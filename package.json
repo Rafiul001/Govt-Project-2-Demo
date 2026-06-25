@@ -2,9 +2,13 @@
   "name": "govt-project-2-demo",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun src/index.ts"
+  },
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "prettier": "^3.8.4"
   },
   "peerDependencies": {
     "typescript": "^5"
