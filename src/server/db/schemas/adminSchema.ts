@@ -13,6 +13,7 @@ const adminTypeEnum = pgEnum("admin_type", adminType);
 export const adminsTable = pgTable(DB.ADMIN, {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
+  username: varchar({ length: 255 }).notNull().unique(),
   password: varchar({ length: 255 }).notNull(),
   avatar: varchar({ length: 255 }).notNull(),
   adminType: adminTypeEnum().notNull().default(adminType.BRANCH_ADMIN),
@@ -22,3 +23,5 @@ export const adminsTable = pgTable(DB.ADMIN, {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export type TAdmin = typeof adminsTable.$inferSelect;

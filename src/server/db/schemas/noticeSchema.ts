@@ -25,3 +25,5 @@ export const noticesTable = pgTable(DB.NOTICE, {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export type TNotice = typeof noticesTable.$inferSelect;

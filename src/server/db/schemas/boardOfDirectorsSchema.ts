@@ -17,3 +17,5 @@ export const boardOfDirectorsTable = pgTable(DB.BOARD_OF_DIRECTORS, {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export type TBoardOfDirector = typeof boardOfDirectorsTable.$inferSelect;

@@ -1,0 +1,98 @@
+import db from "@/server/db/client";
+import { adminsTable, type TAdmin } from "@/server/db/schemas";
+import { authMiddleware } from "@/server/middleware/authMiddleware";
+import { validateJson } from "@/server/middleware/validate";
+import { conflict, created, ok, unAuthorized } from "@/server/responses";
+import type { TAppEnv } from "@/server/types";
+import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
+import { hashPassword, verifyPassword } from "@/server/utils/password";
+import { adminType } from "@/shared/types";
+import {
+  adminLoginSchema,
+  createAdminSchema,
+} from "@/shared/validators/admin.validator";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
+
+/** Strip the password hash before returning an admin to the client. */
+function publicAdmin(admin: TAdmin) {
+  const { password: _password, ...rest } = admin;
+  return rest;
+}
+
+const adminRouter = new Hono<TAppEnv>();
+
+/** POST /api/v1/admin/login */
+adminRouter.post("/login", validateJson(adminLoginSchema), async (c) => {
+  const { username, password } = c.req.valid("json");
+
+  const [admin] = await db
+    .select()
+    .from(adminsTable)
+    .where(eq(adminsTable.username, username))
+    .limit(1);
+
+  if (!admin || !(await verifyPassword(password, admin.password))) {
+    return unAuthorized(c, "Invalid credentials");
+  }
+
+  const tokenInput = { sub: admin.id, adminType: admin.adminType };
+  const accessToken = await generateAccessToken(tokenInput);
+  const refreshToken = await generateRefreshToken(tokenInput);
+
+  return ok(c, "Logged in successfully", {
+    accessToken,
+    refreshToken,
+  });
+});
+
+/** GET /api/v1/admin — list all admins (super admin only). */
+adminRouter.get("/", authMiddleware([adminType.SUPER_ADMIN]), async (c) => {
+  const admins = await db.select().from(adminsTable);
+  return ok(c, "Admins fetched successfully", admins.map(publicAdmin));
+});
+
+/** POST /api/v1/admin — create a new admin (super admin only). */
+adminRouter.post(
+  "/",
+  authMiddleware([adminType.SUPER_ADMIN]),
+  validateJson(createAdminSchema),
+  async (c) => {
+    const data = c.req.valid("json");
+
+    const [existing] = await db
+      .select({ id: adminsTable.id })
+      .from(adminsTable)
+      .where(eq(adminsTable.username, data.username))
+      .limit(1);
+
+    if (existing) {
+      return conflict(c, "Username is already taken");
+    }
+
+    const [createdAdmin] = await db
+      .insert(adminsTable)
+      .values({
+        name: data.name,
+        username: data.username,
+        password: await hashPassword(data.password),
+        avatar: data.avatar ?? "",
+        adminType: data.adminType ?? adminType.BRANCH_ADMIN,
+      })
+      .returning();
+
+    return created(c, "Admin created successfully");
+  },
+);
+
+/**
+ * POST /api/v1/admin/logout
+ *
+ * Authentication is stateless (JWT), so the server holds no session to clear —
+ * the client should discard its access/refresh tokens.
+ */
+adminRouter.post("/logout", authMiddleware(), async (c) => {
+  return ok(c, "Logged out successfully");
+});
+
+export default adminRouter;

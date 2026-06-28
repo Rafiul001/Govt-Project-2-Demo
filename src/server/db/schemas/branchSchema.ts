@@ -15,3 +15,5 @@ export const branchesTable = pgTable(DB.BRANCH, {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export type TBranch = typeof branchesTable.$inferSelect;

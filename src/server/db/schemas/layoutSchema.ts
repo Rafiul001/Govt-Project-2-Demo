@@ -5,7 +5,6 @@ import {
   pgEnum,
   pgTable,
   timestamp,
-  varchar,
 } from "drizzle-orm/pg-core";
 import { DB } from "../constant";
 import { branchesTable } from "./branchSchema";
@@ -29,3 +28,5 @@ export const layoutsTable = pgTable(DB.LAYOUT, {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export type TLayout = typeof layoutsTable.$inferSelect;
