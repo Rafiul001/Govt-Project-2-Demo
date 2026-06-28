@@ -14,7 +14,7 @@ export const tokenType = {
 export const tokenTypes = Object.values(tokenType);
 export type TTokenType = (typeof tokenTypes)[number];
 
-export interface ITokenPayload {
+export interface TTokenPayload {
   /** Admin id */
   sub: number;
   adminType: TAdminTypes;

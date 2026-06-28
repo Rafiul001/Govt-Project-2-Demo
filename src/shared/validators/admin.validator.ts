@@ -1,5 +1,6 @@
 import { adminType } from "@/shared/types";
 import { z } from "zod";
+import { fileSchema } from "./file.validator";
 
 export const adminLoginSchema = z.strictObject({
   username: z.string().trim().min(1, "Username is required"),
@@ -11,9 +12,11 @@ export const createAdminSchema = z
     name: z.string().trim().min(1).max(255),
     username: z.string().trim().min(3).max(255),
     password: z.string().min(8).max(255),
-    avatar: z.url().max(255).optional(),
+    // Uploaded image file; the route stores the resulting Cloudinary URL.
+    avatar: fileSchema.optional(),
     adminType: z.enum(adminType).optional(),
-    branchId: z.number().int().positive().optional(),
+    // Multipart form values arrive as strings, so coerce numeric fields.
+    branchId: z.coerce.number().int().positive().optional(),
   })
   .refine(
     (data) =>

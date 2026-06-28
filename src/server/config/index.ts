@@ -74,6 +74,9 @@ const config = {
     "REFRESH_TOKEN_EXPIRES_IN",
     "7d",
   ),
+  CLOUDINARY_URL: requireEnv("CLOUDINARY_URL"),
+  CLOUDINARY_IMAGE_FOLDER: requireEnv("CLOUDINARY_IMAGE_FOLDER"),
+  CLOUDINARY_PDF_FOLDER: requireEnv("CLOUDINARY_PDF_FOLDER"),
 };
 
 export default config;

@@ -1,10 +1,10 @@
 import db from "@/server/db/client";
 import { branchesTable } from "@/server/db/schemas";
-import { adminType, type ITokenPayload } from "@/shared/types";
+import { adminType, type TTokenPayload } from "@/shared/types";
 import { eq } from "drizzle-orm";
 
 /** True when the authenticated admin is a super admin (not branch-scoped). */
-export function isSuperAdmin(admin: ITokenPayload): boolean {
+export function isSuperAdmin(admin: TTokenPayload): boolean {
   return admin.adminType === adminType.SUPER_ADMIN;
 }
 
@@ -17,7 +17,7 @@ export function isSuperAdmin(admin: ITokenPayload): boolean {
  * branch admin has no branch assigned).
  */
 export function resolveBranchId(
-  admin: ITokenPayload,
+  admin: TTokenPayload,
   bodyBranchId?: number,
 ): number | null {
   return isSuperAdmin(admin) ? (bodyBranchId ?? null) : admin.branchId;
@@ -25,7 +25,7 @@ export function resolveBranchId(
 
 /** Whether a branch admin may access a row belonging to `rowBranchId`. */
 export function canAccessBranch(
-  admin: ITokenPayload,
+  admin: TTokenPayload,
   rowBranchId: number,
 ): boolean {
   return isSuperAdmin(admin) || admin.branchId === rowBranchId;

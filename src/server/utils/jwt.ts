@@ -1,7 +1,7 @@
 import config from "@/server/config";
 import {
   tokenType,
-  type ITokenPayload,
+  type TTokenPayload,
   type TAdminTypes,
 } from "@/shared/types";
 import { sign, verify } from "hono/jwt";
@@ -48,14 +48,14 @@ export async function generateRefreshToken(
   );
 }
 
-export async function verifyAccessToken(token: string): Promise<ITokenPayload> {
+export async function verifyAccessToken(token: string): Promise<TTokenPayload> {
   const payload = await verify(token, config.ACCESS_TOKEN_SECRET, ALG);
-  return payload as unknown as ITokenPayload;
+  return payload as unknown as TTokenPayload;
 }
 
 export async function verifyRefreshToken(
   token: string,
-): Promise<ITokenPayload> {
+): Promise<TTokenPayload> {
   const payload = await verify(token, config.REFRESH_TOKEN_SECRET, ALG);
-  return payload as unknown as ITokenPayload;
+  return payload as unknown as TTokenPayload;
 }

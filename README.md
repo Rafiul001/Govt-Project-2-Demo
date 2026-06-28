@@ -7,17 +7,18 @@ and [Pino](https://getpino.io) for logging.
 
 ## Tech Stack
 
-| Concern        | Choice                                         |
-| -------------- | ---------------------------------------------- |
-| Runtime        | Bun (dev) / Node (production build)            |
-| HTTP framework | Hono (served via `@hono/node-server`)          |
-| Database       | PostgreSQL                                     |
-| ORM            | Drizzle ORM `1.0.0-rc` + `pg` driver           |
-| Migrations     | drizzle-kit                                    |
+| Concern        | Choice                                          |
+| -------------- | ----------------------------------------------- |
+| Runtime        | Bun (dev) / Node (production build)             |
+| HTTP framework | Hono (served via `@hono/node-server`)           |
+| Database       | PostgreSQL                                      |
+| ORM            | Drizzle ORM `1.0.0-rc` + `pg` driver            |
+| Migrations     | drizzle-kit                                     |
 | Auth           | JWT access/refresh (`hono/jwt`) + argon2 hashes |
-| Validation     | Zod + `@hono/zod-validator`                    |
-| Logging        | Pino (`pino-pretty` in development)            |
-| Language       | TypeScript                                     |
+| Validation     | Zod + `@hono/zod-validator`                     |
+| Media uploads  | Cloudinary (`cloudinary` SDK)                   |
+| Logging        | Pino (`pino-pretty` in development)             |
+| Language       | TypeScript                                      |
 
 ## Prerequisites
 
@@ -40,16 +41,19 @@ and [Pino](https://getpino.io) for logging.
    cp .env.template .env
    ```
 
-   | Variable                   | Required | Description                                       | Example                                                      |
-   | -------------------------- | -------- | ------------------------------------------------- | ------------------------------------------------------------ |
-   | `NODE_ENV`                 | yes      | `development` \| `production` \| `test`           | `development`                                                |
-   | `PORT`                     | yes      | HTTP server port                                  | `3000`                                                       |
-   | `LOG_LEVEL`                | yes      | `fatal`…`trace`                                   | `debug`                                                      |
-   | `DATABASE_URL`             | yes      | Postgres connection string                        | `postgres://postgres:postgres@localhost:5432/govt_project_2` |
-   | `ACCESS_TOKEN_SECRET`      | yes      | Secret for signing access tokens                  | `openssl rand -base64 48`                                    |
-   | `REFRESH_TOKEN_SECRET`     | yes      | Secret for signing refresh tokens                 | `openssl rand -base64 48`                                    |
-   | `ACCESS_TOKEN_EXPIRES_IN`  | no       | Access token lifetime (suffix `s`/`m`/`h`/`d`)    | `15m` (default)                                              |
-   | `REFRESH_TOKEN_EXPIRES_IN` | no       | Refresh token lifetime (suffix `s`/`m`/`h`/`d`)   | `7d` (default)                                               |
+   | Variable                   | Required | Description                                     | Example                                                      |
+   | -------------------------- | -------- | ----------------------------------------------- | ------------------------------------------------------------ |
+   | `NODE_ENV`                 | yes      | `development` \| `production` \| `test`         | `development`                                                |
+   | `PORT`                     | yes      | HTTP server port                                | `3000`                                                       |
+   | `LOG_LEVEL`                | yes      | `fatal`…`trace`                                 | `debug`                                                      |
+   | `DATABASE_URL`             | yes      | Postgres connection string                      | `postgres://postgres:postgres@localhost:5432/govt_project_2` |
+   | `ACCESS_TOKEN_SECRET`      | yes      | Secret for signing access tokens                | `openssl rand -base64 48`                                    |
+   | `REFRESH_TOKEN_SECRET`     | yes      | Secret for signing refresh tokens               | `openssl rand -base64 48`                                    |
+   | `ACCESS_TOKEN_EXPIRES_IN`  | no       | Access token lifetime (suffix `s`/`m`/`h`/`d`)  | `15m` (default)                                              |
+   | `REFRESH_TOKEN_EXPIRES_IN` | no       | Refresh token lifetime (suffix `s`/`m`/`h`/`d`) | `7d` (default)                                               |
+   | `CLOUDINARY_URL`           | yes      | Cloudinary credentials URL                      | `cloudinary://<api_key>:<api_secret>@<cloud_name>`           |
+   | `CLOUDINARY_IMAGE_FOLDER`  | yes      | Cloudinary folder images are stored under       | `image`                                                      |
+   | `CLOUDINARY_PDF_FOLDER`    | yes      | Cloudinary folder PDFs are stored under         | `pdf`                                                        |
 
    All variables are validated at startup in
    [`src/server/config/index.ts`](src/server/config/index.ts); the process throws
@@ -85,10 +89,10 @@ and [Pino](https://getpino.io) for logging.
 ## Scripts
 
 | Script          | Description                                              |
-| --------------- | ------------------------------------------------------- |
-| `bun run dev`   | Start the server in watch mode (`src/index.ts`)         |
+| --------------- | -------------------------------------------------------- |
+| `bun run dev`   | Start the server in watch mode (`src/index.ts`)          |
 | `bun run build` | Bundle to `dist/` for production (`NODE_ENV=production`) |
-| `bun run start` | Run the built bundle with Node (`dist/index.js`)        |
+| `bun run start` | Run the built bundle with Node (`dist/index.js`)         |
 
 ## Project Structure
 
@@ -103,14 +107,21 @@ src/
 │   ├── config/
 │   │   └── index.ts          # Env validation & typed config
 │   ├── middleware/
-│   │   ├── authMiddleware.ts # JWT auth + role checks
-│   │   └── validate.ts       # zValidator wrapper (422 envelope)
+│   │   └── authMiddleware.ts # JWT auth + role checks
 │   ├── responses/
 │   │   └── index.ts          # successResponse / errorResponse envelopes
 │   ├── routes/
 │   │   └── v1Router/
-│   │       ├── index.ts      # /api/v1 router
-│   │       └── adminRouter.ts# /api/v1/admin routes
+│   │       ├── index.ts                    # /api/v1 router
+│   │       ├── adminRouter.ts              # /api/v1/admin routes
+│   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
+│   │       ├── layoutRouter.ts             # /api/v1/layout routes
+│   │       └── noticeRouter.ts             # /api/v1/notice routes
+│   ├── service/
+│   │   └── cloudinary/
+│   │       ├── client.ts       # Configured Cloudinary client + URL helpers
+│   │       ├── imageUpload.ts   # upload/replace/delete image assets
+│   │       └── pdfUpload.ts     # upload/replace/delete PDF assets
 │   ├── utils/
 │   │   ├── jwt.ts            # Access/refresh token generate & verify
 │   │   └── password.ts      # argon2 hash & verify
@@ -131,7 +142,12 @@ src/
     ├── utils/
     │   └── pino-logger.ts    # Configured Pino logger
     └── validators/
-        └── admin.validator.ts# Zod schemas for admin requests
+        ├── admin.validator.ts            # Zod schemas for admin requests
+        ├── boardOfDirectors.validator.ts # Zod schemas for board requests
+        ├── layout.validator.ts           # Zod schemas for layout requests
+        ├── notice.validator.ts           # Zod schemas for notice requests
+        ├── params.validator.ts           # Shared `:id` path-param schema
+        └── file.validator.ts             # Shared upload schema (max 5 MB)
 ```
 
 ## Authentication
@@ -151,7 +167,7 @@ Stateless JWT, sent as a **Bearer** token — no cookies.
 
   ```ts
   adminRouter.post("/", authMiddleware([adminType.SUPER_ADMIN]), handler); // super admin only
-  adminRouter.post("/logout", authMiddleware(), handler);                  // any admin
+  adminRouter.post("/logout", authMiddleware(), handler); // any admin
   ```
 
 Logout is a client-side concern: since tokens are stateless, the server holds no
@@ -161,29 +177,50 @@ valid until it expires (`ACCESS_TOKEN_EXPIRES_IN`).
 ### API Endpoints
 
 All responses use a consistent envelope:
-`{ success, message, data }` or `{ success, message, errors }`. Request bodies
-are validated with `@hono/zod-validator`; invalid input returns `422` with a
-`treeifyError` payload under `errors`.
+`{ success, message, data }` or `{ success, message, errors }`. Requests are
+validated with `@hono/zod-validator` — `json` for plain bodies, `param` for the
+numeric `:id`, and `form` for endpoints that accept file uploads. Invalid input
+returns the validator's default `400`.
 
-| Method | Path                   | Auth             | Description                              |
-| ------ | ---------------------- | ---------------- | ---------------------------------------- |
-| `POST` | `/api/v1/admin/login`  | Public           | Log in; returns `accessToken` + `refreshToken` |
-| `GET`  | `/api/v1/admin`        | Super admin only | List all admins                          |
-| `POST` | `/api/v1/admin`        | Super admin only | Create a new admin                       |
-| `POST` | `/api/v1/admin/logout` | Any admin        | Logout (stateless acknowledgement)       |
+Endpoints that accept files use **`multipart/form-data`** (not JSON): all fields
+are sent as form fields, and each uploaded file must be at most **5 MB**. Files
+are stored on Cloudinary and only the resulting delivery URL is persisted.
+
+| Method   | Path                             | Auth             | Body                 | Description                                    |
+| -------- | -------------------------------- | ---------------- | -------------------- | ---------------------------------------------- |
+| `POST`   | `/api/v1/admin/login`            | Public           | `json`               | Log in; returns `accessToken` + `refreshToken` |
+| `GET`    | `/api/v1/admin`                  | Super admin only | —                    | List all admins                                |
+| `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)      | Create a new admin                             |
+| `POST`   | `/api/v1/admin/logout`           | Any admin        | —                    | Logout (stateless acknowledgement)             |
+| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                    | List board members (branch-scoped)             |
+| `GET`    | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Get one board member                           |
+| `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)      | Create a board member                          |
+| `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)      | Update a board member                          |
+| `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Delete a board member (+ its avatar)           |
+| `GET`    | `/api/v1/layout`                 | Any admin        | —                    | List layouts (branch-scoped)                   |
+| `GET`    | `/api/v1/layout/:id`             | Any admin        | —                    | Get one layout                                 |
+| `POST`   | `/api/v1/layout`                 | Any admin        | `json`               | Create a layout                                |
+| `PATCH`  | `/api/v1/layout/:id`             | Any admin        | `json`               | Update a layout                                |
+| `DELETE` | `/api/v1/layout/:id`             | Any admin        | —                    | Delete a layout                                |
+| `GET`    | `/api/v1/notice`                 | Any admin        | —                    | List notices (branch-scoped)                   |
+| `GET`    | `/api/v1/notice/:id`             | Any admin        | —                    | Get one notice                                 |
+| `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file) | Create a notice                                |
+| `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file) | Update a notice                                |
+| `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                    | Delete a notice (+ its image & PDF)            |
 
 > Only a super admin can create other admins, and a super admin **may** create
-> another super admin.
+> another super admin. Branch admins only see and manage records for their own
+> branch; super admins are unscoped.
 
 ## Database Schema
 
-| Table              | Constant                | Purpose                               |
-| ------------------ | ----------------------- | ------------------------------------- |
+| Table              | Constant                | Purpose                                   |
+| ------------------ | ----------------------- | ----------------------------------------- |
 | `admins`           | `DB.ADMIN`              | Portal administrators (unique `username`) |
-| `branches`         | `DB.BRANCH`             | Organization branches (parent entity) |
-| `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch             |
-| `layouts`          | `DB.LAYOUT`             | Per-branch layout/display settings    |
-| `notices`          | `DB.NOTICE`             | Notices published by a branch         |
+| `branches`         | `DB.BRANCH`             | Organization branches (parent entity)     |
+| `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                 |
+| `layouts`          | `DB.LAYOUT`             | Per-branch layout/display settings        |
+| `notices`          | `DB.NOTICE`             | Notices published by a branch             |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
 `TBoardOfDirector`, `TLayout`, `TNotice`).
@@ -221,10 +258,12 @@ const branch = await db.query.branchesTable.findFirst({
 ## Conventions
 
 - Path alias `@/*` maps to `src/*` (see [`tsconfig.json`](tsconfig.json)).
-- Type aliases are prefixed with `T` (e.g. `TAppEnv`); interfaces with `I`
-  (e.g. `ITokenPayload`).
+- Types are prefixed with `T` (e.g. `TAppEnv`, `TTokenPayload`).
 - Drizzle ORM here is the **v1 release candidate**, which uses the new
   `defineRelations` API rather than the legacy per-table `relations()` helper.
 - Production builds target and run on **Node**, so server code avoids Bun-only
   globals (e.g. password hashing uses `argon2`, not `Bun.password`).
+
+```
+
 ```

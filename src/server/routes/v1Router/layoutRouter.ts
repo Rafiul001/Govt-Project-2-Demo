@@ -1,7 +1,6 @@
 import db from "@/server/db/client";
 import { layoutsTable } from "@/server/db/schemas";
 import { authMiddleware } from "@/server/middleware/authMiddleware";
-import { validateJson } from "@/server/middleware/validate";
 import {
   badRequest,
   conflict,
@@ -21,6 +20,8 @@ import {
   createLayoutSchema,
   updateLayoutSchema,
 } from "@/shared/validators/layout.validator";
+import { idParamSchema } from "@/shared/validators/params.validator";
+import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
@@ -42,11 +43,8 @@ layoutRouter.get("/", async (c) => {
 });
 
 /** GET /api/v1/layout/:id */
-layoutRouter.get("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid layout id");
-  }
+layoutRouter.get("/:id", zValidator("param", idParamSchema), async (c) => {
+  const { id } = c.req.valid("param");
 
   const [layout] = await db
     .select()
@@ -65,7 +63,7 @@ layoutRouter.get("/:id", async (c) => {
 });
 
 /** POST /api/v1/layout */
-layoutRouter.post("/", validateJson(createLayoutSchema), async (c) => {
+layoutRouter.post("/", zValidator("json", createLayoutSchema), async (c) => {
   const admin = c.get("admin");
   const data = c.req.valid("json");
 
@@ -87,59 +85,54 @@ layoutRouter.post("/", validateJson(createLayoutSchema), async (c) => {
     return conflict(c, "This branch already has a layout");
   }
 
-  const [layout] = await db
-    .insert(layoutsTable)
-    .values({
-      showLogo: data.showLogo,
-      showBanner: data.showBanner,
-      sidebarPosition: data.sidebarPosition,
-      branchId,
-    })
-    .returning();
+  await db.insert(layoutsTable).values({
+    showLogo: data.showLogo,
+    showBanner: data.showBanner,
+    sidebarPosition: data.sidebarPosition,
+    branchId,
+  });
 
-  return created(c, "Layout created successfully", layout);
+  return created(c, "Layout created successfully");
 });
 
 /** PATCH /api/v1/layout/:id */
-layoutRouter.patch("/:id", validateJson(updateLayoutSchema), async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid layout id");
-  }
+layoutRouter.patch(
+  "/:id",
+  zValidator("param", idParamSchema),
+  zValidator("json", updateLayoutSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const data = c.req.valid("json");
+    if (Object.keys(data).length === 0) {
+      return badRequest(c, "No fields to update");
+    }
 
-  const data = c.req.valid("json");
-  if (Object.keys(data).length === 0) {
-    return badRequest(c, "No fields to update");
-  }
+    const [layout] = await db
+      .select()
+      .from(layoutsTable)
+      .where(eq(layoutsTable.id, id))
+      .limit(1);
 
-  const [layout] = await db
-    .select()
-    .from(layoutsTable)
-    .where(eq(layoutsTable.id, id))
-    .limit(1);
+    if (!layout) {
+      return notFound(c, "Layout not found");
+    }
+    if (!canAccessBranch(c.get("admin"), layout.branchId)) {
+      return forbidden(c);
+    }
 
-  if (!layout) {
-    return notFound(c, "Layout not found");
-  }
-  if (!canAccessBranch(c.get("admin"), layout.branchId)) {
-    return forbidden(c);
-  }
+    await db
+      .update(layoutsTable)
+      .set(data)
+      .where(eq(layoutsTable.id, id))
+      .returning();
 
-  const [updated] = await db
-    .update(layoutsTable)
-    .set(data)
-    .where(eq(layoutsTable.id, id))
-    .returning();
-
-  return ok(c, "Layout updated successfully", updated);
-});
+    return ok(c, "Layout updated successfully");
+  },
+);
 
 /** DELETE /api/v1/layout/:id */
-layoutRouter.delete("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid layout id");
-  }
+layoutRouter.delete("/:id", zValidator("param", idParamSchema), async (c) => {
+  const { id } = c.req.valid("param");
 
   const [layout] = await db
     .select()

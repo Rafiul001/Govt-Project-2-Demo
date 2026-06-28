@@ -1,7 +1,6 @@
 import db from "@/server/db/client";
 import { boardOfDirectorsTable } from "@/server/db/schemas";
 import { authMiddleware } from "@/server/middleware/authMiddleware";
-import { validateJson } from "@/server/middleware/validate";
 import {
   badRequest,
   created,
@@ -9,6 +8,11 @@ import {
   notFound,
   ok,
 } from "@/server/responses";
+import {
+  deleteImage,
+  replaceImage,
+  uploadImage,
+} from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
 import {
   branchExists,
@@ -20,6 +24,8 @@ import {
   createBoardOfDirectorSchema,
   updateBoardOfDirectorSchema,
 } from "@/shared/validators/boardOfDirectors.validator";
+import { idParamSchema } from "@/shared/validators/params.validator";
+import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
@@ -41,73 +47,11 @@ boardOfDirectorsRouter.get("/", async (c) => {
 });
 
 /** GET /api/v1/board-of-directors/:id */
-boardOfDirectorsRouter.get("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid board of director id");
-  }
-
-  const [member] = await db
-    .select()
-    .from(boardOfDirectorsTable)
-    .where(eq(boardOfDirectorsTable.id, id))
-    .limit(1);
-
-  if (!member) {
-    return notFound(c, "Board of director not found");
-  }
-  if (!canAccessBranch(c.get("admin"), member.branchId)) {
-    return forbidden(c);
-  }
-
-  return ok(c, "Board of director fetched successfully", member);
-});
-
-/** POST /api/v1/board-of-directors */
-boardOfDirectorsRouter.post(
-  "/",
-  validateJson(createBoardOfDirectorSchema),
-  async (c) => {
-    const admin = c.get("admin");
-    const data = c.req.valid("json");
-
-    const branchId = resolveBranchId(admin, data.branchId);
-    if (branchId === null) {
-      return badRequest(c, "branchId is required");
-    }
-    if (!(await branchExists(branchId))) {
-      return notFound(c, "Branch not found");
-    }
-
-    const [member] = await db
-      .insert(boardOfDirectorsTable)
-      .values({
-        name: data.name,
-        designation: data.designation,
-        avatar: data.avatar ?? "",
-        order: data.order,
-        branchId,
-      })
-      .returning();
-
-    return created(c, "Board of director created successfully", member);
-  },
-);
-
-/** PATCH /api/v1/board-of-directors/:id */
-boardOfDirectorsRouter.patch(
+boardOfDirectorsRouter.get(
   "/:id",
-  validateJson(updateBoardOfDirectorSchema),
+  zValidator("param", idParamSchema),
   async (c) => {
-    const id = Number(c.req.param("id"));
-    if (!Number.isInteger(id)) {
-      return badRequest(c, "Invalid board of director id");
-    }
-
-    const data = c.req.valid("json");
-    if (Object.keys(data).length === 0) {
-      return badRequest(c, "No fields to update");
-    }
+    const { id } = c.req.valid("param");
 
     const [member] = await db
       .select()
@@ -122,38 +66,107 @@ boardOfDirectorsRouter.patch(
       return forbidden(c);
     }
 
-    const [updated] = await db
-      .update(boardOfDirectorsTable)
-      .set(data)
-      .where(eq(boardOfDirectorsTable.id, id))
-      .returning();
+    return ok(c, "Board of director fetched successfully", member);
+  },
+);
 
-    return ok(c, "Board of director updated successfully", updated);
+/** POST /api/v1/board-of-directors */
+boardOfDirectorsRouter.post(
+  "/",
+  zValidator("form", createBoardOfDirectorSchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const data = c.req.valid("form");
+
+    const branchId = resolveBranchId(admin, data.branchId);
+    if (branchId === null) {
+      return badRequest(c, "branchId is required");
+    }
+    if (!(await branchExists(branchId))) {
+      return notFound(c, "Branch not found");
+    }
+
+    const avatar = data.avatar ? (await uploadImage(data.avatar)).url : "";
+
+    await db.insert(boardOfDirectorsTable).values({
+      name: data.name,
+      designation: data.designation,
+      avatar,
+      order: data.order,
+      branchId,
+    });
+
+    return created(c, "Board of director created successfully");
+  },
+);
+
+/** PATCH /api/v1/board-of-directors/:id */
+boardOfDirectorsRouter.patch(
+  "/:id",
+  zValidator("param", idParamSchema),
+  zValidator("form", updateBoardOfDirectorSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { avatar, ...rest } = c.req.valid("form");
+
+    const [member] = await db
+      .select()
+      .from(boardOfDirectorsTable)
+      .where(eq(boardOfDirectorsTable.id, id))
+      .limit(1);
+
+    if (!member) {
+      return notFound(c, "Board of director not found");
+    }
+    if (!canAccessBranch(c.get("admin"), member.branchId)) {
+      return forbidden(c);
+    }
+
+    const updates = {
+      ...rest,
+      ...(avatar && {
+        avatar: (await replaceImage(member.avatar, avatar)).url,
+      }),
+    };
+    if (Object.keys(updates).length === 0) {
+      return badRequest(c, "No fields to update");
+    }
+
+    await db
+      .update(boardOfDirectorsTable)
+      .set(updates)
+      .where(eq(boardOfDirectorsTable.id, id));
+
+    return ok(c, "Board of director updated successfully");
   },
 );
 
 /** DELETE /api/v1/board-of-directors/:id */
-boardOfDirectorsRouter.delete("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid board of director id");
-  }
+boardOfDirectorsRouter.delete(
+  "/:id",
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
 
-  const [member] = await db
-    .select()
-    .from(boardOfDirectorsTable)
-    .where(eq(boardOfDirectorsTable.id, id))
-    .limit(1);
+    const [member] = await db
+      .select()
+      .from(boardOfDirectorsTable)
+      .where(eq(boardOfDirectorsTable.id, id))
+      .limit(1);
 
-  if (!member) {
-    return notFound(c, "Board of director not found");
-  }
-  if (!canAccessBranch(c.get("admin"), member.branchId)) {
-    return forbidden(c);
-  }
+    if (!member) {
+      return notFound(c, "Board of director not found");
+    }
+    if (!canAccessBranch(c.get("admin"), member.branchId)) {
+      return forbidden(c);
+    }
 
-  await db.delete(boardOfDirectorsTable).where(eq(boardOfDirectorsTable.id, id));
-  return ok(c, "Board of director deleted successfully");
-});
+    await db
+      .delete(boardOfDirectorsTable)
+      .where(eq(boardOfDirectorsTable.id, id));
+    await deleteImage(member.avatar);
+    return ok(c, "Board of director deleted successfully");
+  },
+);
 
 export default boardOfDirectorsRouter;

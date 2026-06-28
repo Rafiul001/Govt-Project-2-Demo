@@ -1,4 +1,4 @@
-import type { ITokenPayload } from "@/shared/types";
+import type { TTokenPayload } from "@/shared/types";
 
 /**
  * Hono environment shared across the server. The authenticated admin's token
@@ -6,6 +6,6 @@ import type { ITokenPayload } from "@/shared/types";
  */
 export type TAppEnv = {
   Variables: {
-    admin: ITokenPayload;
+    admin: TTokenPayload;
   };
 };

@@ -1,7 +1,6 @@
 import db from "@/server/db/client";
 import { adminsTable, type TAdmin } from "@/server/db/schemas";
 import { authMiddleware } from "@/server/middleware/authMiddleware";
-import { validateJson } from "@/server/middleware/validate";
 import {
   conflict,
   created,
@@ -9,6 +8,7 @@ import {
   ok,
   unAuthorized,
 } from "@/server/responses";
+import { uploadImage } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
 import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
@@ -18,6 +18,7 @@ import {
   adminLoginSchema,
   createAdminSchema,
 } from "@/shared/validators/admin.validator";
+import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
@@ -30,7 +31,7 @@ function publicAdmin(admin: TAdmin) {
 const adminRouter = new Hono<TAppEnv>();
 
 /** POST /api/v1/admin/login */
-adminRouter.post("/login", validateJson(adminLoginSchema), async (c) => {
+adminRouter.post("/login", zValidator("json", adminLoginSchema), async (c) => {
   const { username, password } = c.req.valid("json");
 
   const [admin] = await db
@@ -67,9 +68,9 @@ adminRouter.get("/", authMiddleware([adminType.SUPER_ADMIN]), async (c) => {
 adminRouter.post(
   "/",
   authMiddleware([adminType.SUPER_ADMIN]),
-  validateJson(createAdminSchema),
+  zValidator("form", createAdminSchema),
   async (c) => {
-    const data = c.req.valid("json");
+    const data = c.req.valid("form");
     const newAdminType = data.adminType ?? adminType.BRANCH_ADMIN;
 
     const [existing] = await db
@@ -89,11 +90,13 @@ adminRouter.post(
       return notFound(c, "Branch not found");
     }
 
+    const avatar = data.avatar ? (await uploadImage(data.avatar)).url : "";
+
     await db.insert(adminsTable).values({
       name: data.name,
       username: data.username,
       password: await hashPassword(data.password),
-      avatar: data.avatar ?? "",
+      avatar,
       adminType: newAdminType,
       branchId,
     });

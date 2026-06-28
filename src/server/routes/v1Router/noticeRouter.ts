@@ -1,7 +1,6 @@
 import db from "@/server/db/client";
 import { noticesTable } from "@/server/db/schemas";
 import { authMiddleware } from "@/server/middleware/authMiddleware";
-import { validateJson } from "@/server/middleware/validate";
 import {
   badRequest,
   created,
@@ -9,6 +8,16 @@ import {
   notFound,
   ok,
 } from "@/server/responses";
+import {
+  deleteImage,
+  replaceImage,
+  uploadImage,
+} from "@/server/service/cloudinary/imageUpload";
+import {
+  deletePdf,
+  replacePdf,
+  uploadPdf,
+} from "@/server/service/cloudinary/pdfUpload";
 import type { TAppEnv } from "@/server/types";
 import {
   branchExists,
@@ -20,6 +29,8 @@ import {
   createNoticeSchema,
   updateNoticeSchema,
 } from "@/shared/validators/notice.validator";
+import { idParamSchema } from "@/shared/validators/params.validator";
+import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
@@ -41,11 +52,8 @@ noticeRouter.get("/", async (c) => {
 });
 
 /** GET /api/v1/notice/:id */
-noticeRouter.get("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid notice id");
-  }
+noticeRouter.get("/:id", zValidator("param", idParamSchema), async (c) => {
+  const { id } = c.req.valid("param");
 
   const [notice] = await db
     .select()
@@ -64,9 +72,9 @@ noticeRouter.get("/:id", async (c) => {
 });
 
 /** POST /api/v1/notice */
-noticeRouter.post("/", validateJson(createNoticeSchema), async (c) => {
+noticeRouter.post("/", zValidator("form", createNoticeSchema), async (c) => {
   const admin = c.get("admin");
-  const data = c.req.valid("json");
+  const data = c.req.valid("form");
 
   const branchId = resolveBranchId(admin, data.branchId);
   if (branchId === null) {
@@ -76,61 +84,69 @@ noticeRouter.post("/", validateJson(createNoticeSchema), async (c) => {
     return notFound(c, "Branch not found");
   }
 
-  const [notice] = await db
-    .insert(noticesTable)
-    .values({
-      title: data.title,
-      description: data.description,
-      fileUrl: data.fileUrl,
-      image: data.image,
-      isPublished: data.isPublished,
-      branchId,
-    })
-    .returning();
+  const image = data.image ? (await uploadImage(data.image)).url : null;
+  const fileUrl = data.file ? (await uploadPdf(data.file)).url : null;
 
-  return created(c, "Notice created successfully", notice);
+  await db.insert(noticesTable).values({
+    title: data.title,
+    description: data.description,
+    fileUrl,
+    image,
+    isPublished: data.isPublished,
+    branchId,
+  });
+
+  return created(c, "Notice created successfully");
 });
 
 /** PATCH /api/v1/notice/:id */
-noticeRouter.patch("/:id", validateJson(updateNoticeSchema), async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid notice id");
-  }
+noticeRouter.patch(
+  "/:id",
+  zValidator("param", idParamSchema),
+  zValidator("form", updateNoticeSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { image, file, ...rest } = c.req.valid("form");
 
-  const data = c.req.valid("json");
-  if (Object.keys(data).length === 0) {
-    return badRequest(c, "No fields to update");
-  }
+    const [notice] = await db
+      .select()
+      .from(noticesTable)
+      .where(eq(noticesTable.id, id))
+      .limit(1);
 
-  const [notice] = await db
-    .select()
-    .from(noticesTable)
-    .where(eq(noticesTable.id, id))
-    .limit(1);
+    if (!notice) {
+      return notFound(c, "Notice not found");
+    }
+    if (!canAccessBranch(c.get("admin"), notice.branchId)) {
+      return forbidden(c);
+    }
 
-  if (!notice) {
-    return notFound(c, "Notice not found");
-  }
-  if (!canAccessBranch(c.get("admin"), notice.branchId)) {
-    return forbidden(c);
-  }
+    const updates = {
+      ...rest,
+      ...(image && {
+        image: (await replaceImage(notice.image ?? "", image)).url,
+      }),
+      ...(file && {
+        fileUrl: (await replacePdf(notice.fileUrl ?? "", file)).url,
+      }),
+    };
+    if (Object.keys(updates).length === 0) {
+      return badRequest(c, "No fields to update");
+    }
 
-  const [updated] = await db
-    .update(noticesTable)
-    .set(data)
-    .where(eq(noticesTable.id, id))
-    .returning();
+    await db
+      .update(noticesTable)
+      .set(updates)
+      .where(eq(noticesTable.id, id))
+      .returning();
 
-  return ok(c, "Notice updated successfully", updated);
-});
+    return ok(c, "Notice updated successfully");
+  },
+);
 
 /** DELETE /api/v1/notice/:id */
-noticeRouter.delete("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  if (!Number.isInteger(id)) {
-    return badRequest(c, "Invalid notice id");
-  }
+noticeRouter.delete("/:id", zValidator("param", idParamSchema), async (c) => {
+  const { id } = c.req.valid("param");
 
   const [notice] = await db
     .select()
@@ -146,6 +162,8 @@ noticeRouter.delete("/:id", async (c) => {
   }
 
   await db.delete(noticesTable).where(eq(noticesTable.id, id));
+  await deleteImage(notice.image ?? "");
+  await deletePdf(notice.fileUrl ?? "");
   return ok(c, "Notice deleted successfully");
 });
 
