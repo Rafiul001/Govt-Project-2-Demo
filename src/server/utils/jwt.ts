@@ -11,6 +11,7 @@ const ALG = "HS256" as const;
 type TTokenInput = {
   sub: number;
   adminType: TAdminTypes;
+  branchId: number | null;
 };
 
 function nowInSeconds(): number {
@@ -22,6 +23,7 @@ export async function generateAccessToken(input: TTokenInput): Promise<string> {
     {
       sub: input.sub,
       adminType: input.adminType,
+      branchId: input.branchId,
       type: tokenType.ACCESS,
       exp: nowInSeconds() + config.ACCESS_TOKEN_EXPIRES_IN,
     },
@@ -37,6 +39,7 @@ export async function generateRefreshToken(
     {
       sub: input.sub,
       adminType: input.adminType,
+      branchId: input.branchId,
       type: tokenType.REFRESH,
       exp: nowInSeconds() + config.REFRESH_TOKEN_EXPIRES_IN,
     },

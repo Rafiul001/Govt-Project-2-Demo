@@ -1,4 +1,8 @@
-import { sidebarPosition } from "@/shared/types";
+import {
+  sidebarPosition,
+  sidebarPositions,
+  type TSidebarPositionTypes,
+} from "@/shared/types";
 import {
   boolean,
   integer,
@@ -9,7 +13,10 @@ import {
 import { DB } from "../constant";
 import { branchesTable } from "./branchSchema";
 
-const sidebarPositionEnum = pgEnum("sidebar_position", sidebarPosition);
+export const sidebarPositionEnum = pgEnum(
+  "sidebar_position",
+  sidebarPositions as [TSidebarPositionTypes, ...TSidebarPositionTypes[]],
+);
 
 export const layoutsTable = pgTable(DB.LAYOUT, {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

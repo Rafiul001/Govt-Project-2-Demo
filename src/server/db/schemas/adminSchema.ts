@@ -1,4 +1,4 @@
-import { adminType } from "@/shared/types";
+import { adminType, adminTypes, type TAdminTypes } from "@/shared/types";
 import {
   integer,
   pgEnum,
@@ -7,8 +7,12 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { DB } from "../constant";
+import { branchesTable } from "./branchSchema";
 
-const adminTypeEnum = pgEnum("admin_type", adminType);
+export const adminTypeEnum = pgEnum(
+  "admin_type",
+  adminTypes as [TAdminTypes, ...TAdminTypes[]],
+);
 
 export const adminsTable = pgTable(DB.ADMIN, {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -17,6 +21,10 @@ export const adminsTable = pgTable(DB.ADMIN, {
   password: varchar({ length: 255 }).notNull(),
   avatar: varchar({ length: 255 }).notNull(),
   adminType: adminTypeEnum().notNull().default(adminType.BRANCH_ADMIN),
+  // Null for super admins; required for branch admins (enforced in routes).
+  branchId: integer().references(() => branchesTable.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()

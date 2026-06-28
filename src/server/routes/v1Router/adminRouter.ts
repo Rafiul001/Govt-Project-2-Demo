@@ -2,10 +2,17 @@ import db from "@/server/db/client";
 import { adminsTable, type TAdmin } from "@/server/db/schemas";
 import { authMiddleware } from "@/server/middleware/authMiddleware";
 import { validateJson } from "@/server/middleware/validate";
-import { conflict, created, ok, unAuthorized } from "@/server/responses";
+import {
+  conflict,
+  created,
+  notFound,
+  ok,
+  unAuthorized,
+} from "@/server/responses";
 import type { TAppEnv } from "@/server/types";
 import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
+import { branchExists } from "@/server/utils/scope";
 import { adminType } from "@/shared/types";
 import {
   adminLoginSchema,
@@ -36,7 +43,11 @@ adminRouter.post("/login", validateJson(adminLoginSchema), async (c) => {
     return unAuthorized(c, "Invalid credentials");
   }
 
-  const tokenInput = { sub: admin.id, adminType: admin.adminType };
+  const tokenInput = {
+    sub: admin.id,
+    adminType: admin.adminType,
+    branchId: admin.branchId,
+  };
   const accessToken = await generateAccessToken(tokenInput);
   const refreshToken = await generateRefreshToken(tokenInput);
 
@@ -59,6 +70,7 @@ adminRouter.post(
   validateJson(createAdminSchema),
   async (c) => {
     const data = c.req.valid("json");
+    const newAdminType = data.adminType ?? adminType.BRANCH_ADMIN;
 
     const [existing] = await db
       .select({ id: adminsTable.id })
@@ -70,16 +82,21 @@ adminRouter.post(
       return conflict(c, "Username is already taken");
     }
 
-    const [createdAdmin] = await db
-      .insert(adminsTable)
-      .values({
-        name: data.name,
-        username: data.username,
-        password: await hashPassword(data.password),
-        avatar: data.avatar ?? "",
-        adminType: data.adminType ?? adminType.BRANCH_ADMIN,
-      })
-      .returning();
+    // Super admins have no branch; branch admins must belong to an existing one.
+    const branchId =
+      newAdminType === adminType.SUPER_ADMIN ? null : data.branchId!;
+    if (branchId !== null && !(await branchExists(branchId))) {
+      return notFound(c, "Branch not found");
+    }
+
+    await db.insert(adminsTable).values({
+      name: data.name,
+      username: data.username,
+      password: await hashPassword(data.password),
+      avatar: data.avatar ?? "",
+      adminType: newAdminType,
+      branchId,
+    });
 
     return created(c, "Admin created successfully");
   },

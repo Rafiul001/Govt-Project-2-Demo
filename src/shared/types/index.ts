@@ -18,6 +18,8 @@ export interface ITokenPayload {
   /** Admin id */
   sub: number;
   adminType: TAdminTypes;
+  /** Branch the admin belongs to; `null` for super admins. */
+  branchId: number | null;
   type: TTokenType;
 }
 

@@ -3,12 +3,21 @@ import * as schema from "./schemas";
 
 export const relations = defineRelations(schema, (r) => ({
   branchesTable: {
+    // One branch has many admins
+    admins: r.many.adminsTable(),
     // One branch has many board of directors
     boardOfDirectors: r.many.boardOfDirectorsTable(),
     // One branch has many notices
     notices: r.many.noticesTable(),
     // One branch has exactly one layout
     layout: r.one.layoutsTable(),
+  },
+  adminsTable: {
+    // Super admins have no branch, so this relation is optional.
+    branch: r.one.branchesTable({
+      from: r.adminsTable.branchId,
+      to: r.branchesTable.id,
+    }),
   },
   boardOfDirectorsTable: {
     branch: r.one.branchesTable({
