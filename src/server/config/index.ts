@@ -42,6 +42,7 @@ const config = {
     "debug",
     "trace",
   ] as const),
+  DATABASE_URL: requireEnv("DATABASE_URL"),
 };
 
 export default config;
