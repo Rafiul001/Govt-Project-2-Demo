@@ -129,6 +129,20 @@ export type TCreateAdminInput = {
   branchId: number;
 };
 
+export type TUpdateAdminInput = {
+  name?: string;
+  username?: string;
+  password?: string;
+  avatar?: File;
+  branchId?: number;
+};
+
+/** Self-service profile update (any admin): password and/or avatar only. */
+export type TUpdateProfileInput = {
+  password?: string;
+  avatar?: File;
+};
+
 // --- Board of directors ---
 
 export type TCreateBoardOfDirectorInput = {
@@ -140,6 +154,7 @@ export type TCreateBoardOfDirectorInput = {
 };
 
 export type TUpdateBoardOfDirectorInput = {
+  branchId?: number;
   name?: string;
   designation?: string;
   avatar?: File;
@@ -156,6 +171,7 @@ export type TCreateLayoutInput = {
 };
 
 export type TUpdateLayoutInput = {
+  branchId?: number;
   showLogo?: boolean;
   showBanner?: boolean;
   sidebarPosition?: TSidebarPosition;
@@ -173,6 +189,7 @@ export type TCreateNoticeInput = {
 };
 
 export type TUpdateNoticeInput = {
+  branchId?: number;
   title?: string;
   description?: string;
   file?: File;

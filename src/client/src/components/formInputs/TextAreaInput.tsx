@@ -3,7 +3,7 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { getFieldError } from "../../lib/formField";
 import { FieldShell } from "./FieldShell";
 
-type TextAreaInputProps = {
+type TTextAreaInputProps = {
   field: AnyFieldApi;
   label: string;
   placeholder?: string;
@@ -18,8 +18,9 @@ export function TextAreaInput({
   placeholder,
   isRequired,
   rows = 4,
-}: TextAreaInputProps) {
+}: TTextAreaInputProps) {
   const error = getFieldError(field);
+  const resolvedPlaceholder = placeholder ?? `Enter ${label.toLowerCase()}`;
 
   return (
     <FieldShell error={error}>
@@ -33,7 +34,7 @@ export function TextAreaInput({
         isRequired={isRequired}
       >
         <Label>{label}</Label>
-        <TextArea rows={rows} placeholder={placeholder} />
+        <TextArea rows={rows} placeholder={resolvedPlaceholder} />
       </TextField>
     </FieldShell>
   );

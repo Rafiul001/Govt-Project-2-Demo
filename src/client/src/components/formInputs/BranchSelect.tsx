@@ -5,7 +5,7 @@ import { useBranches } from "../../hooks/useBranches";
 import { getFieldError } from "../../lib/formField";
 import { FieldShell } from "./FieldShell";
 
-type BranchSelectProps = {
+type TBranchSelectProps = {
   field: AnyFieldApi;
   label?: string;
   isRequired?: boolean;
@@ -19,7 +19,7 @@ export function BranchSelect({
   field,
   label = "Branch",
   isRequired,
-}: BranchSelectProps) {
+}: TBranchSelectProps) {
   const { data, isLoading } = useBranches({ page: 1, pageSize: 100 });
   const branches = data?.items ?? [];
   const error = getFieldError(field);

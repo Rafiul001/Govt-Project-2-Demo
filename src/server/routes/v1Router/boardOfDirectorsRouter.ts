@@ -14,13 +14,14 @@ import {
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
+import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
   branchExists,
   canAccessBranch,
   isSuperAdmin,
   resolveBranchId,
+  resolveBranchUpdate,
 } from "@/server/utils/scope";
-import { paginated, pageOffset } from "@/server/utils/pagination";
 import {
   createBoardOfDirectorSchema,
   updateBoardOfDirectorSchema,
@@ -131,7 +132,8 @@ boardOfDirectorsRouter.patch(
   zValidator("form", updateBoardOfDirectorSchema),
   async (c) => {
     const { id } = c.req.valid("param");
-    const { avatar, ...rest } = c.req.valid("form");
+    const admin = c.get("admin");
+    const { avatar, branchId, ...rest } = c.req.valid("form");
 
     const [member] = await db
       .select()
@@ -142,12 +144,19 @@ boardOfDirectorsRouter.patch(
     if (!member) {
       return notFound(c, "Board of director not found");
     }
-    if (!canAccessBranch(c.get("admin"), member.branchId)) {
+    if (!canAccessBranch(admin, member.branchId)) {
       return forbidden(c);
+    }
+
+    // Only super admins may move the member to another branch.
+    const newBranchId = resolveBranchUpdate(admin, branchId);
+    if (newBranchId !== undefined && !(await branchExists(newBranchId))) {
+      return notFound(c, "Branch not found");
     }
 
     const updates = {
       ...rest,
+      ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(avatar && {
         avatar: (await replaceImage(member.avatar, avatar)).url,
       }),

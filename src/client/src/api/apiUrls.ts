@@ -10,6 +10,8 @@ export const API_URLS = {
     LOGOUT: "admin/logout",
     LIST: "admin",
     CREATE: "admin",
+    ME: "admin/me",
+    BY_ID: (id: number | string) => `admin/${id}`,
   },
   BRANCH: {
     LIST: "branch",

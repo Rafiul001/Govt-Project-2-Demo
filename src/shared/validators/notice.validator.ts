@@ -15,6 +15,8 @@ export const createNoticeSchema = z.strictObject({
 });
 
 export const updateNoticeSchema = z.strictObject({
+  // Only honoured for super admins (branch admins cannot reassign branch).
+  branchId: z.coerce.number().int().positive().optional(),
   title: z.string().trim().min(1).max(255).optional(),
   description: z.string().optional(),
   file: fileSchema.optional(),

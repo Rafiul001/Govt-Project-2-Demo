@@ -1,10 +1,16 @@
-import { Avatar, Button, Chip } from "@heroui/react";
-import { PlusIcon } from "lucide-react";
+import { Avatar, Button, Chip, toast } from "@heroui/react";
+import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import { useAdmins } from "../../hooks/useAdmins";
+import { useAdmins, useDeleteAdmin } from "../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TAdmin } from "../../types";
-import { EmptyState, ErrorState, LoadingState, PageHeader } from "../molecules";
+import {
+  ConfirmDialog,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+} from "../molecules";
 import {
   AdminForm,
   DataTable,
@@ -21,7 +27,22 @@ type ListPageProps = {
 
 export function AdminsPage({ page, pageSize, onPageChange }: ListPageProps) {
   const query = useAdmins({ page, pageSize });
+  const deleteMutation = useDeleteAdmin();
+
   const [isCreating, setIsCreating] = useState(false);
+  const [editing, setEditing] = useState<TAdmin | null>(null);
+  const [deleting, setDeleting] = useState<TAdmin | null>(null);
+
+  const handleDelete = () => {
+    if (!deleting) return;
+    deleteMutation.mutate(deleting.id, {
+      onSuccess: () => {
+        toast.success("Admin deleted");
+        setDeleting(null);
+      },
+      onError: (error) => toast.danger(getApiErrorMessage(error)),
+    });
+  };
 
   const columns: DataTableColumn<TAdmin>[] = [
     {
@@ -55,6 +76,36 @@ export function AdminsPage({ page, pageSize, onPageChange }: ListPageProps) {
       key: "branchId",
       header: "Branch",
       render: (row) => row.branchId ?? "—",
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (row) =>
+        // Super admins are seeded and cannot be edited/deleted in the panel.
+        row.adminType === "SUPER_ADMIN" ? (
+          <span className="text-muted">—</span>
+        ) : (
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label="Edit"
+              onPress={() => setEditing(row)}
+            >
+              <PencilIcon className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label="Delete"
+              onPress={() => setDeleting(row)}
+            >
+              <TrashIcon className="size-4 text-red-500" />
+            </Button>
+          </div>
+        ),
     },
   ];
 
@@ -103,15 +154,38 @@ export function AdminsPage({ page, pageSize, onPageChange }: ListPageProps) {
       )}
 
       <FormModal
-        isOpen={isCreating}
-        onOpenChange={setIsCreating}
-        title="Add admin"
+        isOpen={isCreating || editing !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreating(false);
+            setEditing(null);
+          }
+        }}
+        title={editing ? "Edit admin" : "Add admin"}
       >
         <AdminForm
-          onSuccess={() => setIsCreating(false)}
-          onCancel={() => setIsCreating(false)}
+          initial={editing ?? undefined}
+          onSuccess={() => {
+            setIsCreating(false);
+            setEditing(null);
+          }}
+          onCancel={() => {
+            setIsCreating(false);
+            setEditing(null);
+          }}
         />
       </FormModal>
+
+      <ConfirmDialog
+        isOpen={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        title="Delete admin"
+        description={`Delete ${deleting?.name ?? "this admin"}? This cannot be undone.`}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

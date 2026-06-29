@@ -31,7 +31,7 @@ export function NoticeForm({ initial, onSuccess, onCancel }: NoticeFormProps) {
 
   const form = useForm({
     defaultValues: {
-      branchId: undefined,
+      branchId: initial?.branchId ?? undefined,
       title: initial?.title ?? "",
       description: initial?.description ?? "",
       file: undefined,
@@ -49,6 +49,7 @@ export function NoticeForm({ initial, onSuccess, onCancel }: NoticeFormProps) {
             file: value.file,
             image: value.image,
             isPublished: value.isPublished,
+            branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Notice updated");
         } else {
@@ -84,7 +85,7 @@ export function NoticeForm({ initial, onSuccess, onCancel }: NoticeFormProps) {
       <form.Field name="description">
         {(field) => <TextAreaInput field={field} label="Description" />}
       </form.Field>
-      {!isEdit && isSuperAdmin ? (
+      {isSuperAdmin ? (
         <form.Field name="branchId">
           {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>

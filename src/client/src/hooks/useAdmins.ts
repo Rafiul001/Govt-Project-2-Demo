@@ -13,6 +13,8 @@ import type {
   TCreateAdminInput,
   TPageParams,
   TPaginated,
+  TUpdateAdminInput,
+  TUpdateProfileInput,
 } from "../types";
 import { queryKeys } from "./queryKeys";
 
@@ -38,6 +40,60 @@ export function useCreateAdmin() {
     mutationFn: async (input: TCreateAdminInput) => {
       const res = await apiClient
         .post(API_URLS.ADMIN.CREATE, { body: toFormData(input) })
+        .json<TApiResponse<null>>();
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all });
+    },
+  });
+}
+
+/** Update a branch admin (super admin only; multipart, optional avatar). */
+export function useUpdateAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...input
+    }: TUpdateAdminInput & { id: number }) => {
+      const res = await apiClient
+        .patch(API_URLS.ADMIN.BY_ID(id), { body: toFormData(input) })
+        .json<TApiResponse<null>>();
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all });
+    },
+  });
+}
+
+/** Delete a branch admin by id (super admin only). */
+export function useDeleteAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiClient
+        .delete(API_URLS.ADMIN.BY_ID(id))
+        .json<TApiResponse<null>>();
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all });
+    },
+  });
+}
+
+/** Update the current admin's own account (password and/or avatar). */
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: TUpdateProfileInput) => {
+      const res = await apiClient
+        .patch(API_URLS.ADMIN.ME, { body: toFormData(input) })
         .json<TApiResponse<null>>();
       return res;
     },

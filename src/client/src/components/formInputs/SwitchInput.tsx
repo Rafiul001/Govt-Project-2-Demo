@@ -1,13 +1,13 @@
 import { Switch } from "@heroui/react";
 import type { AnyFieldApi } from "@tanstack/react-form";
 
-type SwitchInputProps = {
+type TSwitchInputProps = {
   field: AnyFieldApi;
   label: string;
 };
 
 /** Boolean toggle bound to a TanStack Form field. */
-export function SwitchInput({ field, label }: SwitchInputProps) {
+export function SwitchInput({ field, label }: TSwitchInputProps) {
   return (
     <Switch
       className="flex flex-row items-center justify-start gap-3"

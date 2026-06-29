@@ -37,7 +37,7 @@ export function BoardOfDirectorForm({
 
   const form = useForm({
     defaultValues: {
-      branchId: undefined,
+      branchId: initial?.branchId ?? undefined,
       name: initial?.name ?? "",
       designation: initial?.designation ?? "",
       order: initial?.order,
@@ -53,6 +53,7 @@ export function BoardOfDirectorForm({
             designation: value.designation,
             order: value.order,
             avatar: value.avatar,
+            branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Board member updated");
         } else {
@@ -90,7 +91,7 @@ export function BoardOfDirectorForm({
       <form.Field name="order">
         {(field) => <NumberInput field={field} label="Display order" min={0} />}
       </form.Field>
-      {!isEdit && isSuperAdmin ? (
+      {isSuperAdmin ? (
         <form.Field name="branchId">
           {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>

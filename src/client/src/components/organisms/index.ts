@@ -9,3 +9,4 @@ export { BoardOfDirectorForm } from "./forms/BoardOfDirectorForm";
 export { NoticeForm } from "./forms/NoticeForm";
 export { LayoutForm } from "./forms/LayoutForm";
 export { AdminForm } from "./forms/AdminForm";
+export { ProfileForm } from "./forms/ProfileForm";

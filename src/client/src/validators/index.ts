@@ -83,6 +83,39 @@ export const createAdminSchema = z.strictObject({
 });
 export type TCreateAdminForm = z.infer<typeof createAdminSchema>;
 
+// Super admin editing a branch admin: all fields optional. Password is left
+// blank unless it is being changed.
+export const updateAdminSchema = z.strictObject({
+  name: z.string().trim().min(1, "Name is required").max(255).optional(),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(255)
+    .optional(),
+  password: z
+    .union([
+      z.literal(""),
+      z.string().min(8, "Password must be at least 8 characters").max(255),
+    ])
+    .optional(),
+  avatar: optionalFile,
+  branchId: branchId.optional(),
+});
+export type TUpdateAdminForm = z.infer<typeof updateAdminSchema>;
+
+// An admin editing their own account: only password and avatar.
+export const updateProfileSchema = z.strictObject({
+  password: z
+    .union([
+      z.literal(""),
+      z.string().min(8, "Password must be at least 8 characters").max(255),
+    ])
+    .optional(),
+  avatar: optionalFile,
+});
+export type TUpdateProfileForm = z.infer<typeof updateProfileSchema>;
+
 // --- Board of directors ---
 
 export const createBoardOfDirectorSchema = z.strictObject({
@@ -97,6 +130,7 @@ export type TCreateBoardOfDirectorForm = z.infer<
 >;
 
 export const updateBoardOfDirectorSchema = z.strictObject({
+  branchId: branchId.optional(),
   name: z.string().trim().min(1, "Name is required").max(255).optional(),
   designation: z
     .string()
@@ -122,6 +156,7 @@ export const createLayoutSchema = z.strictObject({
 export type TCreateLayoutForm = z.infer<typeof createLayoutSchema>;
 
 export const updateLayoutSchema = z.strictObject({
+  branchId: branchId.optional(),
   showLogo: z.boolean(),
   showBanner: z.boolean(),
   sidebarPosition: z.enum(sidebarPositionValues),
@@ -141,6 +176,7 @@ export const createNoticeSchema = z.strictObject({
 export type TCreateNoticeForm = z.infer<typeof createNoticeSchema>;
 
 export const updateNoticeSchema = z.strictObject({
+  branchId: branchId.optional(),
   title: z.string().trim().min(1, "Title is required").max(255).optional(),
   description: z.string().optional(),
   file: optionalFile,

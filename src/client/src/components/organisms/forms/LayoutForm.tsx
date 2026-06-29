@@ -30,7 +30,7 @@ export function LayoutForm({ initial, onSuccess, onCancel }: LayoutFormProps) {
 
   const form = useForm({
     defaultValues: {
-      branchId: undefined,
+      branchId: initial?.branchId ?? undefined,
       showLogo: initial?.showLogo ?? true,
       showBanner: initial?.showBanner ?? true,
       sidebarPosition: initial?.sidebarPosition ?? "right",
@@ -44,6 +44,7 @@ export function LayoutForm({ initial, onSuccess, onCancel }: LayoutFormProps) {
             showLogo: value.showLogo,
             showBanner: value.showBanner,
             sidebarPosition: value.sidebarPosition,
+            branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Layout updated");
         } else {
@@ -71,7 +72,7 @@ export function LayoutForm({ initial, onSuccess, onCancel }: LayoutFormProps) {
         void form.handleSubmit();
       }}
     >
-      {!isEdit && isSuperAdmin ? (
+      {isSuperAdmin ? (
         <form.Field name="branchId">
           {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>

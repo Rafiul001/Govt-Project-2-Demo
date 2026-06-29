@@ -2,6 +2,7 @@ import { Button, Card } from "@heroui/react";
 import { CheckIcon, MoonIcon, SunIcon } from "lucide-react";
 import { ACCENTS, useThemeStore } from "../../store/theme.store";
 import { PageHeader } from "../molecules";
+import { ProfileForm } from "../organisms";
 
 export function SettingsPage() {
   const mode = useThemeStore((state) => state.mode);
@@ -62,6 +63,16 @@ export function SettingsPage() {
               ))}
             </div>
           </div>
+        </Card.Content>
+      </Card>
+
+      <Card className="max-w-xl">
+        <Card.Header>
+          <Card.Title>Account</Card.Title>
+          <Card.Description>Update your avatar and password.</Card.Description>
+        </Card.Header>
+        <Card.Content className="p-6">
+          <ProfileForm />
         </Card.Content>
       </Card>
     </div>

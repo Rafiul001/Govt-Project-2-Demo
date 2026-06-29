@@ -3,7 +3,7 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { getFieldError } from "../../lib/formField";
 import { FieldShell } from "./FieldShell";
 
-type NumberInputProps = {
+type TNumberInputProps = {
   field: AnyFieldApi;
   label: string;
   placeholder?: string;
@@ -21,9 +21,10 @@ export function NumberInput({
   placeholder,
   isRequired,
   min,
-}: NumberInputProps) {
+}: TNumberInputProps) {
   const error = getFieldError(field);
   const value = field.state.value;
+  const resolvedPlaceholder = placeholder ?? `Enter ${label.toLowerCase()}`;
 
   return (
     <FieldShell error={error}>
@@ -43,7 +44,7 @@ export function NumberInput({
           type="number"
           inputMode="numeric"
           min={min}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
         />
       </TextField>
     </FieldShell>

@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { getFieldError } from "../../lib/formField";
 import { FieldShell } from "./FieldShell";
 
-type FileInputProps = {
+type TFileInputProps = {
   field: AnyFieldApi;
   label: string;
   /** e.g. "image/*" or "application/pdf". */
@@ -13,7 +13,7 @@ type FileInputProps = {
 };
 
 /** File picker bound to a TanStack Form field (value is `File | undefined`). */
-export function FileInput({ field, label, accept }: FileInputProps) {
+export function FileInput({ field, label, accept }: TFileInputProps) {
   const error = getFieldError(field);
   const inputRef = useRef<HTMLInputElement>(null);
   const file = field.state.value as File | undefined;

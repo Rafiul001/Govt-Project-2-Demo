@@ -4,12 +4,12 @@ import { ChevronDownIcon } from "lucide-react";
 import { getFieldError } from "../../lib/formField";
 import { FieldShell } from "./FieldShell";
 
-export type SelectOption = { value: string; label: string };
+export type TSelectOption = { value: string; label: string };
 
-type SelectInputProps = {
+type TSelectInputProps = {
   field: AnyFieldApi;
   label: string;
-  options: SelectOption[];
+  options: TSelectOption[];
   placeholder?: string;
   isRequired?: boolean;
 };
@@ -21,7 +21,7 @@ export function SelectInput({
   options,
   placeholder = "Select…",
   isRequired,
-}: SelectInputProps) {
+}: TSelectInputProps) {
   const error = getFieldError(field);
 
   return (

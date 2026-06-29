@@ -1,37 +1,64 @@
 import { Button, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
-import { useCreateAdmin } from "../../../hooks/useAdmins";
+import { useCreateAdmin, useUpdateAdmin } from "../../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../../lib/apiError";
-import { createAdminSchema, type TCreateAdminForm } from "../../../validators";
+import type { TAdmin } from "../../../types";
+import {
+  createAdminSchema,
+  updateAdminSchema,
+  type TCreateAdminForm,
+} from "../../../validators";
 import { BranchSelect, FileInput, TextInput } from "../../formInputs";
 
 type AdminFormProps = {
+  initial?: TAdmin;
   onSuccess: () => void;
   onCancel: () => void;
 };
 
-export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
+export function AdminForm({ initial, onSuccess, onCancel }: AdminFormProps) {
+  const isEdit = Boolean(initial);
   const createMutation = useCreateAdmin();
+  const updateMutation = useUpdateAdmin();
 
   const form = useForm({
     defaultValues: {
-      name: "",
-      username: "",
+      name: initial?.name ?? "",
+      username: initial?.username ?? "",
       password: "",
       avatar: undefined,
-      branchId: undefined,
+      branchId: initial?.branchId ?? undefined,
     } as unknown as TCreateAdminForm,
-    validators: { onChange: createAdminSchema },
+    // Edit mode validates with the all-optional schema (password may be blank);
+    // cast keeps the form's value type aligned with the create schema.
+    validators: {
+      onChange: (isEdit
+        ? updateAdminSchema
+        : createAdminSchema) as typeof createAdminSchema,
+    },
     onSubmit: async ({ value }) => {
       try {
-        await createMutation.mutateAsync({
-          name: value.name,
-          username: value.username,
-          password: value.password,
-          avatar: value.avatar,
-          branchId: value.branchId,
-        });
-        toast.success("Admin created");
+        if (initial) {
+          await updateMutation.mutateAsync({
+            id: initial.id,
+            name: value.name,
+            username: value.username,
+            // Only send the password when the admin actually typed a new one.
+            password: value.password ? value.password : undefined,
+            avatar: value.avatar,
+            branchId: value.branchId,
+          });
+          toast.success("Admin updated");
+        } else {
+          await createMutation.mutateAsync({
+            name: value.name,
+            username: value.username,
+            password: value.password,
+            avatar: value.avatar,
+            branchId: value.branchId,
+          });
+          toast.success("Admin created");
+        }
         onSuccess();
       } catch (error) {
         toast.danger(getApiErrorMessage(error));
@@ -65,9 +92,10 @@ export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
         {(field) => (
           <TextInput
             field={field}
-            label="Password"
+            label={isEdit ? "New password" : "Password"}
             type="password"
-            isRequired
+            isRequired={!isEdit}
+            placeholder={isEdit ? "Leave blank to keep current" : undefined}
             autoComplete="new-password"
           />
         )}
@@ -86,7 +114,7 @@ export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" variant="primary" isDisabled={isSubmitting}>
-              Create
+              {isEdit ? "Save changes" : "Create"}
             </Button>
           )}
         </form.Subscribe>
