@@ -9,8 +9,8 @@ import {
   type TCreateNoticeForm,
 } from "../../../validators";
 import {
+  BranchSelect,
   FileInput,
-  NumberInput,
   SwitchInput,
   TextAreaInput,
   TextInput,
@@ -86,9 +86,7 @@ export function NoticeForm({ initial, onSuccess, onCancel }: NoticeFormProps) {
       </form.Field>
       {!isEdit && isSuperAdmin ? (
         <form.Field name="branchId">
-          {(field) => (
-            <NumberInput field={field} label="Branch ID" min={1} isRequired />
-          )}
+          {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>
       ) : null}
       <form.Field name="image">

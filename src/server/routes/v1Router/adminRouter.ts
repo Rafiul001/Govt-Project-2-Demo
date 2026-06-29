@@ -11,9 +11,9 @@ import {
 import { uploadImage } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
 import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
+import { pageOffset, paginated } from "@/server/utils/pagination";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
 import { branchExists } from "@/server/utils/scope";
-import { paginated, pageOffset } from "@/server/utils/pagination";
 import { adminType } from "@/shared/types";
 import {
   adminLoginSchema,
@@ -86,14 +86,18 @@ adminRouter.get(
   },
 );
 
-/** POST /api/v1/admin — create a new admin (super admin only). */
+/**
+ * POST /api/v1/admin — create a new branch admin (super admin only).
+ *
+ * Only branch admins can be created here; a super admin cannot create another
+ * super admin (those are seeded via the bootstrap script).
+ */
 adminRouter.post(
   "/",
   authMiddleware([adminType.SUPER_ADMIN]),
   zValidator("form", createAdminSchema),
   async (c) => {
     const data = c.req.valid("form");
-    const newAdminType = data.adminType ?? adminType.BRANCH_ADMIN;
 
     const [existing] = await db
       .select({ id: adminsTable.id })
@@ -105,10 +109,7 @@ adminRouter.post(
       return conflict(c, "Username is already taken");
     }
 
-    // Super admins have no branch; branch admins must belong to an existing one.
-    const branchId =
-      newAdminType === adminType.SUPER_ADMIN ? null : data.branchId!;
-    if (branchId !== null && !(await branchExists(branchId))) {
+    if (!(await branchExists(data.branchId))) {
       return notFound(c, "Branch not found");
     }
 
@@ -119,8 +120,8 @@ adminRouter.post(
       username: data.username,
       password: await hashPassword(data.password),
       avatar,
-      adminType: newAdminType,
-      branchId,
+      adminType: adminType.BRANCH_ADMIN,
+      branchId: data.branchId,
     });
 
     return created(c, "Admin created successfully");

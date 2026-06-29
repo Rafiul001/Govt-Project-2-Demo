@@ -65,26 +65,22 @@ export type TUpdateBranchForm = z.infer<typeof updateBranchSchema>;
 
 // --- Admin ---
 
-export const createAdminSchema = z
-  .strictObject({
-    name: z.string().trim().min(1, "Name is required").max(255),
-    username: z
-      .string()
-      .trim()
-      .min(3, "Username must be at least 3 characters")
-      .max(255),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(255),
-    avatar: optionalFile,
-    adminType: z.enum(adminTypeValues),
-    branchId: branchId.optional(),
-  })
-  .refine(
-    (data) => data.adminType === "SUPER_ADMIN" || data.branchId !== undefined,
-    { message: "Branch ID is required for branch admins", path: ["branchId"] },
-  );
+// Admins created in the panel are always branch admins, so a branch is required.
+// Super admins can't be created here (only seeded via the bootstrap script).
+export const createAdminSchema = z.strictObject({
+  name: z.string().trim().min(1, "Name is required").max(255),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(255),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(255),
+  avatar: optionalFile,
+  branchId,
+});
 export type TCreateAdminForm = z.infer<typeof createAdminSchema>;
 
 // --- Board of directors ---

@@ -11,7 +11,12 @@ import {
   createBoardOfDirectorSchema,
   type TCreateBoardOfDirectorForm,
 } from "../../../validators";
-import { FileInput, NumberInput, TextInput } from "../../formInputs";
+import {
+  BranchSelect,
+  FileInput,
+  NumberInput,
+  TextInput,
+} from "../../formInputs";
 
 type BoardOfDirectorFormProps = {
   initial?: TBoardOfDirector;
@@ -87,9 +92,7 @@ export function BoardOfDirectorForm({
       </form.Field>
       {!isEdit && isSuperAdmin ? (
         <form.Field name="branchId">
-          {(field) => (
-            <NumberInput field={field} label="Branch ID" min={1} isRequired />
-          )}
+          {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>
       ) : null}
       <form.Field name="avatar">

@@ -126,8 +126,7 @@ export type TCreateAdminInput = {
   username: string;
   password: string;
   avatar?: File;
-  adminType?: TAdminType;
-  branchId?: number;
+  branchId: number;
 };
 
 // --- Board of directors ---

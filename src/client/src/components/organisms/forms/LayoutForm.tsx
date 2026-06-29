@@ -8,7 +8,7 @@ import {
   createLayoutSchema,
   type TCreateLayoutForm,
 } from "../../../validators";
-import { NumberInput, SelectInput, SwitchInput } from "../../formInputs";
+import { BranchSelect, SelectInput, SwitchInput } from "../../formInputs";
 
 const SIDEBAR_OPTIONS = [
   { value: "left", label: "Left" },
@@ -73,9 +73,7 @@ export function LayoutForm({ initial, onSuccess, onCancel }: LayoutFormProps) {
     >
       {!isEdit && isSuperAdmin ? (
         <form.Field name="branchId">
-          {(field) => (
-            <NumberInput field={field} label="Branch ID" min={1} isRequired />
-          )}
+          {(field) => <BranchSelect field={field} isRequired />}
         </form.Field>
       ) : null}
       <form.Field name="sidebarPosition">

@@ -3,17 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useCreateAdmin } from "../../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../../lib/apiError";
 import { createAdminSchema, type TCreateAdminForm } from "../../../validators";
-import {
-  FileInput,
-  NumberInput,
-  SelectInput,
-  TextInput,
-} from "../../formInputs";
-
-const ADMIN_TYPE_OPTIONS = [
-  { value: "BRANCH_ADMIN", label: "Branch Admin" },
-  { value: "SUPER_ADMIN", label: "Super Admin" },
-];
+import { BranchSelect, FileInput, TextInput } from "../../formInputs";
 
 type AdminFormProps = {
   onSuccess: () => void;
@@ -29,9 +19,8 @@ export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
       username: "",
       password: "",
       avatar: undefined,
-      adminType: "BRANCH_ADMIN",
       branchId: undefined,
-    } as TCreateAdminForm,
+    } as unknown as TCreateAdminForm,
     validators: { onChange: createAdminSchema },
     onSubmit: async ({ value }) => {
       try {
@@ -40,9 +29,7 @@ export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
           username: value.username,
           password: value.password,
           avatar: value.avatar,
-          adminType: value.adminType,
-          branchId:
-            value.adminType === "SUPER_ADMIN" ? undefined : value.branchId,
+          branchId: value.branchId,
         });
         toast.success("Admin created");
         onSuccess();
@@ -85,32 +72,9 @@ export function AdminForm({ onSuccess, onCancel }: AdminFormProps) {
           />
         )}
       </form.Field>
-      <form.Field name="adminType">
-        {(field) => (
-          <SelectInput
-            field={field}
-            label="Role"
-            options={ADMIN_TYPE_OPTIONS}
-            isRequired
-          />
-        )}
+      <form.Field name="branchId">
+        {(field) => <BranchSelect field={field} isRequired />}
       </form.Field>
-      <form.Subscribe selector={(state) => state.values.adminType}>
-        {(adminType) =>
-          adminType === "BRANCH_ADMIN" ? (
-            <form.Field name="branchId">
-              {(field) => (
-                <NumberInput
-                  field={field}
-                  label="Branch ID"
-                  min={1}
-                  isRequired
-                />
-              )}
-            </form.Field>
-          ) : null
-        }
-      </form.Subscribe>
       <form.Field name="avatar">
         {(field) => <FileInput field={field} label="Avatar" accept="image/*" />}
       </form.Field>
