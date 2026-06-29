@@ -20,13 +20,15 @@ import {
   isSuperAdmin,
   resolveBranchId,
 } from "@/server/utils/scope";
+import { paginated, pageOffset } from "@/server/utils/pagination";
 import {
   createBoardOfDirectorSchema,
   updateBoardOfDirectorSchema,
 } from "@/shared/validators/boardOfDirectors.validator";
+import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const boardOfDirectorsRouter = new Hono<TAppEnv>();
@@ -34,17 +36,39 @@ const boardOfDirectorsRouter = new Hono<TAppEnv>();
 // Every board-of-directors route requires an authenticated admin.
 boardOfDirectorsRouter.use(authMiddleware());
 
-/** GET /api/v1/board-of-directors — list (branch-scoped for branch admins). */
-boardOfDirectorsRouter.get("/", async (c) => {
-  const admin = c.get("admin");
-  const rows = isSuperAdmin(admin)
-    ? await db.select().from(boardOfDirectorsTable)
-    : await db
-        .select()
-        .from(boardOfDirectorsTable)
-        .where(eq(boardOfDirectorsTable.branchId, admin.branchId!));
-  return ok(c, "Board of directors fetched successfully", rows);
-});
+/** GET /api/v1/board-of-directors — list (branch-scoped, paginated). */
+boardOfDirectorsRouter.get(
+  "/",
+  zValidator("query", paginationQuerySchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const { page, pageSize } = c.req.valid("query");
+
+    const where = isSuperAdmin(admin)
+      ? undefined
+      : eq(boardOfDirectorsTable.branchId, admin.branchId!);
+
+    const totalResult = await db
+      .select({ value: count() })
+      .from(boardOfDirectorsTable)
+      .where(where);
+    const total = totalResult[0]?.value ?? 0;
+
+    const items = await db
+      .select()
+      .from(boardOfDirectorsTable)
+      .where(where)
+      .orderBy(boardOfDirectorsTable.order, boardOfDirectorsTable.id)
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize));
+
+    return ok(
+      c,
+      "Board of directors fetched successfully",
+      paginated(items, total, page, pageSize),
+    );
+  },
+);
 
 /** GET /api/v1/board-of-directors/:id */
 boardOfDirectorsRouter.get(

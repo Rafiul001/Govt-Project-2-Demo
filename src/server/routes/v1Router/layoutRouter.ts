@@ -16,13 +16,15 @@ import {
   isSuperAdmin,
   resolveBranchId,
 } from "@/server/utils/scope";
+import { paginated, pageOffset } from "@/server/utils/pagination";
 import {
   createLayoutSchema,
   updateLayoutSchema,
 } from "@/shared/validators/layout.validator";
+import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const layoutRouter = new Hono<TAppEnv>();
@@ -30,17 +32,39 @@ const layoutRouter = new Hono<TAppEnv>();
 // A branch has exactly one layout (unique branchId).
 layoutRouter.use(authMiddleware());
 
-/** GET /api/v1/layout — list layouts (branch-scoped for branch admins). */
-layoutRouter.get("/", async (c) => {
-  const admin = c.get("admin");
-  const rows = isSuperAdmin(admin)
-    ? await db.select().from(layoutsTable)
-    : await db
-        .select()
-        .from(layoutsTable)
-        .where(eq(layoutsTable.branchId, admin.branchId!));
-  return ok(c, "Layouts fetched successfully", rows);
-});
+/** GET /api/v1/layout — list layouts (branch-scoped, paginated). */
+layoutRouter.get(
+  "/",
+  zValidator("query", paginationQuerySchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const { page, pageSize } = c.req.valid("query");
+
+    const where = isSuperAdmin(admin)
+      ? undefined
+      : eq(layoutsTable.branchId, admin.branchId!);
+
+    const totalResult = await db
+      .select({ value: count() })
+      .from(layoutsTable)
+      .where(where);
+    const total = totalResult[0]?.value ?? 0;
+
+    const items = await db
+      .select()
+      .from(layoutsTable)
+      .where(where)
+      .orderBy(layoutsTable.id)
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize));
+
+    return ok(
+      c,
+      "Layouts fetched successfully",
+      paginated(items, total, page, pageSize),
+    );
+  },
+);
 
 /** GET /api/v1/layout/:id */
 layoutRouter.get("/:id", zValidator("param", idParamSchema), async (c) => {

@@ -1,2 +1,51 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+
+/*
+ * Brand palette exposed as Tailwind theme tokens (utilities like `bg-brand-teal`).
+ * The three accent options requested for the admin panel.
+ */
+@theme {
+  --color-brand-teal: #009688;
+  --color-brand-blue: #03a9f4;
+  --color-brand-purple: #8a4af3;
+}
+
+/*
+ * Accent theming.
+ *
+ * HeroUI drives every component off CSS variables (notably `--accent`). Light vs.
+ * dark is toggled with the `.light` / `.dark` class on <html>; the *accent color*
+ * is chosen independently via `data-accent`. These rules are intentionally left
+ * unlayered so they win over HeroUI's `@layer base` variable defaults in both
+ * light and dark mode.
+ */
+:root,
+[data-accent="teal"] {
+  --accent: var(--color-brand-teal);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+[data-accent="blue"] {
+  --accent: var(--color-brand-blue);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+[data-accent="purple"] {
+  --accent: var(--color-brand-purple);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}

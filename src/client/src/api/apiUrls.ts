@@ -1,0 +1,34 @@
+/**
+ * API endpoint paths, relative to the ky `prefixUrl` (`/api/v1`).
+ *
+ * Paths are intentionally written without a leading slash so ky resolves them
+ * against the prefix. Routes with a dynamic `:id` are exposed as functions.
+ */
+export const API_URLS = {
+  ADMIN: {
+    LOGIN: "admin/login",
+    LOGOUT: "admin/logout",
+    LIST: "admin",
+    CREATE: "admin",
+  },
+  BRANCH: {
+    LIST: "branch",
+    CREATE: "branch",
+    BY_ID: (id: number | string) => `branch/${id}`,
+  },
+  BOARD_OF_DIRECTORS: {
+    LIST: "board-of-directors",
+    CREATE: "board-of-directors",
+    BY_ID: (id: number | string) => `board-of-directors/${id}`,
+  },
+  LAYOUT: {
+    LIST: "layout",
+    CREATE: "layout",
+    BY_ID: (id: number | string) => `layout/${id}`,
+  },
+  NOTICE: {
+    LIST: "notice",
+    CREATE: "notice",
+    BY_ID: (id: number | string) => `notice/${id}`,
+  },
+} as const;

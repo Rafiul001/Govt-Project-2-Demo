@@ -1,4 +1,16 @@
-import { createRootRoute } from "@tanstack/react-router";
-import RootLayout from "../components/layouts/RootLayout";
+import { Toast } from "@heroui/react";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { useApplyTheme } from "../hooks/useApplyTheme";
 
-export const Route = createRootRoute({ component: RootLayout });
+function RootComponent() {
+  useApplyTheme();
+
+  return (
+    <>
+      <Outlet />
+      <Toast.Provider placement="bottom end" />
+    </>
+  );
+}
+
+export const Route = createRootRoute({ component: RootComponent });

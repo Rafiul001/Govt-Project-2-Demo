@@ -1,11 +1,15 @@
 # govt-project-2-demo
 
-Backend API for a multi-branch government/organization portal. Built on the
-[Bun](https://bun.com) runtime with [Hono](https://hono.dev) for HTTP routing,
-[Drizzle ORM](https://orm.drizzle.team) (v1) over PostgreSQL, JWT authentication,
-and [Pino](https://getpino.io) for logging.
+Full-stack application for a multi-branch government/organization portal. The
+**backend** is a JSON API built on the [Bun](https://bun.com) runtime with
+[Hono](https://hono.dev) for HTTP routing, [Drizzle ORM](https://orm.drizzle.team)
+(v1) over PostgreSQL, JWT authentication, and [Pino](https://getpino.io) for
+logging. The **frontend** is a React admin panel ([`src/client/`](src/client/))
+built with Vite, TanStack Router/Query/Form, and HeroUI.
 
 ## Tech Stack
+
+### Backend
 
 | Concern        | Choice                                          |
 | -------------- | ----------------------------------------------- |
@@ -20,6 +24,18 @@ and [Pino](https://getpino.io) for logging.
 | Logging        | Pino (`pino-pretty` in development)             |
 | Language       | TypeScript                                      |
 
+### Frontend (`src/client/`)
+
+| Concern       | Choice                            |
+| ------------- | --------------------------------- |
+| Build tool    | Vite (React Compiler enabled)     |
+| UI library    | React 19                          |
+| Routing       | TanStack Router (file-based)      |
+| Data fetching | TanStack Query + `ky` HTTP client |
+| Forms         | TanStack Form                     |
+| Styling       | Tailwind CSS v4 + HeroUI          |
+| Language      | TypeScript                        |
+
 ## Prerequisites
 
 - [Bun](https://bun.com) `>= 1.3`
@@ -29,8 +45,11 @@ and [Pino](https://getpino.io) for logging.
 
 1. **Install dependencies**
 
+   Install the backend (root) and the frontend (`src/client/`) dependencies:
+
    ```bash
    bun install
+   cd src/client && bun install && cd ../..
    ```
 
 2. **Configure environment**
@@ -78,26 +97,54 @@ and [Pino](https://getpino.io) for logging.
    bun src/scripts/createSuperAdmin.ts <username> <password> [name]
    ```
 
-5. **Run the server**
+5. **Run the app**
 
    ```bash
-   bun run dev                 # watch mode
+   bun run dev                 # backend (watch mode) + frontend (Vite) together
    ```
 
-   The server logs `Server running at http://localhost:<PORT>`.
+   This starts both processes concurrently. The server logs
+   `Server running at http://localhost:<PORT>`, and Vite serves the admin panel
+   on its own dev URL (printed in the console). To run just one side:
+
+   ```bash
+   bun run dev:server          # backend only
+   bun run dev:client          # frontend only
+   ```
 
 ## Scripts
 
-| Script          | Description                                              |
-| --------------- | -------------------------------------------------------- |
-| `bun run dev`   | Start the server in watch mode (`src/index.ts`)          |
-| `bun run build` | Bundle to `dist/` for production (`NODE_ENV=production`) |
-| `bun run start` | Run the built bundle with Node (`dist/index.js`)         |
+Root scripts:
+
+| Script               | Description                                              |
+| -------------------- | ------------------------------------------------------- |
+| `bun run dev`        | Run backend (watch) + frontend (Vite) concurrently       |
+| `bun run dev:server` | Start only the backend in watch mode (`src/index.ts`)    |
+| `bun run dev:client` | Start only the frontend Vite dev server                  |
+| `bun run build`      | Bundle the backend to `dist/` (`NODE_ENV=production`)     |
+| `bun run start`      | Run the built backend bundle with Node (`dist/index.js`) |
+
+Frontend scripts (run from `src/client/`):
+
+| Script            | Description                                |
+| ----------------- | ------------------------------------------ |
+| `bun run dev`     | Start the Vite dev server                  |
+| `bun run build`   | Type-check and build the client to `dist/` |
+| `bun run preview` | Preview the production build               |
+| `bun run lint`    | Lint the client with ESLint                |
 
 ## Project Structure
 
 ```
 src/
+├── client/                   # React admin panel (Vite app — see src/client/README.md)
+│   ├── index.html            # Vite entry HTML
+│   ├── vite.config.ts        # Vite config (React Compiler + TanStack Router plugin)
+│   └── src/
+│       ├── main.tsx          # App bootstrap (router + providers)
+│       ├── routeTree.gen.ts  # Generated TanStack Router route tree
+│       ├── routes/           # File-based routes (__root.tsx, index.tsx)
+│       └── components/       # Pages and layouts
 ├── index.ts                  # Entry point: boots Hono server, graceful shutdown
 ├── scripts/
 │   └── createSuperAdmin.ts   # Seed script to bootstrap the first super admin

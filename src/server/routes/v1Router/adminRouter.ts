@@ -13,13 +13,15 @@ import type { TAppEnv } from "@/server/types";
 import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
 import { branchExists } from "@/server/utils/scope";
+import { paginated, pageOffset } from "@/server/utils/pagination";
 import { adminType } from "@/shared/types";
 import {
   adminLoginSchema,
   createAdminSchema,
 } from "@/shared/validators/admin.validator";
+import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 /** Strip the password hash before returning an admin to the client. */
@@ -58,11 +60,31 @@ adminRouter.post("/login", zValidator("json", adminLoginSchema), async (c) => {
   });
 });
 
-/** GET /api/v1/admin — list all admins (super admin only). */
-adminRouter.get("/", authMiddleware([adminType.SUPER_ADMIN]), async (c) => {
-  const admins = await db.select().from(adminsTable);
-  return ok(c, "Admins fetched successfully", admins.map(publicAdmin));
-});
+/** GET /api/v1/admin — list all admins (super admin only, paginated). */
+adminRouter.get(
+  "/",
+  authMiddleware([adminType.SUPER_ADMIN]),
+  zValidator("query", paginationQuerySchema),
+  async (c) => {
+    const { page, pageSize } = c.req.valid("query");
+
+    const totalResult = await db.select({ value: count() }).from(adminsTable);
+    const total = totalResult[0]?.value ?? 0;
+
+    const admins = await db
+      .select()
+      .from(adminsTable)
+      .orderBy(adminsTable.id)
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize));
+
+    return ok(
+      c,
+      "Admins fetched successfully",
+      paginated(admins.map(publicAdmin), total, page, pageSize),
+    );
+  },
+);
 
 /** POST /api/v1/admin — create a new admin (super admin only). */
 adminRouter.post(
