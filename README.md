@@ -141,10 +141,21 @@ src/
 │   ├── index.html            # Vite entry HTML
 │   ├── vite.config.ts        # Vite config (React Compiler + TanStack Router plugin)
 │   └── src/
-│       ├── main.tsx          # App bootstrap (router + providers)
+│       ├── main.tsx          # App bootstrap (QueryClientProvider + router)
+│       ├── index.css         # Tailwind + HeroUI styles & theme tokens
 │       ├── routeTree.gen.ts  # Generated TanStack Router route tree
-│       ├── routes/           # File-based routes (__root.tsx, index.tsx)
-│       └── components/       # Pages and layouts
+│       ├── api/              # ky client, endpoint URLs, FormData helper
+│       ├── hooks/           # TanStack Query hooks (per resource) + auth/theme
+│       ├── store/           # Zustand stores (auth tokens, theme prefs)
+│       ├── validators/      # Client Zod schemas (forms + search params)
+│       ├── lib/             # queryClient, apiError, token decode, form helpers
+│       ├── types/           # Shared client types (entities, API envelope)
+│       ├── routes/          # File-based routes (login, _app/* authed area)
+│       └── components/
+│           ├── formInputs/  # TanStack-Form-bound inputs (Text, Select, File, …)
+│           ├── molecules/   # Single-element building blocks
+│           ├── organisms/   # AppShell, DataTable, resource forms
+│           └── pages/       # One component per screen
 ├── index.ts                  # Entry point: boots Hono server, graceful shutdown
 ├── scripts/
 │   └── createSuperAdmin.ts   # Seed script to bootstrap the first super admin
@@ -161,6 +172,7 @@ src/
 │   │   └── v1Router/
 │   │       ├── index.ts                    # /api/v1 router
 │   │       ├── adminRouter.ts              # /api/v1/admin routes
+│   │       ├── branchRouter.ts             # /api/v1/branch routes
 │   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
 │   │       ├── layoutRouter.ts             # /api/v1/layout routes
 │   │       └── noticeRouter.ts             # /api/v1/notice routes
@@ -171,7 +183,9 @@ src/
 │   │       └── pdfUpload.ts     # upload/replace/delete PDF assets
 │   ├── utils/
 │   │   ├── jwt.ts            # Access/refresh token generate & verify
-│   │   └── password.ts      # argon2 hash & verify
+│   │   ├── password.ts      # argon2 hash & verify
+│   │   ├── scope.ts         # Branch-scoping & access-control helpers
+│   │   └── pagination.ts    # Offset + paginated payload helpers
 │   └── db/
 │       ├── client.ts         # Drizzle client (wired with relations)
 │       ├── constant.ts       # Table name constants (DB.*)
@@ -190,9 +204,11 @@ src/
     │   └── pino-logger.ts    # Configured Pino logger
     └── validators/
         ├── admin.validator.ts            # Zod schemas for admin requests
+        ├── branch.validator.ts           # Zod schemas for branch requests
         ├── boardOfDirectors.validator.ts # Zod schemas for board requests
         ├── layout.validator.ts           # Zod schemas for layout requests
         ├── notice.validator.ts           # Zod schemas for notice requests
+        ├── pagination.validator.ts       # Shared `?page`/`?pageSize` query schema
         ├── params.validator.ts           # Shared `:id` path-param schema
         └── file.validator.ts             # Shared upload schema (max 5 MB)
 ```
@@ -233,31 +249,52 @@ Endpoints that accept files use **`multipart/form-data`** (not JSON): all fields
 are sent as form fields, and each uploaded file must be at most **5 MB**. Files
 are stored on Cloudinary and only the resulting delivery URL is persisted.
 
+**Pagination.** Every `GET` list endpoint is paginated via the `?page` and
+`?pageSize` query params (validated with
+[`paginationQuerySchema`](src/shared/validators/pagination.validator.ts);
+defaults `page=1`, `pageSize=10`, max `pageSize=100`). Their `data` is a
+paginated envelope rather than a bare array:
+
+```jsonc
+{
+  "success": true,
+  "message": "…",
+  "data": { "items": [...], "total": 42, "page": 1, "pageSize": 10, "totalPages": 5 }
+}
+```
+
 | Method   | Path                             | Auth             | Body                 | Description                                    |
 | -------- | -------------------------------- | ---------------- | -------------------- | ---------------------------------------------- |
 | `POST`   | `/api/v1/admin/login`            | Public           | `json`               | Log in; returns `accessToken` + `refreshToken` |
-| `GET`    | `/api/v1/admin`                  | Super admin only | —                    | List all admins                                |
-| `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)      | Create a new admin                             |
+| `GET`    | `/api/v1/admin`                  | Super admin only | —                    | List admins (paginated)                        |
+| `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)      | Create a branch admin (`branchId` required)    |
 | `POST`   | `/api/v1/admin/logout`           | Any admin        | —                    | Logout (stateless acknowledgement)             |
-| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                    | List board members (branch-scoped)             |
+| `GET`    | `/api/v1/branch`                 | Super admin only | —                    | List branches (paginated)                      |
+| `GET`    | `/api/v1/branch/:id`             | Super admin only | —                    | Get one branch                                 |
+| `POST`   | `/api/v1/branch`                 | Super admin only | `form` (logo, banner)| Create a branch                                |
+| `PATCH`  | `/api/v1/branch/:id`             | Super admin only | `form` (logo, banner)| Update a branch                                |
+| `DELETE` | `/api/v1/branch/:id`             | Super admin only | —                    | Delete a branch (+ media, cascades children)   |
+| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                    | List board members (branch-scoped, paginated)  |
 | `GET`    | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Get one board member                           |
 | `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)      | Create a board member                          |
 | `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)      | Update a board member                          |
 | `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Delete a board member (+ its avatar)           |
-| `GET`    | `/api/v1/layout`                 | Any admin        | —                    | List layouts (branch-scoped)                   |
+| `GET`    | `/api/v1/layout`                 | Any admin        | —                    | List layouts (branch-scoped, paginated)        |
 | `GET`    | `/api/v1/layout/:id`             | Any admin        | —                    | Get one layout                                 |
 | `POST`   | `/api/v1/layout`                 | Any admin        | `json`               | Create a layout                                |
 | `PATCH`  | `/api/v1/layout/:id`             | Any admin        | `json`               | Update a layout                                |
 | `DELETE` | `/api/v1/layout/:id`             | Any admin        | —                    | Delete a layout                                |
-| `GET`    | `/api/v1/notice`                 | Any admin        | —                    | List notices (branch-scoped)                   |
+| `GET`    | `/api/v1/notice`                 | Any admin        | —                    | List notices (branch-scoped, paginated)        |
 | `GET`    | `/api/v1/notice/:id`             | Any admin        | —                    | Get one notice                                 |
 | `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file) | Create a notice                                |
 | `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file) | Update a notice                                |
 | `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                    | Delete a notice (+ its image & PDF)            |
 
-> Only a super admin can create other admins, and a super admin **may** create
-> another super admin. Branch admins only see and manage records for their own
-> branch; super admins are unscoped.
+> Admins created through the API are always **branch admins** (a `branchId` is
+> required); a super admin **cannot** create another super admin — those are
+> seeded only via the bootstrap script. Branch admins only see and manage records
+> for their own branch; super admins are unscoped. Branch management is
+> super-admin only.
 
 ## Database Schema
 
@@ -302,6 +339,29 @@ const branch = await db.query.branchesTable.findFirst({
 - `admin_type` — `SUPER_ADMIN` | `BRANCH_ADMIN` (defaults to `BRANCH_ADMIN`)
 - `sidebar_position` — `left` | `right` (layout setting, defaults to `right`)
 
+## Admin Panel (Frontend)
+
+The Vite/React app in [`src/client/`](src/client/) is the admin UI for the API
+above. During development it runs on its own port and proxies `/api` to the Hono
+server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
+
+- **Routing & auth** — file-based routes split into a public `/login` and an
+  authenticated `/_app` layout (sidebar + top bar). Route guards redirect
+  unauthenticated users to login, and super-admin-only screens (Branches,
+  Admins) redirect branch admins away. Tokens live in a persisted Zustand store;
+  the `ky` client attaches the `Bearer` token and clears it on a `401`.
+- **Screens** — Dashboard, Branches, Board of Directors, Notices, Layouts,
+  Admins, and Settings, each composed from `molecules` → `organisms` → `pages`.
+- **Forms** — TanStack Form with the Zod schemas in
+  [`src/client/src/validators`](src/client/src/validators/) (`onChange`
+  validation). When a super admin must pick a branch, the field is a dropdown
+  populated from `/api/v1/branch`.
+- **Lists** — server-paginated; the page/size live in the URL search params
+  (validated with Zod) and feed the TanStack Query hooks.
+- **Theming** — light/dark mode plus three accent colors (teal, blue, purple),
+  chosen on the Settings page and persisted; applied via HeroUI theme tokens in
+  [`src/client/src/index.css`](src/client/src/index.css).
+
 ## Conventions
 
 - Path alias `@/*` maps to `src/*` (see [`tsconfig.json`](tsconfig.json)).
@@ -310,7 +370,3 @@ const branch = await db.query.branchesTable.findFirst({
   `defineRelations` API rather than the legacy per-table `relations()` helper.
 - Production builds target and run on **Node**, so server code avoids Bun-only
   globals (e.g. password hashing uses `argon2`, not `Bun.password`).
-
-```
-
-```
