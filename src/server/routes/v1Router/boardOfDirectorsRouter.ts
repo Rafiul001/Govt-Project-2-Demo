@@ -14,19 +14,22 @@ import {
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
+import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
   branchExists,
   canAccessBranch,
   isSuperAdmin,
   resolveBranchId,
+  resolveBranchUpdate,
 } from "@/server/utils/scope";
 import {
   createBoardOfDirectorSchema,
   updateBoardOfDirectorSchema,
 } from "@/shared/validators/boardOfDirectors.validator";
+import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const boardOfDirectorsRouter = new Hono<TAppEnv>();
@@ -34,17 +37,39 @@ const boardOfDirectorsRouter = new Hono<TAppEnv>();
 // Every board-of-directors route requires an authenticated admin.
 boardOfDirectorsRouter.use(authMiddleware());
 
-/** GET /api/v1/board-of-directors — list (branch-scoped for branch admins). */
-boardOfDirectorsRouter.get("/", async (c) => {
-  const admin = c.get("admin");
-  const rows = isSuperAdmin(admin)
-    ? await db.select().from(boardOfDirectorsTable)
-    : await db
-        .select()
-        .from(boardOfDirectorsTable)
-        .where(eq(boardOfDirectorsTable.branchId, admin.branchId!));
-  return ok(c, "Board of directors fetched successfully", rows);
-});
+/** GET /api/v1/board-of-directors — list (branch-scoped, paginated). */
+boardOfDirectorsRouter.get(
+  "/",
+  zValidator("query", paginationQuerySchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const { page, pageSize } = c.req.valid("query");
+
+    const where = isSuperAdmin(admin)
+      ? undefined
+      : eq(boardOfDirectorsTable.branchId, admin.branchId!);
+
+    const totalResult = await db
+      .select({ value: count() })
+      .from(boardOfDirectorsTable)
+      .where(where);
+    const total = totalResult[0]?.value ?? 0;
+
+    const items = await db
+      .select()
+      .from(boardOfDirectorsTable)
+      .where(where)
+      .orderBy(boardOfDirectorsTable.order, boardOfDirectorsTable.id)
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize));
+
+    return ok(
+      c,
+      "Board of directors fetched successfully",
+      paginated(items, total, page, pageSize),
+    );
+  },
+);
 
 /** GET /api/v1/board-of-directors/:id */
 boardOfDirectorsRouter.get(
@@ -107,7 +132,8 @@ boardOfDirectorsRouter.patch(
   zValidator("form", updateBoardOfDirectorSchema),
   async (c) => {
     const { id } = c.req.valid("param");
-    const { avatar, ...rest } = c.req.valid("form");
+    const admin = c.get("admin");
+    const { avatar, branchId, ...rest } = c.req.valid("form");
 
     const [member] = await db
       .select()
@@ -118,12 +144,19 @@ boardOfDirectorsRouter.patch(
     if (!member) {
       return notFound(c, "Board of director not found");
     }
-    if (!canAccessBranch(c.get("admin"), member.branchId)) {
+    if (!canAccessBranch(admin, member.branchId)) {
       return forbidden(c);
+    }
+
+    // Only super admins may move the member to another branch.
+    const newBranchId = resolveBranchUpdate(admin, branchId);
+    if (newBranchId !== undefined && !(await branchExists(newBranchId))) {
+      return notFound(c, "Branch not found");
     }
 
     const updates = {
       ...rest,
+      ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(avatar && {
         avatar: (await replaceImage(member.avatar, avatar)).url,
       }),

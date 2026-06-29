@@ -10,6 +10,8 @@ export const createLayoutSchema = z.strictObject({
 });
 
 export const updateLayoutSchema = z.strictObject({
+  // Only honoured for super admins (branch admins cannot reassign branch).
+  branchId: z.number().int().positive().optional(),
   showLogo: z.boolean().optional(),
   showBanner: z.boolean().optional(),
   sidebarPosition: z.enum(sidebarPosition).optional(),

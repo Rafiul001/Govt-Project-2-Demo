@@ -19,19 +19,22 @@ import {
   uploadPdf,
 } from "@/server/service/cloudinary/pdfUpload";
 import type { TAppEnv } from "@/server/types";
+import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
   branchExists,
   canAccessBranch,
   isSuperAdmin,
   resolveBranchId,
+  resolveBranchUpdate,
 } from "@/server/utils/scope";
 import {
   createNoticeSchema,
   updateNoticeSchema,
 } from "@/shared/validators/notice.validator";
+import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const noticeRouter = new Hono<TAppEnv>();
@@ -39,16 +42,34 @@ const noticeRouter = new Hono<TAppEnv>();
 // Every notice route requires an authenticated admin.
 noticeRouter.use(authMiddleware());
 
-/** GET /api/v1/notice — list notices (branch-scoped for branch admins). */
-noticeRouter.get("/", async (c) => {
+/** GET /api/v1/notice — list notices (branch-scoped, paginated). */
+noticeRouter.get("/", zValidator("query", paginationQuerySchema), async (c) => {
   const admin = c.get("admin");
-  const rows = isSuperAdmin(admin)
-    ? await db.select().from(noticesTable)
-    : await db
-        .select()
-        .from(noticesTable)
-        .where(eq(noticesTable.branchId, admin.branchId!));
-  return ok(c, "Notices fetched successfully", rows);
+  const { page, pageSize } = c.req.valid("query");
+
+  const where = isSuperAdmin(admin)
+    ? undefined
+    : eq(noticesTable.branchId, admin.branchId!);
+
+  const totalResult = await db
+    .select({ value: count() })
+    .from(noticesTable)
+    .where(where);
+  const total = totalResult[0]?.value ?? 0;
+
+  const items = await db
+    .select()
+    .from(noticesTable)
+    .where(where)
+    .orderBy(desc(noticesTable.id))
+    .limit(pageSize)
+    .offset(pageOffset(page, pageSize));
+
+  return ok(
+    c,
+    "Notices fetched successfully",
+    paginated(items, total, page, pageSize),
+  );
 });
 
 /** GET /api/v1/notice/:id */
@@ -106,7 +127,8 @@ noticeRouter.patch(
   zValidator("form", updateNoticeSchema),
   async (c) => {
     const { id } = c.req.valid("param");
-    const { image, file, ...rest } = c.req.valid("form");
+    const admin = c.get("admin");
+    const { image, file, branchId, ...rest } = c.req.valid("form");
 
     const [notice] = await db
       .select()
@@ -117,12 +139,19 @@ noticeRouter.patch(
     if (!notice) {
       return notFound(c, "Notice not found");
     }
-    if (!canAccessBranch(c.get("admin"), notice.branchId)) {
+    if (!canAccessBranch(admin, notice.branchId)) {
       return forbidden(c);
+    }
+
+    // Only super admins may move the notice to another branch.
+    const newBranchId = resolveBranchUpdate(admin, branchId);
+    if (newBranchId !== undefined && !(await branchExists(newBranchId))) {
+      return notFound(c, "Branch not found");
     }
 
     const updates = {
       ...rest,
+      ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(image && {
         image: (await replaceImage(notice.image ?? "", image)).url,
       }),

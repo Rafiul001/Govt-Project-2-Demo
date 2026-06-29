@@ -23,6 +23,20 @@ export function resolveBranchId(
   return isSuperAdmin(admin) ? (bodyBranchId ?? null) : admin.branchId;
 }
 
+/**
+ * Resolves a branch reassignment on an UPDATE. Only super admins may move a row
+ * to another branch; for branch admins the requested value is ignored.
+ *
+ * Returns the new branchId to apply, or `undefined` when no change should be
+ * made (branch admin, or super admin who didn't send one).
+ */
+export function resolveBranchUpdate(
+  admin: TTokenPayload,
+  bodyBranchId?: number,
+): number | undefined {
+  return isSuperAdmin(admin) ? bodyBranchId : undefined;
+}
+
 /** Whether a branch admin may access a row belonging to `rowBranchId`. */
 export function canAccessBranch(
   admin: TTokenPayload,

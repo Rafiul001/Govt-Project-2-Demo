@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/*
+ * Brand palette exposed as Tailwind theme tokens (utilities like `bg-brand-teal`).
+ * The three accent options requested for the admin panel.
+ */
+@theme {
+  --color-brand-teal: #009688;
+  --color-brand-blue: #03a9f4;
+  --color-brand-purple: #8a4af3;
+}
+
+/*
+ * Accent theming.
+ *
+ * HeroUI drives every component off CSS variables (notably `--accent`). Light vs.
+ * dark is toggled with the `.light` / `.dark` class on <html>; the *accent color*
+ * is chosen independently via `data-accent`. These rules are intentionally left
+ * unlayered so they win over HeroUI's `@layer base` variable defaults in both
+ * light and dark mode.
+ */
+:root,
+[data-accent="teal"] {
+  --accent: var(--color-brand-teal);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+[data-accent="blue"] {
+  --accent: var(--color-brand-blue);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+[data-accent="purple"] {
+  --accent: var(--color-brand-purple);
+  --accent-foreground: var(--white);
+  --focus: var(--accent);
+}
+
+/*
+ * Surface elevation tokens. The main content canvas and card shadows are
+ * theme-aware so cards stay legible (and cast a visible shadow) in dark mode,
+ * where a flat black-on-black drop shadow would otherwise disappear.
+ */
+:root,
+.light,
+[data-theme="light"] {
+  --app-canvas: var(--background);
+  --card-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --card-shadow-hover: 0 10px 24px -4px rgb(0 0 0 / 0.14);
+  /* Give form fields a visible outline (HeroUI defaults to a transparent
+   * field border, which relies on a drop shadow that is disabled in dark). */
+  --field-border: var(--border);
+}
+
+.dark,
+[data-theme="dark"] {
+  --app-canvas: oklch(16% 0.005 285.823);
+  --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 8px 22px -4px rgb(0 0 0 / 0.6);
+  --card-shadow-hover: 0 14px 32px -6px rgb(0 0 0 / 0.75);
+  /* Inputs would otherwise blend into the dialog (transparent border + no
+   * shadow in dark); a slightly lifted surface + visible border restores them. */
+  --field-border: var(--border);
+  --field-background: oklch(23% 0.006 285.89);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
