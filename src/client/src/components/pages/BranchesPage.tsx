@@ -1,23 +1,18 @@
-import { Button, Link, toast } from "@heroui/react";
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Button, toast } from "@heroui/react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useBranches, useDeleteBranch } from "../../hooks/useBranches";
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TBranch } from "../../types";
 import {
+  BranchCard,
   ConfirmDialog,
   EmptyState,
   ErrorState,
   LoadingState,
   PageHeader,
 } from "../molecules";
-import {
-  BranchForm,
-  DataTable,
-  FormModal,
-  TablePagination,
-  type DataTableColumn,
-} from "../organisms";
+import { BranchForm, FormModal, TablePagination } from "../organisms";
 
 type ListPageProps = {
   page: number;
@@ -32,73 +27,6 @@ export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TBranch | null>(null);
   const [deleting, setDeleting] = useState<TBranch | null>(null);
-
-  const columns: DataTableColumn<TBranch>[] = [
-    {
-      key: "name",
-      header: "Name",
-      isRowHeader: true,
-      render: (row) => row.name,
-    },
-    { key: "address", header: "Address", render: (row) => row.address },
-    {
-      key: "phone",
-      header: "Phone",
-      render: (row) => row.phone ?? <span className="text-muted">—</span>,
-    },
-    {
-      key: "email",
-      header: "Email",
-      render: (row) => row.email ?? <span className="text-muted">—</span>,
-    },
-    {
-      key: "media",
-      header: "Media",
-      render: (row) => (
-        <div className="flex gap-3 text-sm">
-          {row.logo ? (
-            <Link href={row.logo} target="_blank">
-              Logo
-            </Link>
-          ) : null}
-          {row.banner ? (
-            <Link href={row.banner} target="_blank">
-              Banner
-            </Link>
-          ) : null}
-          {!row.logo && !row.banner ? (
-            <span className="text-muted">—</span>
-          ) : null}
-        </div>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (row) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Edit"
-            onPress={() => setEditing(row)}
-          >
-            <PencilIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Delete"
-            onPress={() => setDeleting(row)}
-          >
-            <TrashIcon className="size-4 text-red-500" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   const handleDelete = () => {
     if (!deleting) return;
@@ -144,8 +72,17 @@ export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
           }
         />
       ) : (
-        <div className="space-y-4">
-          <DataTable ariaLabel="Branches" columns={columns} rows={items} />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((branch) => (
+              <BranchCard
+                key={branch.id}
+                branch={branch}
+                onEdit={() => setEditing(branch)}
+                onDelete={() => setDeleting(branch)}
+              />
+            ))}
+          </div>
           <TablePagination
             page={page}
             totalPages={totalPages}

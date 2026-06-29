@@ -10,7 +10,7 @@ type SwitchInputProps = {
 export function SwitchInput({ field, label }: SwitchInputProps) {
   return (
     <Switch
-      className="flex items-center gap-3"
+      className="flex flex-row items-center justify-start gap-3"
       name={field.name}
       isSelected={Boolean(field.state.value)}
       onChange={(isSelected) => field.handleChange(isSelected)}

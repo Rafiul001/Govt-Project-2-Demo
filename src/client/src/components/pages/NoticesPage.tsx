@@ -1,5 +1,5 @@
-import { Button, Chip, Link, toast } from "@heroui/react";
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Button, toast } from "@heroui/react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useDeleteNotice, useNotices } from "../../hooks/useNotices";
 import { getApiErrorMessage } from "../../lib/apiError";
@@ -9,15 +9,11 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  NoticeCard,
+  NoticePreview,
   PageHeader,
 } from "../molecules";
-import {
-  DataTable,
-  FormModal,
-  NoticeForm,
-  TablePagination,
-  type DataTableColumn,
-} from "../organisms";
+import { FormModal, NoticeForm, TablePagination } from "../organisms";
 
 type ListPageProps = {
   page: number;
@@ -32,78 +28,14 @@ export function NoticesPage({ page, pageSize, onPageChange }: ListPageProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TNotice | null>(null);
   const [deleting, setDeleting] = useState<TNotice | null>(null);
-
-  const columns: DataTableColumn<TNotice>[] = [
-    {
-      key: "title",
-      header: "Title",
-      isRowHeader: true,
-      render: (row) => row.title,
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (row) => (
-        <Chip color={row.isPublished ? "success" : "default"} variant="soft">
-          {row.isPublished ? "Published" : "Draft"}
-        </Chip>
-      ),
-    },
-    {
-      key: "attachments",
-      header: "Attachments",
-      render: (row) => (
-        <div className="flex gap-3 text-sm">
-          {row.image ? (
-            <Link href={row.image} target="_blank">
-              Image
-            </Link>
-          ) : null}
-          {row.fileUrl ? (
-            <Link href={row.fileUrl} target="_blank">
-              PDF
-            </Link>
-          ) : null}
-          {!row.image && !row.fileUrl ? (
-            <span className="text-muted">—</span>
-          ) : null}
-        </div>
-      ),
-    },
-    { key: "branchId", header: "Branch", render: (row) => row.branchId },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (row) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Edit"
-            onPress={() => setEditing(row)}
-          >
-            <PencilIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Delete"
-            onPress={() => setDeleting(row)}
-          >
-            <TrashIcon className="size-4 text-red-500" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const handleDelete = () => {
     if (!deleting) return;
     deleteMutation.mutate(deleting.id, {
       onSuccess: () => {
         toast.success("Notice deleted");
+        if (selectedId === deleting.id) setSelectedId(null);
         setDeleting(null);
       },
       onError: (error) => toast.danger(getApiErrorMessage(error)),
@@ -113,9 +45,10 @@ export function NoticesPage({ page, pageSize, onPageChange }: ListPageProps) {
   const items = query.data?.items ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = query.data?.totalPages ?? 1;
+  const selected = items.find((item) => item.id === selectedId) ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
       <PageHeader
         title="Notices"
         description="Publish and manage branch notices."
@@ -143,14 +76,33 @@ export function NoticesPage({ page, pageSize, onPageChange }: ListPageProps) {
           }
         />
       ) : (
-        <div className="space-y-4">
-          <DataTable ariaLabel="Notices" columns={columns} rows={items} />
-          <TablePagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            onChange={onPageChange}
-          />
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:flex-1 lg:flex-row">
+          {/* List */}
+          <div className="flex flex-col gap-3 lg:w-4/12 lg:overflow-y-auto lg:pr-1">
+            {items.map((notice) => (
+              <NoticeCard
+                key={notice.id}
+                notice={notice}
+                isSelected={notice.id === selectedId}
+                onSelect={() => setSelectedId(notice.id)}
+              />
+            ))}
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              onChange={onPageChange}
+            />
+          </div>
+
+          {/* Preview */}
+          <div className="lg:min-h-0 lg:w-8/12">
+            <NoticePreview
+              notice={selected}
+              onEdit={() => selected && setEditing(selected)}
+              onDelete={() => selected && setDeleting(selected)}
+            />
+          </div>
         </div>
       )}
 

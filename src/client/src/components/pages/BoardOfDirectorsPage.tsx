@@ -1,5 +1,5 @@
-import { Avatar, Button, toast } from "@heroui/react";
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Button, toast } from "@heroui/react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import {
   useBoardOfDirectors,
@@ -8,19 +8,14 @@ import {
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TBoardOfDirector } from "../../types";
 import {
+  BoardMemberCard,
   ConfirmDialog,
   EmptyState,
   ErrorState,
   LoadingState,
   PageHeader,
 } from "../molecules";
-import {
-  BoardOfDirectorForm,
-  DataTable,
-  FormModal,
-  TablePagination,
-  type DataTableColumn,
-} from "../organisms";
+import { BoardOfDirectorForm, FormModal, TablePagination } from "../organisms";
 
 type ListPageProps = {
   page: number;
@@ -39,56 +34,6 @@ export function BoardOfDirectorsPage({
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TBoardOfDirector | null>(null);
   const [deleting, setDeleting] = useState<TBoardOfDirector | null>(null);
-
-  const columns: DataTableColumn<TBoardOfDirector>[] = [
-    {
-      key: "member",
-      header: "Member",
-      isRowHeader: true,
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <Avatar size="sm">
-            <Avatar.Image src={row.avatar} />
-            <Avatar.Fallback>{row.name.charAt(0)}</Avatar.Fallback>
-          </Avatar>
-          <span className="font-medium">{row.name}</span>
-        </div>
-      ),
-    },
-    {
-      key: "designation",
-      header: "Designation",
-      render: (row) => row.designation,
-    },
-    { key: "order", header: "Order", render: (row) => row.order },
-    { key: "branchId", header: "Branch", render: (row) => row.branchId },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (row) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Edit"
-            onPress={() => setEditing(row)}
-          >
-            <PencilIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Delete"
-            onPress={() => setDeleting(row)}
-          >
-            <TrashIcon className="size-4 text-red-500" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   const handleDelete = () => {
     if (!deleting) return;
@@ -134,12 +79,17 @@ export function BoardOfDirectorsPage({
           }
         />
       ) : (
-        <div className="space-y-4">
-          <DataTable
-            ariaLabel="Board of directors"
-            columns={columns}
-            rows={items}
-          />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+            {items.map((member) => (
+              <BoardMemberCard
+                key={member.id}
+                member={member}
+                onEdit={() => setEditing(member)}
+                onDelete={() => setDeleting(member)}
+              />
+            ))}
+          </div>
           <TablePagination
             page={page}
             totalPages={totalPages}
