@@ -31,7 +31,7 @@ export function FileInput({ field, label, accept }: FileInputProps) {
           <UploadIcon className="size-4" />
           Choose file
         </Button>
-        <span className="truncate text-sm text-(--muted)">
+        <span className="truncate text-sm text-muted">
           {file ? file.name : "No file selected"}
         </span>
         {file ? (

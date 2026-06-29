@@ -51,7 +51,7 @@ export function SettingsPage() {
                   type="button"
                   aria-label={option.label}
                   onClick={() => setAccent(option.value)}
-                  className="grid size-10 place-items-center rounded-full text-white ring-offset-2 ring-offset-(--background) transition data-[active=true]:ring-2 data-[active=true]:ring-(--accent)"
+                  className="grid size-10 place-items-center rounded-full text-white ring-offset-2 ring-offset-background transition data-[active=true]:ring-2 data-[active=true]:ring-accent"
                   data-active={accent === option.value}
                   style={{ backgroundColor: option.color }}
                 >

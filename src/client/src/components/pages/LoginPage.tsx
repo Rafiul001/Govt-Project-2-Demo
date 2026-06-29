@@ -24,10 +24,10 @@ export function LoginPage() {
   });
 
   return (
-    <div className="grid min-h-screen place-items-center bg-(--background) p-4">
+    <div className="grid min-h-screen place-items-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <Card.Header className="flex flex-col items-center gap-2 pt-6">
-          <div className="grid size-12 place-items-center rounded-xl bg-(--accent) text-lg font-bold text-(--accent-foreground)">
+          <div className="grid size-12 place-items-center rounded-xl bg-accent text-lg font-bold text-accent-foreground">
             GP
           </div>
           <Card.Title>Admin Panel</Card.Title>

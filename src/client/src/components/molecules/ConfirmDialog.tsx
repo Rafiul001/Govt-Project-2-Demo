@@ -30,7 +30,7 @@ export function ConfirmDialog({
             </Modal.Header>
             {description ? (
               <Modal.Body>
-                <p className="text-sm text-(--muted)">{description}</p>
+                <p className="text-sm text-muted">{description}</p>
               </Modal.Body>
             ) : null}
             <Modal.Footer className="flex justify-end gap-2">

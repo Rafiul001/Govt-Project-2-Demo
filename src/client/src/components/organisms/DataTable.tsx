@@ -22,7 +22,7 @@ export function DataTable<T extends { id: number }>({
 }: DataTableProps<T>) {
   return (
     <Table>
-      <Table.ScrollContainer className="rounded-xl border border-(--border)">
+      <Table.ScrollContainer className="rounded-xl border border-border">
         <Table.Content aria-label={ariaLabel}>
           <Table.Header>
             {columns.map((column) => (

@@ -19,7 +19,7 @@ export function TablePagination({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-(--muted)">{total} item(s)</span>
+      <span className="text-sm text-muted">{total} item(s)</span>
       <Pagination>
         <Pagination.Content>
           <Pagination.Item>

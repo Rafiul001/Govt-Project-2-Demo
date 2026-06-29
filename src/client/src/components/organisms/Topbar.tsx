@@ -18,7 +18,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="flex items-center justify-end gap-3 border-b border-(--border) bg-(--surface) px-6 py-3">
+    <header className="flex items-center justify-end gap-3 border-b border-border bg-surface px-6 py-3">
       {admin ? (
         <Chip color="accent" variant="soft">
           {admin.adminType === "SUPER_ADMIN" ? "Super Admin" : "Branch Admin"}

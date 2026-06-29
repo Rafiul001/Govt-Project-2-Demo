@@ -45,9 +45,9 @@ export function Sidebar() {
   const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col gap-6 border-r border-(--border) bg-(--surface) p-4">
+    <aside className="flex h-full w-64 shrink-0 flex-col gap-6 border-r border-border bg-surface p-4">
       <div className="flex items-center gap-2 px-2 py-1">
-        <div className="grid size-9 place-items-center rounded-lg bg-(--accent) font-bold text-(--accent-foreground)">
+        <div className="grid size-9 place-items-center rounded-lg bg-accent font-bold text-accent-foreground">
           GP
         </div>
         <span className="text-lg font-semibold">Admin Panel</span>
@@ -62,10 +62,10 @@ export function Sidebar() {
               activeOptions={{ exact }}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
               activeProps={{
-                className: "bg-(--accent) text-(--accent-foreground)",
+                className: "bg-accent text-accent-foreground",
               }}
               inactiveProps={{
-                className: "text-(--muted) hover:bg-(--surface-secondary)",
+                className: "text-muted hover:bg-surface-secondary",
               }}
             >
               <Icon className="size-5" />

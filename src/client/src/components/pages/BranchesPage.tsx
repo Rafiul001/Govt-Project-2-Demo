@@ -44,12 +44,12 @@ export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
     {
       key: "phone",
       header: "Phone",
-      render: (row) => row.phone ?? <span className="text-(--muted)">—</span>,
+      render: (row) => row.phone ?? <span className="text-muted">—</span>,
     },
     {
       key: "email",
       header: "Email",
-      render: (row) => row.email ?? <span className="text-(--muted)">—</span>,
+      render: (row) => row.email ?? <span className="text-muted">—</span>,
     },
     {
       key: "media",
@@ -67,7 +67,7 @@ export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
             </Link>
           ) : null}
           {!row.logo && !row.banner ? (
-            <span className="text-(--muted)">—</span>
+            <span className="text-muted">—</span>
           ) : null}
         </div>
       ),

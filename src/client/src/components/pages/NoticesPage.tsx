@@ -65,7 +65,7 @@ export function NoticesPage({ page, pageSize, onPageChange }: ListPageProps) {
             </Link>
           ) : null}
           {!row.image && !row.fileUrl ? (
-            <span className="text-(--muted)">—</span>
+            <span className="text-muted">—</span>
           ) : null}
         </div>
       ),
