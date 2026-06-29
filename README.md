@@ -7,6 +7,67 @@ Full-stack application for a multi-branch government/organization portal. The
 logging. The **frontend** is a React admin panel ([`src/client/`](src/client/))
 built with Vite, TanStack Router/Query/Form, and HeroUI.
 
+## Screenshots
+
+A tour of the admin panel. Every list screen is built from reusable cards, and
+the whole UI supports light/dark mode with three accent colors.
+
+### Dashboard
+
+A greeting hero, at-a-glance stat tiles (each links to its section), a recent
+notices feed, and quick-action shortcuts. Clicking a recent notice deep-links
+straight to its preview.
+
+| Light                                                      | Dark                                                     |
+| ---------------------------------------------------------- | -------------------------------------------------------- |
+| ![Dashboard (light)](docs/screenshots/dashboard-light.png) | ![Dashboard (dark)](docs/screenshots/dashboard-dark.png) |
+
+### Branches
+
+Branch records as media cards — banner image, overlapping logo, name/address,
+and contact details — with floating edit/delete actions. _(Super admin only.)_
+
+![Branches](docs/screenshots/branches.png)
+
+### Board of Directors
+
+Horizontal profile cards showing each member's photo, name, designation, and
+display order.
+
+![Board of Directors](docs/screenshots/board-of-directors.png)
+
+### Notices
+
+A master–detail layout: an inbox-style list on the left and a full preview on
+the right (image, description, and an inline PDF viewer for attachments). The
+panel fills the content height and scrolls on its own.
+
+![Notices](docs/screenshots/notices.png)
+
+### Layouts
+
+Per-branch display settings as cards — show logo / show banner toggles and the
+sidebar position, headed by the branch name.
+
+![Layouts](docs/screenshots/layouts.png)
+
+### Admins
+
+Administrator cards with avatar, username, role chip, and branch. Super admins
+are read-only (seeded, not editable); branch admins expose edit/delete.
+_(Super admin only.)_
+
+![Admins](docs/screenshots/admins.png)
+
+### Settings
+
+Personalize the panel: theme mode and accent color, plus an account section to
+update your own avatar and password.
+
+| Light                                                    | Dark                                                   |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| ![Settings (light)](docs/screenshots/settings-light.png) | ![Settings (dark)](docs/screenshots/settings-dark.png) |
+
 ## Tech Stack
 
 ### Backend
@@ -117,11 +178,11 @@ built with Vite, TanStack Router/Query/Form, and HeroUI.
 Root scripts:
 
 | Script               | Description                                              |
-| -------------------- | ------------------------------------------------------- |
+| -------------------- | -------------------------------------------------------- |
 | `bun run dev`        | Run backend (watch) + frontend (Vite) concurrently       |
 | `bun run dev:server` | Start only the backend in watch mode (`src/index.ts`)    |
 | `bun run dev:client` | Start only the frontend Vite dev server                  |
-| `bun run build`      | Bundle the backend to `dist/` (`NODE_ENV=production`)     |
+| `bun run build`      | Bundle the backend to `dist/` (`NODE_ENV=production`)    |
 | `bun run start`      | Run the built backend bundle with Node (`dist/index.js`) |
 
 Frontend scripts (run from `src/client/`):
@@ -263,32 +324,32 @@ paginated envelope rather than a bare array:
 }
 ```
 
-| Method   | Path                             | Auth             | Body                 | Description                                    |
-| -------- | -------------------------------- | ---------------- | -------------------- | ---------------------------------------------- |
-| `POST`   | `/api/v1/admin/login`            | Public           | `json`               | Log in; returns `accessToken` + `refreshToken` |
-| `GET`    | `/api/v1/admin`                  | Super admin only | —                    | List admins (paginated)                        |
-| `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)      | Create a branch admin (`branchId` required)    |
-| `POST`   | `/api/v1/admin/logout`           | Any admin        | —                    | Logout (stateless acknowledgement)             |
-| `GET`    | `/api/v1/branch`                 | Super admin only | —                    | List branches (paginated)                      |
-| `GET`    | `/api/v1/branch/:id`             | Super admin only | —                    | Get one branch                                 |
-| `POST`   | `/api/v1/branch`                 | Super admin only | `form` (logo, banner)| Create a branch                                |
-| `PATCH`  | `/api/v1/branch/:id`             | Super admin only | `form` (logo, banner)| Update a branch                                |
-| `DELETE` | `/api/v1/branch/:id`             | Super admin only | —                    | Delete a branch (+ media, cascades children)   |
-| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                    | List board members (branch-scoped, paginated)  |
-| `GET`    | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Get one board member                           |
-| `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)      | Create a board member                          |
-| `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)      | Update a board member                          |
-| `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                    | Delete a board member (+ its avatar)           |
-| `GET`    | `/api/v1/layout`                 | Any admin        | —                    | List layouts (branch-scoped, paginated)        |
-| `GET`    | `/api/v1/layout/:id`             | Any admin        | —                    | Get one layout                                 |
-| `POST`   | `/api/v1/layout`                 | Any admin        | `json`               | Create a layout                                |
-| `PATCH`  | `/api/v1/layout/:id`             | Any admin        | `json`               | Update a layout                                |
-| `DELETE` | `/api/v1/layout/:id`             | Any admin        | —                    | Delete a layout                                |
-| `GET`    | `/api/v1/notice`                 | Any admin        | —                    | List notices (branch-scoped, paginated)        |
-| `GET`    | `/api/v1/notice/:id`             | Any admin        | —                    | Get one notice                                 |
-| `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file) | Create a notice                                |
-| `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file) | Update a notice                                |
-| `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                    | Delete a notice (+ its image & PDF)            |
+| Method   | Path                             | Auth             | Body                  | Description                                    |
+| -------- | -------------------------------- | ---------------- | --------------------- | ---------------------------------------------- |
+| `POST`   | `/api/v1/admin/login`            | Public           | `json`                | Log in; returns `accessToken` + `refreshToken` |
+| `GET`    | `/api/v1/admin`                  | Super admin only | —                     | List admins (paginated)                        |
+| `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)       | Create a branch admin (`branchId` required)    |
+| `POST`   | `/api/v1/admin/logout`           | Any admin        | —                     | Logout (stateless acknowledgement)             |
+| `GET`    | `/api/v1/branch`                 | Super admin only | —                     | List branches (paginated)                      |
+| `GET`    | `/api/v1/branch/:id`             | Super admin only | —                     | Get one branch                                 |
+| `POST`   | `/api/v1/branch`                 | Super admin only | `form` (logo, banner) | Create a branch                                |
+| `PATCH`  | `/api/v1/branch/:id`             | Super admin only | `form` (logo, banner) | Update a branch                                |
+| `DELETE` | `/api/v1/branch/:id`             | Super admin only | —                     | Delete a branch (+ media, cascades children)   |
+| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                     | List board members (branch-scoped, paginated)  |
+| `GET`    | `/api/v1/board-of-directors/:id` | Any admin        | —                     | Get one board member                           |
+| `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)       | Create a board member                          |
+| `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)       | Update a board member                          |
+| `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                     | Delete a board member (+ its avatar)           |
+| `GET`    | `/api/v1/layout`                 | Any admin        | —                     | List layouts (branch-scoped, paginated)        |
+| `GET`    | `/api/v1/layout/:id`             | Any admin        | —                     | Get one layout                                 |
+| `POST`   | `/api/v1/layout`                 | Any admin        | `json`                | Create a layout                                |
+| `PATCH`  | `/api/v1/layout/:id`             | Any admin        | `json`                | Update a layout                                |
+| `DELETE` | `/api/v1/layout/:id`             | Any admin        | —                     | Delete a layout                                |
+| `GET`    | `/api/v1/notice`                 | Any admin        | —                     | List notices (branch-scoped, paginated)        |
+| `GET`    | `/api/v1/notice/:id`             | Any admin        | —                     | Get one notice                                 |
+| `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file)  | Create a notice                                |
+| `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file)  | Update a notice                                |
+| `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                     | Delete a notice (+ its image & PDF)            |
 
 > Admins created through the API are always **branch admins** (a `branchId` is
 > required); a super admin **cannot** create another super admin — those are
@@ -357,7 +418,10 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   validation). When a super admin must pick a branch, the field is a dropdown
   populated from `/api/v1/branch`.
 - **Lists** — server-paginated; the page/size live in the URL search params
-  (validated with Zod) and feed the TanStack Query hooks.
+  (validated with Zod) and feed the TanStack Query hooks. Each resource is
+  presented as a responsive **card grid** rather than a table (Notices uses a
+  master–detail layout with an inline PDF preview) — see
+  [Screenshots](#screenshots).
 - **Theming** — light/dark mode plus three accent colors (teal, blue, purple),
   chosen on the Settings page and persisted; applied via HeroUI theme tokens in
   [`src/client/src/index.css`](src/client/src/index.css).
