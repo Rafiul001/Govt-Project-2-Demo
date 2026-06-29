@@ -1,6 +1,8 @@
-import { Button, Chip, toast } from "@heroui/react";
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Button, toast } from "@heroui/react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
+import { useBranches } from "../../hooks/useBranches";
+import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
 import { useDeleteLayout, useLayouts } from "../../hooks/useLayouts";
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TLayout } from "../../types";
@@ -8,16 +10,11 @@ import {
   ConfirmDialog,
   EmptyState,
   ErrorState,
+  LayoutCard,
   LoadingState,
   PageHeader,
 } from "../molecules";
-import {
-  DataTable,
-  FormModal,
-  LayoutForm,
-  TablePagination,
-  type DataTableColumn,
-} from "../organisms";
+import { FormModal, LayoutForm, TablePagination } from "../organisms";
 
 type ListPageProps = {
   page: number;
@@ -25,71 +22,24 @@ type ListPageProps = {
   onPageChange: (page: number) => void;
 };
 
-const YesNo = ({ value }: { value: boolean }) => (
-  <Chip color={value ? "success" : "default"} variant="soft">
-    {value ? "Yes" : "No"}
-  </Chip>
-);
-
 export function LayoutsPage({ page, pageSize, onPageChange }: ListPageProps) {
   const query = useLayouts({ page, pageSize });
   const deleteMutation = useDeleteLayout();
+  const admin = useCurrentAdmin();
+  const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";
+  // The branch list endpoint is super-admin only; branch admins fall back to
+  // showing the branch id.
+  const branchesQuery = useBranches(
+    { page: 1, pageSize: 100 },
+    { enabled: isSuperAdmin },
+  );
 
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TLayout | null>(null);
   const [deleting, setDeleting] = useState<TLayout | null>(null);
 
-  const columns: DataTableColumn<TLayout>[] = [
-    {
-      key: "branchId",
-      header: "Branch",
-      isRowHeader: true,
-      render: (row) => row.branchId,
-    },
-    {
-      key: "sidebarPosition",
-      header: "Sidebar",
-      render: (row) => (
-        <span className="capitalize">{row.sidebarPosition}</span>
-      ),
-    },
-    {
-      key: "showLogo",
-      header: "Logo",
-      render: (row) => <YesNo value={row.showLogo} />,
-    },
-    {
-      key: "showBanner",
-      header: "Banner",
-      render: (row) => <YesNo value={row.showBanner} />,
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (row) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Edit"
-            onPress={() => setEditing(row)}
-          >
-            <PencilIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            aria-label="Delete"
-            onPress={() => setDeleting(row)}
-          >
-            <TrashIcon className="size-4 text-red-500" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const branchName = (id: number) =>
+    branchesQuery.data?.items.find((b) => b.id === id)?.name;
 
   const handleDelete = () => {
     if (!deleting) return;
@@ -135,8 +85,18 @@ export function LayoutsPage({ page, pageSize, onPageChange }: ListPageProps) {
           }
         />
       ) : (
-        <div className="space-y-4">
-          <DataTable ariaLabel="Layouts" columns={columns} rows={items} />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((layout) => (
+              <LayoutCard
+                key={layout.id}
+                layout={layout}
+                branchName={branchName(layout.branchId)}
+                onEdit={() => setEditing(layout)}
+                onDelete={() => setDeleting(layout)}
+              />
+            ))}
+          </div>
           <TablePagination
             page={page}
             totalPages={totalPages}

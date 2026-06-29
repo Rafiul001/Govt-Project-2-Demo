@@ -19,16 +19,25 @@ type ListPageProps = {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  /** Optional notice id to preview on first render (e.g. deep-linked). */
+  initialSelectedId?: number;
 };
 
-export function NoticesPage({ page, pageSize, onPageChange }: ListPageProps) {
+export function NoticesPage({
+  page,
+  pageSize,
+  onPageChange,
+  initialSelectedId,
+}: ListPageProps) {
   const query = useNotices({ page, pageSize });
   const deleteMutation = useDeleteNotice();
 
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TNotice | null>(null);
   const [deleting, setDeleting] = useState<TNotice | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(
+    initialSelectedId ?? null,
+  );
 
   const handleDelete = () => {
     if (!deleting) return;

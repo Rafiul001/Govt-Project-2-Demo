@@ -18,7 +18,10 @@ import type {
 import { queryKeys } from "./queryKeys";
 
 /** List branches (super admin only), paginated server-side. */
-export function useBranches(params: TPageParams) {
+export function useBranches(
+  params: TPageParams,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: queryKeys.branches.list(params),
     queryFn: async () => {
@@ -28,6 +31,7 @@ export function useBranches(params: TPageParams) {
       return res.data;
     },
     placeholderData: keepPreviousData,
+    enabled: options?.enabled,
   });
 }
 

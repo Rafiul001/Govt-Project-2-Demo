@@ -11,3 +11,13 @@ export const listSearchSchema = z.strictObject({
 });
 
 export type TListSearch = z.infer<typeof listSearchSchema>;
+
+/**
+ * Notices list also accepts a `selected` notice id, so links (e.g. from the
+ * dashboard) can deep-link straight to a notice's preview.
+ */
+export const noticesSearchSchema = listSearchSchema.extend({
+  selected: z.coerce.number().int().positive().optional(),
+});
+
+export type TNoticesSearch = z.infer<typeof noticesSearchSchema>;

@@ -19,7 +19,10 @@ import type {
 import { queryKeys } from "./queryKeys";
 
 /** List admins (super admin only), paginated server-side. */
-export function useAdmins(params: TPageParams) {
+export function useAdmins(
+  params: TPageParams,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: queryKeys.admins.list(params),
     queryFn: async () => {
@@ -29,6 +32,7 @@ export function useAdmins(params: TPageParams) {
       return res.data;
     },
     placeholderData: keepPreviousData,
+    enabled: options?.enabled,
   });
 }
 
