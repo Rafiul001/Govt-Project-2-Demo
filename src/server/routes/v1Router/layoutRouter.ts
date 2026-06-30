@@ -1,6 +1,9 @@
 import db from "@/server/db/client";
 import { layoutsTable } from "@/server/db/schemas";
-import { authMiddleware } from "@/server/middleware/authMiddleware";
+import {
+  authMiddleware,
+  optionalAuthMiddleware,
+} from "@/server/middleware/authMiddleware";
 import {
   badRequest,
   conflict,
@@ -13,16 +16,18 @@ import type { TAppEnv } from "@/server/types";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
   branchExists,
+  branchIdByName,
   canAccessBranch,
   isSuperAdmin,
   resolveBranchId,
   resolveBranchUpdate,
 } from "@/server/utils/scope";
+import type { TTokenPayload } from "@/shared/types";
 import {
   createLayoutSchema,
   updateLayoutSchema,
 } from "@/shared/validators/layout.validator";
-import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
+import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
 import { count, eq } from "drizzle-orm";
@@ -30,95 +35,133 @@ import { Hono } from "hono";
 
 const layoutRouter = new Hono<TAppEnv>();
 
-// A branch has exactly one layout (unique branchId).
-layoutRouter.use(authMiddleware());
+// A branch has exactly one layout (unique branchId). Reads are public so the
+// public landing sites can pick up their per-branch display settings; mutations
+// require an authenticated admin (per-route below).
 
-/** GET /api/v1/layout — list layouts (branch-scoped, paginated). */
-layoutRouter.get("/", zValidator("query", paginationQuerySchema), async (c) => {
-  const admin = c.get("admin");
-  const { page, pageSize } = c.req.valid("query");
+/**
+ * GET /api/v1/layout — list layouts (paginated).
+ *
+ * - Branch admin (dashboard): pinned to their own branch.
+ * - Super admin / public: optionally scoped by `?branchName=`.
+ *
+ * An unknown branch name yields an empty page.
+ */
+layoutRouter.get(
+  "/",
+  optionalAuthMiddleware(),
+  zValidator("query", branchListQuerySchema),
+  async (c) => {
+    const admin = c.get("admin") as TTokenPayload | undefined;
+    const { page, pageSize, branchName } = c.req.valid("query");
 
-  const where = isSuperAdmin(admin)
-    ? undefined
-    : eq(layoutsTable.branchId, admin.branchId!);
+    let branchId: number | null | undefined;
+    if (admin && !isSuperAdmin(admin)) {
+      branchId = admin.branchId!;
+    } else if (branchName) {
+      branchId = await branchIdByName(branchName);
+      if (branchId === null) {
+        return ok(
+          c,
+          "Layouts fetched successfully",
+          paginated([], 0, page, pageSize),
+        );
+      }
+    }
 
-  const totalResult = await db
-    .select({ value: count() })
-    .from(layoutsTable)
-    .where(where);
-  const total = totalResult[0]?.value ?? 0;
+    const where =
+      branchId != null ? eq(layoutsTable.branchId, branchId) : undefined;
 
-  const items = await db
-    .select()
-    .from(layoutsTable)
-    .where(where)
-    .orderBy(layoutsTable.id)
-    .limit(pageSize)
-    .offset(pageOffset(page, pageSize));
+    const totalResult = await db
+      .select({ value: count() })
+      .from(layoutsTable)
+      .where(where);
+    const total = totalResult[0]?.value ?? 0;
 
-  return ok(
-    c,
-    "Layouts fetched successfully",
-    paginated(items, total, page, pageSize),
-  );
-});
+    const items = await db
+      .select()
+      .from(layoutsTable)
+      .where(where)
+      .orderBy(layoutsTable.id)
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize));
 
-/** GET /api/v1/layout/:id */
-layoutRouter.get("/:id", zValidator("param", idParamSchema), async (c) => {
-  const { id } = c.req.valid("param");
+    return ok(
+      c,
+      "Layouts fetched successfully",
+      paginated(items, total, page, pageSize),
+    );
+  },
+);
 
-  const [layout] = await db
-    .select()
-    .from(layoutsTable)
-    .where(eq(layoutsTable.id, id))
-    .limit(1);
+/** GET /api/v1/layout/:id — public. */
+layoutRouter.get(
+  "/:id",
+  optionalAuthMiddleware(),
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const admin = c.get("admin") as TTokenPayload | undefined;
 
-  if (!layout) {
-    return notFound(c, "Layout not found");
-  }
-  if (!canAccessBranch(c.get("admin"), layout.branchId)) {
-    return forbidden(c);
-  }
+    const [layout] = await db
+      .select()
+      .from(layoutsTable)
+      .where(eq(layoutsTable.id, id))
+      .limit(1);
 
-  return ok(c, "Layout fetched successfully", layout);
-});
+    if (!layout) {
+      return notFound(c, "Layout not found");
+    }
+    if (admin && !canAccessBranch(admin, layout.branchId)) {
+      return forbidden(c);
+    }
+
+    return ok(c, "Layout fetched successfully", layout);
+  },
+);
 
 /** POST /api/v1/layout */
-layoutRouter.post("/", zValidator("json", createLayoutSchema), async (c) => {
-  const admin = c.get("admin");
-  const data = c.req.valid("json");
+layoutRouter.post(
+  "/",
+  authMiddleware(),
+  zValidator("json", createLayoutSchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const data = c.req.valid("json");
 
-  const branchId = resolveBranchId(admin, data.branchId);
-  if (branchId === null) {
-    return badRequest(c, "branchId is required");
-  }
-  if (!(await branchExists(branchId))) {
-    return notFound(c, "Branch not found");
-  }
+    const branchId = resolveBranchId(admin, data.branchId);
+    if (branchId === null) {
+      return badRequest(c, "branchId is required");
+    }
+    if (!(await branchExists(branchId))) {
+      return notFound(c, "Branch not found");
+    }
 
-  const [existing] = await db
-    .select({ id: layoutsTable.id })
-    .from(layoutsTable)
-    .where(eq(layoutsTable.branchId, branchId))
-    .limit(1);
+    const [existing] = await db
+      .select({ id: layoutsTable.id })
+      .from(layoutsTable)
+      .where(eq(layoutsTable.branchId, branchId))
+      .limit(1);
 
-  if (existing) {
-    return conflict(c, "This branch already has a layout");
-  }
+    if (existing) {
+      return conflict(c, "This branch already has a layout");
+    }
 
-  await db.insert(layoutsTable).values({
-    showLogo: data.showLogo,
-    showBanner: data.showBanner,
-    sidebarPosition: data.sidebarPosition,
-    branchId,
-  });
+    await db.insert(layoutsTable).values({
+      showLogo: data.showLogo,
+      showBanner: data.showBanner,
+      sidebarPosition: data.sidebarPosition,
+      branchId,
+    });
 
-  return created(c, "Layout created successfully");
-});
+    return created(c, "Layout created successfully");
+  },
+);
 
 /** PATCH /api/v1/layout/:id */
 layoutRouter.patch(
   "/:id",
+  authMiddleware(),
   zValidator("param", idParamSchema),
   zValidator("json", updateLayoutSchema),
   async (c) => {
@@ -175,24 +218,29 @@ layoutRouter.patch(
 );
 
 /** DELETE /api/v1/layout/:id */
-layoutRouter.delete("/:id", zValidator("param", idParamSchema), async (c) => {
-  const { id } = c.req.valid("param");
+layoutRouter.delete(
+  "/:id",
+  authMiddleware(),
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
 
-  const [layout] = await db
-    .select()
-    .from(layoutsTable)
-    .where(eq(layoutsTable.id, id))
-    .limit(1);
+    const [layout] = await db
+      .select()
+      .from(layoutsTable)
+      .where(eq(layoutsTable.id, id))
+      .limit(1);
 
-  if (!layout) {
-    return notFound(c, "Layout not found");
-  }
-  if (!canAccessBranch(c.get("admin"), layout.branchId)) {
-    return forbidden(c);
-  }
+    if (!layout) {
+      return notFound(c, "Layout not found");
+    }
+    if (!canAccessBranch(c.get("admin"), layout.branchId)) {
+      return forbidden(c);
+    }
 
-  await db.delete(layoutsTable).where(eq(layoutsTable.id, id));
-  return ok(c, "Layout deleted successfully");
-});
+    await db.delete(layoutsTable).where(eq(layoutsTable.id, id));
+    return ok(c, "Layout deleted successfully");
+  },
+);
 
 export default layoutRouter;

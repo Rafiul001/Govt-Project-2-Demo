@@ -8,7 +8,7 @@ import {
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
-import { paginated, pageOffset } from "@/server/utils/pagination";
+import { pageOffset, paginated } from "@/server/utils/pagination";
 import { adminType } from "@/shared/types";
 import {
   createBranchSchema,
@@ -22,10 +22,10 @@ import { Hono } from "hono";
 
 const branchRouter = new Hono<TAppEnv>();
 
-// Branch management is restricted to super admins.
-branchRouter.use(authMiddleware([adminType.SUPER_ADMIN]));
+// Reads are public — the branch directory powers the public landing sites.
+// Every mutating route is restricted to super admins via per-route middleware.
 
-/** GET /api/v1/branch — list branches (paginated). */
+/** GET /api/v1/branch — list branches (paginated). Public. */
 branchRouter.get("/", zValidator("query", paginationQuerySchema), async (c) => {
   const { page, pageSize } = c.req.valid("query");
 
@@ -64,27 +64,33 @@ branchRouter.get("/:id", zValidator("param", idParamSchema), async (c) => {
 });
 
 /** POST /api/v1/branch */
-branchRouter.post("/", zValidator("form", createBranchSchema), async (c) => {
-  const data = c.req.valid("form");
+branchRouter.post(
+  "/",
+  authMiddleware([adminType.SUPER_ADMIN]),
+  zValidator("form", createBranchSchema),
+  async (c) => {
+    const data = c.req.valid("form");
 
-  const logo = data.logo ? (await uploadImage(data.logo)).url : null;
-  const banner = data.banner ? (await uploadImage(data.banner)).url : null;
+    const logo = data.logo ? (await uploadImage(data.logo)).url : null;
+    const banner = data.banner ? (await uploadImage(data.banner)).url : null;
 
-  await db.insert(branchesTable).values({
-    name: data.name,
-    address: data.address,
-    phone: data.phone || null,
-    email: data.email || null,
-    logo,
-    banner,
-  });
+    await db.insert(branchesTable).values({
+      name: data.name,
+      address: data.address,
+      phone: data.phone || null,
+      email: data.email || null,
+      logo,
+      banner,
+    });
 
-  return created(c, "Branch created successfully");
-});
+    return created(c, "Branch created successfully");
+  },
+);
 
 /** PATCH /api/v1/branch/:id */
 branchRouter.patch(
   "/:id",
+  authMiddleware([adminType.SUPER_ADMIN]),
   zValidator("param", idParamSchema),
   zValidator("form", updateBranchSchema),
   async (c) => {
@@ -119,24 +125,29 @@ branchRouter.patch(
 );
 
 /** DELETE /api/v1/branch/:id */
-branchRouter.delete("/:id", zValidator("param", idParamSchema), async (c) => {
-  const { id } = c.req.valid("param");
+branchRouter.delete(
+  "/:id",
+  authMiddleware([adminType.SUPER_ADMIN]),
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
 
-  const [branch] = await db
-    .select()
-    .from(branchesTable)
-    .where(eq(branchesTable.id, id))
-    .limit(1);
+    const [branch] = await db
+      .select()
+      .from(branchesTable)
+      .where(eq(branchesTable.id, id))
+      .limit(1);
 
-  if (!branch) {
-    return notFound(c, "Branch not found");
-  }
+    if (!branch) {
+      return notFound(c, "Branch not found");
+    }
 
-  await db.delete(branchesTable).where(eq(branchesTable.id, id));
-  await deleteImage(branch.logo ?? "");
-  await deleteImage(branch.banner ?? "");
+    await db.delete(branchesTable).where(eq(branchesTable.id, id));
+    await deleteImage(branch.logo ?? "");
+    await deleteImage(branch.banner ?? "");
 
-  return ok(c, "Branch deleted successfully");
-});
+    return ok(c, "Branch deleted successfully");
+  },
+);
 
 export default branchRouter;

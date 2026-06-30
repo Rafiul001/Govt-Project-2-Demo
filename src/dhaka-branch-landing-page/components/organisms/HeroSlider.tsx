@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
 type Slide = { title: string; subtitle: string };
@@ -24,7 +25,7 @@ const SLIDES: Slide[] = [
 ];
 
 /** Auto-rotating hero banner with manual controls and dot navigation. */
-export function HeroSlider() {
+export function HeroSlider({ bannerUrl }: { bannerUrl: string | null }) {
   const [index, setIndex] = useState(0);
 
   const go = useCallback(
@@ -40,9 +41,24 @@ export function HeroSlider() {
   return (
     <section
       id="home"
-      className="relative overflow-hidden bg-gradient-to-br from-govt-green-dark via-govt-green to-govt-green-dark text-white"
+      className="relative overflow-hidden bg-linear-to-br from-govt-green-dark via-govt-green to-govt-green-dark text-white"
       aria-roledescription="carousel"
     >
+      {/* Branch banner as a subtle, darkened backdrop when available */}
+      {bannerUrl ? (
+        <div className="absolute inset-0" aria-hidden>
+          <Image
+            src={bannerUrl}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-25"
+          />
+          <div className="absolute inset-0 bg-govt-green-dark/60" />
+        </div>
+      ) : null}
+
       {/* Decorative emblem watermark */}
       <div
         className="pointer-events-none absolute -right-12 -top-10 size-72 rounded-full bg-white/5 blur-2xl"
@@ -53,7 +69,7 @@ export function HeroSlider() {
         aria-hidden
       />
 
-      <div className="relative mx-auto flex min-h-[18rem] max-w-7xl items-center px-4 py-14 sm:min-h-[22rem]">
+      <div className="relative mx-auto flex min-h-72 max-w-7xl items-center px-4 py-14 sm:min-h-88">
         <div className="max-w-2xl">
           <p className="mb-3 inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
             গণপ্রজাতন্ত্রী বাংলাদেশ সরকার

@@ -1,10 +1,12 @@
 import { ContactRow } from "@/components/molecules/ContactRow";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
-import { branch } from "@/lib/data";
+import type { TBranch } from "@/lib/types";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 /** Contact block: branch address / phone / email + an embedded location map. */
-export function ContactSection() {
+export function ContactSection({ branch }: { branch: TBranch | null }) {
+  if (!branch) return null;
+
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
     branch.address,
   )}&output=embed`;
@@ -47,7 +49,7 @@ export function ContactSection() {
             <iframe
               title="অবস্থান মানচিত্র"
               src={mapSrc}
-              className="h-full min-h-[20rem] w-full"
+              className="h-full min-h-80 w-full"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

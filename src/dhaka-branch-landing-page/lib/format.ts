@@ -4,7 +4,7 @@ const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮"
 
 /** Convert ASCII digits in a string to Bengali numerals. */
 export function toBanglaDigits(input: string | number): string {
-  return String(input).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)]);
+  return String(input).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)] ?? d);
 }
 
 /** Format an ISO date as a Bengali long date, e.g. "২৮ জুন ২০২৬". */

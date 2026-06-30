@@ -27,7 +27,7 @@ export function AboutSection() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           title="আমাদের সম্পর্কে"
-          subtitle={`${ORGANIZATION.nameBn}, ${ORGANIZATION.branchBn} জনগণের কল্যাণে নিবেদিত একটি সরকারি প্রতিষ্ঠান।`}
+          subtitle={`${ORGANIZATION.nameBn} জনগণের কল্যাণে নিবেদিত একটি সরকারি প্রতিষ্ঠান।`}
         />
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">

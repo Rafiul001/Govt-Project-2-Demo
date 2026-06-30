@@ -1,13 +1,14 @@
 import { NoticeItem } from "@/components/molecules/NoticeItem";
 import { QuickLink } from "@/components/molecules/QuickLink";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
-import { importantLinks, notices } from "@/lib/data";
+import { importantLinks } from "@/lib/data";
+import type { TNotice } from "@/lib/types";
 
 /**
  * Notice board + important links — the two-column centrepiece of nearly every
- * Bangladesh govt portal. Only published notices are rendered.
+ * Bangladesh govt portal. Notices come from the API (already published-only).
  */
-export function NoticeBoard() {
+export function NoticeBoard({ notices }: { notices: TNotice[] }) {
   const published = notices.filter((n) => n.isPublished);
 
   return (

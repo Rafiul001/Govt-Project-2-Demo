@@ -1,10 +1,11 @@
-import { branch, importantLinks, ORGANIZATION } from "@/lib/data";
+import { importantLinks, ORGANIZATION } from "@/lib/data";
 import { toBanglaDigits } from "@/lib/format";
+import type { TBranch } from "@/lib/types";
 import { Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 
 /** Dark-green footer with contact, quick links, and copyright. */
-export function SiteFooter() {
+export function SiteFooter({ branch }: { branch: TBranch | null }) {
   const year = toBanglaDigits(new Date().getFullYear());
 
   return (
@@ -22,7 +23,9 @@ export function SiteFooter() {
             />
             <div>
               <p className="font-bold text-white">{ORGANIZATION.nameBn}</p>
-              <p className="text-sm text-slate-300">{ORGANIZATION.branchBn}</p>
+              {branch ? (
+                <p className="text-sm text-slate-300">{branch.name} শাখা</p>
+              ) : null}
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-slate-300">
@@ -35,17 +38,19 @@ export function SiteFooter() {
         <div>
           <h3 className="mb-4 font-semibold text-white">যোগাযোগ</h3>
           <ul className="space-y-3 text-sm">
-            <li className="flex gap-2">
-              <MapPin className="size-4 shrink-0 text-govt-red" aria-hidden />
-              <span>{branch.address}</span>
-            </li>
-            {branch.phone ? (
+            {branch?.address ? (
+              <li className="flex gap-2">
+                <MapPin className="size-4 shrink-0 text-govt-red" aria-hidden />
+                <span>{branch.address}</span>
+              </li>
+            ) : null}
+            {branch?.phone ? (
               <li className="flex gap-2">
                 <Phone className="size-4 shrink-0 text-govt-red" aria-hidden />
                 <span>{branch.phone}</span>
               </li>
             ) : null}
-            {branch.email ? (
+            {branch?.email ? (
               <li className="flex gap-2">
                 <Mail className="size-4 shrink-0 text-govt-red" aria-hidden />
                 <span>{branch.email}</span>
@@ -108,8 +113,8 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-xs text-slate-400 sm:flex-row sm:text-left">
           <p>
-            © {year} {ORGANIZATION.nameBn}, {ORGANIZATION.branchBn}। সর্বস্বত্ব
-            সংরক্ষিত।
+            © {year} {ORGANIZATION.nameBn}
+            {branch ? `, ${branch.name} শাখা` : ""}। সর্বস্বত্ব সংরক্ষিত।
           </p>
           <p>{ORGANIZATION.govLineBn}</p>
         </div>

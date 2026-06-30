@@ -24,12 +24,12 @@ export function ContactRow({
         {href ? (
           <a
             href={href}
-            className="break-words font-medium text-slate-700 hover:text-govt-green"
+            className="wrap-break-word font-medium text-slate-700 hover:text-govt-green"
           >
             {value}
           </a>
         ) : (
-          <p className="break-words font-medium text-slate-700">{value}</p>
+          <p className="wrap-break-word font-medium text-slate-700">{value}</p>
         )}
       </div>
     </div>
