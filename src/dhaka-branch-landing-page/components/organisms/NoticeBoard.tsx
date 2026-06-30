@@ -6,6 +6,10 @@ import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { importantLinks } from "@/lib/data";
 import type { TNotice } from "@/lib/types";
+import Link from "next/link";
+
+/** Notices shown on the home page; the rest live on the `/notices` archive. */
+const HOME_NOTICE_LIMIT = 4;
 
 /**
  * Notice board + important links — the two-column centrepiece of nearly every
@@ -13,7 +17,10 @@ import type { TNotice } from "@/lib/types";
  */
 export function NoticeBoard({ notices }: { notices: TNotice[] }) {
   const { lang, t } = useLanguage();
-  const published = notices.filter((n) => n.isPublished);
+  // Surface only the latest few here; "view all" leads to the full archive.
+  const latest = notices
+    .filter((n) => n.isPublished)
+    .slice(0, HOME_NOTICE_LIMIT);
 
   return (
     <section id="notices" className="scroll-mt-20 bg-slate-50 py-14">
@@ -22,8 +29,8 @@ export function NoticeBoard({ notices }: { notices: TNotice[] }) {
         <div className="lg:col-span-2">
           <SectionHeading title={t.notices.title} />
           <div className="mt-6 rounded-lg border border-slate-200 bg-white px-5 py-2 shadow-sm">
-            {published.length > 0 ? (
-              published.map((notice) => (
+            {latest.length > 0 ? (
+              latest.map((notice) => (
                 <NoticeItem key={notice.id} notice={notice} />
               ))
             ) : (
@@ -33,12 +40,12 @@ export function NoticeBoard({ notices }: { notices: TNotice[] }) {
             )}
           </div>
           <div className="mt-4 text-right">
-            <a
-              href="#"
+            <Link
+              href="/notices"
               className="text-sm font-semibold text-govt-green hover:underline"
             >
               {t.notices.viewAll}
-            </a>
+            </Link>
           </div>
         </div>
 

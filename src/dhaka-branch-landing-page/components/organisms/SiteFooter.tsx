@@ -14,10 +14,10 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
   const branchLabel = branch ? `, ${branch.name} ${t.header.branchSuffix}` : "";
 
   const quickAccess = [
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.notices, href: "#notices" },
-    { label: t.nav.board, href: "#board" },
-    { label: t.nav.contact, href: "#contact" },
+    { label: t.nav.about, href: "/#about" },
+    { label: t.nav.notices, href: "/#notices" },
+    { label: t.nav.board, href: "/#board" },
+    { label: t.nav.contact, href: "/#contact" },
   ];
 
   return (

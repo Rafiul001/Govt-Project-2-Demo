@@ -4,16 +4,27 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { formatLocaleDate } from "@/lib/format";
 import type { TNotice } from "@/lib/types";
 import { Download, FileText } from "lucide-react";
+import Link from "next/link";
 
 /**
  * Notice-board row — mirrors the inbox-style `NoticeCard` from the admin client
  * (`src/client/.../molecules/NoticeCard.tsx`) but read-only for public viewing.
+ *
+ * The whole row is a "stretched link" to the `/notices` archive with the notice
+ * pre-selected; the download link sits above it so it stays independently
+ * clickable (anchors can't be nested).
  */
 export function NoticeItem({ notice }: { notice: TNotice }) {
   const { lang, t } = useLanguage();
 
   return (
-    <article className="group flex gap-4 border-b border-slate-200 py-4 last:border-b-0">
+    <article className="group relative flex gap-4 border-b border-slate-200 py-4 last:border-b-0">
+      <Link
+        href={`/notices?id=${notice.id}`}
+        aria-label={notice.title}
+        className="absolute inset-0 z-0"
+      />
+
       <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-md bg-govt-green/10 text-govt-green">
         <FileText className="size-5" aria-hidden />
       </div>
@@ -34,7 +45,7 @@ export function NoticeItem({ notice }: { notice: TNotice }) {
           {notice.fileUrl ? (
             <a
               href={notice.fileUrl}
-              className="inline-flex items-center gap-1 font-medium text-govt-red hover:underline"
+              className="relative z-10 inline-flex items-center gap-1 font-medium text-govt-red hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >

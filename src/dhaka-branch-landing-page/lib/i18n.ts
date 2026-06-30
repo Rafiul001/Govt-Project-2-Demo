@@ -65,9 +65,24 @@ type Dictionary = {
     publishedOn: string;
     download: string;
   };
+  noticesPage: {
+    heading: string;
+    subtitle: string;
+    backHome: string;
+    count: string;
+    empty: string;
+  };
   board: {
     title: string;
     subtitle: string;
+    empty: string;
+    viewAll: string;
+  };
+  boardPage: {
+    heading: string;
+    subtitle: string;
+    backHome: string;
+    count: string;
     empty: string;
   };
   contact: {
@@ -167,10 +182,26 @@ export const dictionaries: Record<Language, Dictionary> = {
       publishedOn: "প্রকাশকাল",
       download: "ডাউনলোড",
     },
+    noticesPage: {
+      heading: "সকল নোটিশ",
+      subtitle: "ঢাকা শাখার প্রকাশিত সকল নোটিশ ও বিজ্ঞপ্তি।",
+      backHome: "← প্রচ্ছদে ফিরুন",
+      count: "টি নোটিশ",
+      empty: "এই মুহূর্তে প্রকাশিত কোনো নোটিশ নেই।",
+    },
     board: {
       title: "পরিচালনা পর্ষদ",
       subtitle:
         "প্রতিষ্ঠানের নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
+      empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
+      viewAll: "সকল সদস্য দেখুন →",
+    },
+    boardPage: {
+      heading: "পরিচালনা পর্ষদ",
+      subtitle:
+        "ঢাকা শাখার নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
+      backHome: "← প্রচ্ছদে ফিরুন",
+      count: "জন সদস্য",
       empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
     },
     contact: {
@@ -270,10 +301,26 @@ export const dictionaries: Record<Language, Dictionary> = {
       publishedOn: "Published",
       download: "Download",
     },
+    noticesPage: {
+      heading: "All Notices",
+      subtitle: "All published notices and announcements of the Dhaka Branch.",
+      backHome: "← Back to Home",
+      count: "notices",
+      empty: "There are no published notices at this time.",
+    },
     board: {
       title: "Board of Directors",
       subtitle:
         "The honourable officials entrusted with the policy-making and management of the institution.",
+      empty: "Information on the board of directors will be published soon.",
+      viewAll: "View all members →",
+    },
+    boardPage: {
+      heading: "Board of Directors",
+      subtitle:
+        "The honourable officials entrusted with the policy-making and management of the Dhaka Branch.",
+      backHome: "← Back to Home",
+      count: "members",
       empty: "Information on the board of directors will be published soon.",
     },
     contact: {

@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 /** Primary green navigation bar with a collapsible menu on small screens. */
@@ -9,12 +10,14 @@ export function NavBar() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
+  // Section anchors are root-relative so they also work from other routes;
+  // "Notice Board" and "Board of Directors" link to their full pages.
   const navItems = [
-    { label: t.nav.home, href: "#home" },
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.notices, href: "#notices" },
-    { label: t.nav.board, href: "#board" },
-    { label: t.nav.contact, href: "#contact" },
+    { label: t.nav.home, href: "/#home" },
+    { label: t.nav.about, href: "/#about" },
+    { label: t.nav.notices, href: "/notices" },
+    { label: t.nav.board, href: "/board" },
+    { label: t.nav.contact, href: "/#contact" },
   ];
 
   return (
@@ -23,12 +26,12 @@ export function NavBar() {
         <ul className="hidden items-center md:flex">
           {navItems.map((item) => (
             <li key={item.href}>
-              <a
+              <Link
                 href={item.href}
                 className="block px-4 py-3 text-sm font-medium transition-colors hover:bg-govt-green-dark"
               >
                 {item.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -51,13 +54,13 @@ export function NavBar() {
         <ul className="border-t border-white/10 md:hidden">
           {navItems.map((item) => (
             <li key={item.href}>
-              <a
+              <Link
                 href={item.href}
                 className="block px-4 py-3 text-sm font-medium transition-colors hover:bg-govt-green-dark"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

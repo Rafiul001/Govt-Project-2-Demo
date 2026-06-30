@@ -46,9 +46,7 @@ async function apiGet<T>(path: string): Promise<T | null> {
 export async function getBranch(
   name: string = BRANCH_NAME,
 ): Promise<TBranch | null> {
-  const data = await apiGet<TPaginated<TBranch>>(
-    `/api/v1/branch?pageSize=100`,
-  );
+  const data = await apiGet<TPaginated<TBranch>>(`/api/v1/branch?pageSize=100`);
   return data?.items.find((b) => b.name === name) ?? null;
 }
 
@@ -63,6 +61,13 @@ export async function getNotices(
   return data?.items ?? [];
 }
 
+/** Every notice for the branch — backs the full `/notices` archive page. */
+export async function getAllNotices(
+  name: string = BRANCH_NAME,
+): Promise<TNotice[]> {
+  return getNotices(name, 100);
+}
+
 /** Board of directors for the branch, ordered by display order. */
 export async function getBoardOfDirectors(
   name: string = BRANCH_NAME,
@@ -72,4 +77,11 @@ export async function getBoardOfDirectors(
     `/api/v1/board-of-directors?branchName=${encodeURIComponent(name)}&pageSize=${pageSize}`,
   );
   return data?.items ?? [];
+}
+
+/** Full board of directors — backs the `/board` page. */
+export async function getAllBoardOfDirectors(
+  name: string = BRANCH_NAME,
+): Promise<TBoardOfDirector[]> {
+  return getBoardOfDirectors(name, 100);
 }
