@@ -6,7 +6,7 @@
     "dev": "concurrently -n server,client,landing -c blue,green,magenta \"bun run dev:server\" \"bun run dev:client\" \"bun run dev:landing\"",
     "dev:server": "bun --watch src/index.ts",
     "dev:client": "cd src/client && bun run dev",
-    "dev:landing": "cd src/dhaka-branch-landing-page && bun run dev --port 3001",
+    "dev:landing": "cd src/landing-page && bun run dev --port 3001",
     "build": "NODE_ENV=production bun build src/index.ts --outdir dist --target node",
     "start": "node --env-file-if-exists=.env dist/index.js"
   },

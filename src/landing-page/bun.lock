@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "dhaka-branch-landing-page",
+      "name": "landing-page",
       "dependencies": {
         "lucide-react": "^1.22.0",
         "next": "16.2.9",

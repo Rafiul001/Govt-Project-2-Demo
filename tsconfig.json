@@ -33,7 +33,7 @@
     "noPropertyAccessFromIndexSignature": false
   },
 
-  // The Dhaka landing page is a standalone Next.js project with its own
+  // The landing page is a standalone Next.js project with its own
   // tsconfig (and its own `@/*` alias root); it must not be type-checked here.
-  "exclude": ["node_modules", "dist", "src/dhaka-branch-landing-page"]
+  "exclude": ["node_modules", "dist", "src/landing-page"]
 }
