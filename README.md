@@ -1,11 +1,19 @@
 # govt-project-2-demo
 
-Full-stack application for a multi-branch government/organization portal. The
-**backend** is a JSON API built on the [Bun](https://bun.com) runtime with
-[Hono](https://hono.dev) for HTTP routing, [Drizzle ORM](https://orm.drizzle.team)
-(v1) over PostgreSQL, JWT authentication, and [Pino](https://getpino.io) for
-logging. The **frontend** is a React admin panel ([`src/client/`](src/client/))
-built with Vite, TanStack Router/Query/Form, and HeroUI.
+Full-stack application for a multi-branch government/organization portal. It has
+three parts:
+
+- **Backend** ([`src/server/`](src/server/)) — a JSON API on the
+  [Bun](https://bun.com) runtime with [Hono](https://hono.dev) for HTTP routing,
+  [Drizzle ORM](https://orm.drizzle.team) (v1) over PostgreSQL, JWT
+  authentication, and [Pino](https://getpino.io) for logging.
+- **Admin panel** ([`src/client/`](src/client/)) — a React app built with Vite,
+  TanStack Router/Query/Form, and HeroUI for managing branches and their content.
+- **Public landing sites** ([`src/landing-page/`](src/landing-page/)) — a
+  [Next.js](https://nextjs.org) app that serves one bilingual (Bengali/English)
+  public site **per branch**, resolved from the request **subdomain**
+  (`dhaka.example.com` → the Dhaka branch). See
+  [Public Landing Sites](#public-landing-sites).
 
 ## Screenshots
 
@@ -25,9 +33,12 @@ straight to its preview.
 ### Branches
 
 Branch records as media cards — banner image, overlapping logo, name/address,
-and contact details — with floating edit/delete actions. _(Super admin only.)_
+the public **preview URL** (a globe link to the branch's landing site), and
+contact details — with floating edit/delete actions. _(Super admin only.)_
 
-![Branches](docs/screenshots/branches.png)
+| Light                                                    | Dark                                                   |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| ![Branches (light)](docs/screenshots/branches-light.png) | ![Branches (dark)](docs/screenshots/branches-dark.png) |
 
 ### Board of Directors
 
@@ -43,13 +54,6 @@ the right (image, description, and an inline PDF viewer for attachments). The
 panel fills the content height and scrolls on its own.
 
 ![Notices](docs/screenshots/notices.png)
-
-### Layouts
-
-Per-branch display settings as cards — show logo / show banner toggles and the
-sidebar position, headed by the branch name.
-
-![Layouts](docs/screenshots/layouts.png)
 
 ### Admins
 
@@ -67,6 +71,19 @@ update your own avatar and password.
 | Light                                                    | Dark                                                   |
 | -------------------------------------------------------- | ------------------------------------------------------ |
 | ![Settings (light)](docs/screenshots/settings-light.png) | ![Settings (dark)](docs/screenshots/settings-dark.png) |
+
+### Public Landing Sites
+
+The public-facing side ([`src/landing-page/`](src/landing-page/)). One Next.js
+deployment serves **every branch**: the branch is resolved from the request
+subdomain, and all content (branch profile, notices, board of directors) is
+fetched live from the API and scoped to that branch. Each site is bilingual with
+a Bengali/English toggle — below, **Dhaka** is shown in English and **Sylhet** in
+Bengali.
+
+| Dhaka — English (`dhaka.example.com`)                  | Sylhet — Bengali (`sylhet.example.com`)                  |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| ![Dhaka branch site](docs/screenshots/landing-dhaka.png) | ![Sylhet branch site](docs/screenshots/landing-sylhet.png) |
 
 ## Tech Stack
 
@@ -97,6 +114,18 @@ update your own avatar and password.
 | Styling       | Tailwind CSS v4 + HeroUI          |
 | Language      | TypeScript                        |
 
+### Public site (`src/landing-page/`)
+
+| Concern       | Choice                                            |
+| ------------- | ------------------------------------------------- |
+| Framework     | Next.js 16 (App Router)                           |
+| UI library    | React 19                                          |
+| Data fetching | Server Components fetching the public GET routes  |
+| Routing       | Subdomain → branch (resolved via request host)    |
+| i18n          | Bilingual Bengali/English toggle                  |
+| Styling       | Tailwind CSS v4                                    |
+| Language      | TypeScript                                        |
+
 ## Prerequisites
 
 - [Bun](https://bun.com) `>= 1.3`
@@ -106,11 +135,13 @@ update your own avatar and password.
 
 1. **Install dependencies**
 
-   Install the backend (root) and the frontend (`src/client/`) dependencies:
+   Install the backend (root), the admin panel (`src/client/`), and the public
+   landing site (`src/landing-page/`) dependencies — each is its own package:
 
    ```bash
    bun install
    cd src/client && bun install && cd ../..
+   cd src/landing-page && bun install && cd ../..
    ```
 
 2. **Configure environment**
@@ -161,31 +192,45 @@ update your own avatar and password.
 5. **Run the app**
 
    ```bash
-   bun run dev                 # backend (watch mode) + frontend (Vite) together
+   bun run dev                 # backend + admin panel + landing site together
    ```
 
-   This starts both processes concurrently. The server logs
-   `Server running at http://localhost:<PORT>`, and Vite serves the admin panel
-   on its own dev URL (printed in the console). To run just one side:
+   This starts all three processes concurrently: the backend (logs
+   `Server running at http://localhost:<PORT>`), the Vite admin panel on its own
+   dev URL, and the Next.js landing site on **`http://localhost:3001`**. To run
+   just one side:
 
    ```bash
    bun run dev:server          # backend only
-   bun run dev:client          # frontend only
+   bun run dev:client          # admin panel only
+   bun run dev:landing         # public landing site only (port 3001)
    ```
+
+   To exercise the per-branch **subdomain** routing locally, map the branch
+   subdomains to localhost (e.g. in `/etc/hosts`) and visit them on port 3001:
+
+   ```
+   127.0.0.1  dhaka.example.com sylhet.example.com rajshahi.example.com
+   ```
+
+   The dev server already allows these origins via `allowedDevOrigins` in
+   [`src/landing-page/next.config.ts`](src/landing-page/next.config.ts). A bare
+   `localhost:3001` (no subdomain) falls back to the `BRANCH_NAME` env var.
 
 ## Scripts
 
 Root scripts:
 
-| Script               | Description                                              |
-| -------------------- | -------------------------------------------------------- |
-| `bun run dev`        | Run backend (watch) + frontend (Vite) concurrently       |
-| `bun run dev:server` | Start only the backend in watch mode (`src/index.ts`)    |
-| `bun run dev:client` | Start only the frontend Vite dev server                  |
-| `bun run build`      | Bundle the backend to `dist/` (`NODE_ENV=production`)    |
-| `bun run start`      | Run the built backend bundle with Node (`dist/index.js`) |
+| Script                | Description                                              |
+| --------------------- | ------------------------------------------------------- |
+| `bun run dev`         | Run backend + admin panel + landing site concurrently   |
+| `bun run dev:server`  | Start only the backend in watch mode (`src/index.ts`)   |
+| `bun run dev:client`  | Start only the admin panel Vite dev server              |
+| `bun run dev:landing` | Start only the landing site (Next.js, port 3001)        |
+| `bun run build`       | Bundle the backend to `dist/` (`NODE_ENV=production`)   |
+| `bun run start`       | Run the built backend bundle with Node (`dist/index.js`) |
 
-Frontend scripts (run from `src/client/`):
+Admin panel scripts (run from `src/client/`):
 
 | Script            | Description                                |
 | ----------------- | ------------------------------------------ |
@@ -193,6 +238,15 @@ Frontend scripts (run from `src/client/`):
 | `bun run build`   | Type-check and build the client to `dist/` |
 | `bun run preview` | Preview the production build               |
 | `bun run lint`    | Lint the client with ESLint                |
+
+Landing site scripts (run from `src/landing-page/`):
+
+| Script          | Description                            |
+| --------------- | ------------------------------------- |
+| `bun run dev`   | Start the Next.js dev server          |
+| `bun run build` | Build the landing site for production |
+| `bun run start` | Serve the production build            |
+| `bun run lint`  | Lint the landing site with ESLint     |
 
 ## Project Structure
 
@@ -217,6 +271,11 @@ src/
 │           ├── molecules/   # Single-element building blocks
 │           ├── organisms/   # AppShell, DataTable, resource forms
 │           └── pages/       # One component per screen
+├── landing-page/             # Public per-branch site (Next.js — see its README)
+│   ├── next.config.ts        # Next config (image hosts, allowedDevOrigins)
+│   ├── app/                  # App Router pages (home, /notices, /board)
+│   ├── components/           # Atoms/molecules/organisms for the public site
+│   └── lib/                  # api.ts (subdomain → branch + data fetching), i18n
 ├── index.ts                  # Entry point: boots Hono server, graceful shutdown
 ├── scripts/
 │   └── createSuperAdmin.ts   # Seed script to bootstrap the first super admin
@@ -235,7 +294,6 @@ src/
 │   │       ├── adminRouter.ts              # /api/v1/admin routes
 │   │       ├── branchRouter.ts             # /api/v1/branch routes
 │   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
-│   │       ├── layoutRouter.ts             # /api/v1/layout routes
 │   │       └── noticeRouter.ts             # /api/v1/notice routes
 │   ├── service/
 │   │   └── cloudinary/
@@ -256,7 +314,6 @@ src/
 │           ├── adminSchema.ts
 │           ├── branchSchema.ts
 │           ├── boardOfDirectorsSchema.ts
-│           ├── layoutSchema.ts
 │           └── noticeSchema.ts
 └── shared/
     ├── types/
@@ -267,7 +324,6 @@ src/
         ├── admin.validator.ts            # Zod schemas for admin requests
         ├── branch.validator.ts           # Zod schemas for branch requests
         ├── boardOfDirectors.validator.ts # Zod schemas for board requests
-        ├── layout.validator.ts           # Zod schemas for layout requests
         ├── notice.validator.ts           # Zod schemas for notice requests
         ├── pagination.validator.ts       # Shared `?page`/`?pageSize` query schema
         ├── params.validator.ts           # Shared `:id` path-param schema
@@ -330,45 +386,49 @@ paginated envelope rather than a bare array:
 | `GET`    | `/api/v1/admin`                  | Super admin only | —                     | List admins (paginated)                        |
 | `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)       | Create a branch admin (`branchId` required)    |
 | `POST`   | `/api/v1/admin/logout`           | Any admin        | —                     | Logout (stateless acknowledgement)             |
-| `GET`    | `/api/v1/branch`                 | Super admin only | —                     | List branches (paginated)                      |
-| `GET`    | `/api/v1/branch/:id`             | Super admin only | —                     | Get one branch                                 |
+| `GET`    | `/api/v1/branch`                 | Public           | —                     | List branches (paginated)                      |
+| `GET`    | `/api/v1/branch/:id`             | Public           | —                     | Get one branch                                 |
 | `POST`   | `/api/v1/branch`                 | Super admin only | `form` (logo, banner) | Create a branch                                |
 | `PATCH`  | `/api/v1/branch/:id`             | Super admin only | `form` (logo, banner) | Update a branch                                |
 | `DELETE` | `/api/v1/branch/:id`             | Super admin only | —                     | Delete a branch (+ media, cascades children)   |
-| `GET`    | `/api/v1/board-of-directors`     | Any admin        | —                     | List board members (branch-scoped, paginated)  |
-| `GET`    | `/api/v1/board-of-directors/:id` | Any admin        | —                     | Get one board member                           |
+| `GET`    | `/api/v1/board-of-directors`     | Public           | —                     | List board members (branch-scoped, paginated)  |
+| `GET`    | `/api/v1/board-of-directors/:id` | Public           | —                     | Get one board member                           |
 | `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)       | Create a board member                          |
 | `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)       | Update a board member                          |
 | `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                     | Delete a board member (+ its avatar)           |
-| `GET`    | `/api/v1/layout`                 | Any admin        | —                     | List layouts (branch-scoped, paginated)        |
-| `GET`    | `/api/v1/layout/:id`             | Any admin        | —                     | Get one layout                                 |
-| `POST`   | `/api/v1/layout`                 | Any admin        | `json`                | Create a layout                                |
-| `PATCH`  | `/api/v1/layout/:id`             | Any admin        | `json`                | Update a layout                                |
-| `DELETE` | `/api/v1/layout/:id`             | Any admin        | —                     | Delete a layout                                |
-| `GET`    | `/api/v1/notice`                 | Any admin        | —                     | List notices (branch-scoped, paginated)        |
-| `GET`    | `/api/v1/notice/:id`             | Any admin        | —                     | Get one notice                                 |
+| `GET`    | `/api/v1/notice`                 | Public           | —                     | List notices (branch-scoped, paginated)        |
+| `GET`    | `/api/v1/notice/:id`             | Public           | —                     | Get one notice                                 |
 | `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file)  | Create a notice                                |
 | `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file)  | Update a notice                                |
 | `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                     | Delete a notice (+ its image & PDF)            |
 
+> **Public reads.** The `GET` routes above are public — they power the landing
+> sites, which fetch each branch's profile, notices, and board members with no
+> auth, scoped by `?branchName=`. Anonymous callers only ever see **published**
+> notices; an authenticated admin additionally sees their own branch's drafts.
+>
 > Admins created through the API are always **branch admins** (a `branchId` is
 > required); a super admin **cannot** create another super admin — those are
 > seeded only via the bootstrap script. Branch admins only see and manage records
-> for their own branch; super admins are unscoped. Branch management is
-> super-admin only.
+> for their own branch; super admins are unscoped. Branch **mutations** (create/
+> update/delete) are super-admin only.
 
 ## Database Schema
 
-| Table              | Constant                | Purpose                                   |
-| ------------------ | ----------------------- | ----------------------------------------- |
-| `admins`           | `DB.ADMIN`              | Portal administrators (unique `username`) |
-| `branches`         | `DB.BRANCH`             | Organization branches (parent entity)     |
-| `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                 |
-| `layouts`          | `DB.LAYOUT`             | Per-branch layout/display settings        |
-| `notices`          | `DB.NOTICE`             | Notices published by a branch             |
+| Table              | Constant                | Purpose                                          |
+| ------------------ | ----------------------- | ------------------------------------------------ |
+| `admins`           | `DB.ADMIN`              | Portal administrators (unique `username`)        |
+| `branches`         | `DB.BRANCH`             | Organization branches (parent entity)            |
+| `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                        |
+| `notices`          | `DB.NOTICE`             | Notices published by a branch                    |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
-`TBoardOfDirector`, `TLayout`, `TNotice`).
+`TBoardOfDirector`, `TNotice`).
+
+The `branches` table also has a unique, optional **`previewUrl`** — the public
+URL of the branch's landing site, whose subdomain must be the branch name (e.g.
+`https://dhaka.example.com` for "Dhaka"), validated in
+[`branch.validator.ts`](src/shared/validators/branch.validator.ts).
 
 ### Relationships
 
@@ -376,7 +436,6 @@ A **branch** is the parent entity:
 
 - One branch **has many** board of directors (`boardofdirectors.branchId → branches.id`)
 - One branch **has many** notices (`notices.branchId → branches.id`)
-- One branch **has one** layout (`layouts.branchId → branches.id`, `UNIQUE`)
 
 All child foreign keys are `ON DELETE CASCADE`. Query-time relations are defined
 with Drizzle's `defineRelations` in
@@ -390,7 +449,6 @@ const branch = await db.query.branchesTable.findFirst({
   with: {
     boardOfDirectors: true,
     notices: true,
-    layout: true,
   },
 });
 ```
@@ -398,7 +456,6 @@ const branch = await db.query.branchesTable.findFirst({
 ### Enums
 
 - `admin_type` — `SUPER_ADMIN` | `BRANCH_ADMIN` (defaults to `BRANCH_ADMIN`)
-- `sidebar_position` — `left` | `right` (layout setting, defaults to `right`)
 
 ## Admin Panel (Frontend)
 
@@ -411,8 +468,8 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   unauthenticated users to login, and super-admin-only screens (Branches,
   Admins) redirect branch admins away. Tokens live in a persisted Zustand store;
   the `ky` client attaches the `Bearer` token and clears it on a `401`.
-- **Screens** — Dashboard, Branches, Board of Directors, Notices, Layouts,
-  Admins, and Settings, each composed from `molecules` → `organisms` → `pages`.
+- **Screens** — Dashboard, Branches, Board of Directors, Notices, Admins, and
+  Settings, each composed from `molecules` → `organisms` → `pages`.
 - **Forms** — TanStack Form with the Zod schemas in
   [`src/client/src/validators`](src/client/src/validators/) (`onChange`
   validation). When a super admin must pick a branch, the field is a dropdown
@@ -425,6 +482,33 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
 - **Theming** — light/dark mode plus three accent colors (teal, blue, purple),
   chosen on the Settings page and persisted; applied via HeroUI theme tokens in
   [`src/client/src/index.css`](src/client/src/index.css).
+
+## Public Landing Sites
+
+The Next.js app in [`src/landing-page/`](src/landing-page/) is the public,
+citizen-facing site. A single deployment serves **every branch** — there is no
+per-branch build.
+
+- **Subdomain → branch** — each request's branch is derived from its host
+  subdomain in [`src/landing-page/lib/api.ts`](src/landing-page/lib/api.ts)
+  (`dhaka.example.com` → `Dhaka`), reading the request `Host` header via Next's
+  `headers()`. A bare host (or `localhost`) falls back to the `BRANCH_NAME` env
+  var. In dev, the branch subdomains are allow-listed via `allowedDevOrigins` in
+  [`next.config.ts`](src/landing-page/next.config.ts).
+- **Server-side data** — Server Components fetch the API's **public** GET routes
+  directly (server → server, no auth), scoped by `?branchName=`. A transient
+  API/DB outage degrades to empty sections rather than a crashed page.
+- **Bilingual** — every page has a Bengali/English toggle (Bengali is the
+  default for a government portal); see the screenshots above.
+- **Content** — hero, About, Notice Board, Board of Directors, Important Links,
+  and a Contact section with an embedded map. Branch profile, notices, and board
+  members are live from the API; the org identity and standard e-government links
+  are static config.
+
+| Variable        | Required | Description                                  | Default                 |
+| --------------- | -------- | -------------------------------------------- | ----------------------- |
+| `API_BASE_URL`  | no       | Base URL of the Hono API the site fetches    | `http://localhost:3000` |
+| `BRANCH_NAME`   | no       | Fallback branch when the host has no subdomain | `Dhaka`               |
 
 ## Conventions
 
