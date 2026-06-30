@@ -42,24 +42,63 @@ const optionalEmail = z
   .union([z.literal(""), z.email("Enter a valid email")])
   .optional();
 
-export const createBranchSchema = z.strictObject({
-  name: z.string().trim().min(1, "Name is required").max(255),
-  address: z.string().trim().min(1, "Address is required").max(255),
-  phone: z.string().trim().max(50).optional(),
-  email: optionalEmail,
-  logo: optionalFile,
-  banner: optionalFile,
-});
+// Public preview URL for the branch. Any URL, but its subdomain must be the
+// branch name (checked cross-field below) — e.g. https://dhaka.example.com.
+const previewUrl = z.url("Enter a valid URL").max(255);
+
+const PREVIEW_URL_MISMATCH =
+  'The branch name must be the URL subdomain (e.g. "https://dhaka.example.com" for "Dhaka")';
+
+/** The preview URL's first host label must equal the branch name. */
+function previewUrlMatchesName(url: string, name: string): boolean {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return false;
+  }
+  const subdomain = hostname.split(".")[0]?.toLowerCase() ?? "";
+  return subdomain === name.trim().toLowerCase();
+}
+
+export const createBranchSchema = z
+  .strictObject({
+    name: z.string().trim().min(1, "Name is required").max(255),
+    previewUrl,
+    address: z.string().trim().min(1, "Address is required").max(255),
+    phone: z.string().trim().max(50).optional(),
+    email: optionalEmail,
+    logo: optionalFile,
+    banner: optionalFile,
+  })
+  .refine((v) => previewUrlMatchesName(v.previewUrl, v.name), {
+    path: ["previewUrl"],
+    message: PREVIEW_URL_MISMATCH,
+  });
 export type TCreateBranchForm = z.infer<typeof createBranchSchema>;
 
-export const updateBranchSchema = z.strictObject({
-  name: z.string().trim().min(1, "Name is required").max(255).optional(),
-  address: z.string().trim().min(1, "Address is required").max(255).optional(),
-  phone: z.string().trim().max(50).optional(),
-  email: optionalEmail,
-  logo: optionalFile,
-  banner: optionalFile,
-});
+export const updateBranchSchema = z
+  .strictObject({
+    name: z.string().trim().min(1, "Name is required").max(255).optional(),
+    previewUrl: previewUrl.optional(),
+    address: z
+      .string()
+      .trim()
+      .min(1, "Address is required")
+      .max(255)
+      .optional(),
+    phone: z.string().trim().max(50).optional(),
+    email: optionalEmail,
+    logo: optionalFile,
+    banner: optionalFile,
+  })
+  .refine(
+    (v) =>
+      v.previewUrl === undefined ||
+      v.name === undefined ||
+      previewUrlMatchesName(v.previewUrl, v.name),
+    { path: ["previewUrl"], message: PREVIEW_URL_MISMATCH },
+  );
 export type TUpdateBranchForm = z.infer<typeof updateBranchSchema>;
 
 // --- Admin ---

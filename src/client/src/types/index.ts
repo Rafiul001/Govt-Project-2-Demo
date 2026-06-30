@@ -32,6 +32,7 @@ export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
 export type TBranch = {
   id: number;
   name: string;
+  previewUrl: string | null;
   address: string;
   phone: string | null;
   email: string | null;
@@ -92,6 +93,7 @@ export type TLoginResult = {
 
 export type TCreateBranchInput = {
   name: string;
+  previewUrl: string;
   address: string;
   phone?: string;
   email?: string;
@@ -101,6 +103,7 @@ export type TCreateBranchInput = {
 
 export type TUpdateBranchInput = {
   name?: string;
+  previewUrl?: string;
   address?: string;
   phone?: string;
   email?: string;

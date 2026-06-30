@@ -1,5 +1,6 @@
 import { Button } from "@heroui/react";
 import {
+  GlobeIcon,
   MailIcon,
   MapPinIcon,
   PencilIcon,
@@ -82,6 +83,20 @@ export function BranchCard({ branch, onEdit, onDelete }: BranchCardProps) {
             <p className="line-clamp-2 text-sm text-muted">{branch.address}</p>
           </div>
         </div>
+
+        {branch.previewUrl && (
+          <a
+            href={branch.previewUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm hover:underline"
+          >
+            <GlobeIcon className="size-4 shrink-0 text-accent" />
+            <span className="truncate font-medium text-accent">
+              {branch.previewUrl}
+            </span>
+          </a>
+        )}
 
         {(branch.phone || branch.email) && (
           <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3 text-sm">

@@ -23,6 +23,7 @@ export function BranchForm({ initial, onSuccess, onCancel }: BranchFormProps) {
   const form = useForm({
     defaultValues: {
       name: initial?.name ?? "",
+      previewUrl: initial?.previewUrl ?? "",
       address: initial?.address ?? "",
       phone: initial?.phone ?? "",
       email: initial?.email ?? "",
@@ -34,6 +35,7 @@ export function BranchForm({ initial, onSuccess, onCancel }: BranchFormProps) {
       try {
         const payload = {
           name: value.name,
+          previewUrl: value.previewUrl,
           address: value.address,
           phone: value.phone || undefined,
           email: value.email || undefined,
@@ -65,6 +67,16 @@ export function BranchForm({ initial, onSuccess, onCancel }: BranchFormProps) {
     >
       <form.Field name="name">
         {(field) => <TextInput field={field} label="Name" isRequired />}
+      </form.Field>
+      <form.Field name="previewUrl">
+        {(field) => (
+          <TextInput
+            field={field}
+            label="Preview URL"
+            placeholder="https://dhaka.example.com"
+            isRequired
+          />
+        )}
       </form.Field>
       <form.Field name="address">
         {(field) => <TextInput field={field} label="Address" isRequired />}
