@@ -54,3 +54,16 @@ export async function branchExists(branchId: number): Promise<boolean> {
     .limit(1);
   return Boolean(row);
 }
+
+/**
+ * Resolves a branch id from its (unique) name. Returns `null` when no branch
+ * matches — used by the public read routes to scope a list by `?branchName=`.
+ */
+export async function branchIdByName(name: string): Promise<number | null> {
+  const [row] = await db
+    .select({ id: branchesTable.id })
+    .from(branchesTable)
+    .where(eq(branchesTable.name, name))
+    .limit(1);
+  return row?.id ?? null;
+}

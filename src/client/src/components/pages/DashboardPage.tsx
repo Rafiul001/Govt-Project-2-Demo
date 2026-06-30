@@ -4,7 +4,6 @@ import {
   ArrowUpRightIcon,
   Building2Icon,
   CalendarIcon,
-  LayoutTemplateIcon,
   MegaphoneIcon,
   PlusIcon,
   ShieldUserIcon,
@@ -14,7 +13,6 @@ import type { ComponentType } from "react";
 import { useAdmins } from "../../hooks/useAdmins";
 import { useBoardOfDirectors } from "../../hooks/useBoardOfDirectors";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
-import { useLayouts } from "../../hooks/useLayouts";
 import { useNotices } from "../../hooks/useNotices";
 import type { TNotice } from "../../types";
 
@@ -72,7 +70,6 @@ export function DashboardPage() {
   // We only need the totals, so request a single row per resource.
   const countParams = { page: 1, pageSize: 1 };
   const board = useBoardOfDirectors(countParams);
-  const layouts = useLayouts(countParams);
   const admins = useAdmins(countParams, { enabled: isSuperAdmin });
 
   // Recent notices feed.
@@ -85,7 +82,6 @@ export function DashboardPage() {
   const quickActions = [
     { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
     { to: "/notices", label: "Notices", icon: MegaphoneIcon },
-    { to: "/layouts", label: "Layouts", icon: LayoutTemplateIcon },
     ...(isSuperAdmin
       ? [
           { to: "/branches", label: "Branches", icon: Building2Icon },
@@ -121,7 +117,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatTile
           to="/board-of-directors"
           label="Board members"
@@ -133,12 +129,6 @@ export function DashboardPage() {
           label="Notices"
           value={dash(recent.data?.total, recent.isLoading)}
           icon={MegaphoneIcon}
-        />
-        <StatTile
-          to="/layouts"
-          label="Layouts"
-          value={dash(layouts.data?.total, layouts.isLoading)}
-          icon={LayoutTemplateIcon}
         />
         {isSuperAdmin ? (
           <StatTile

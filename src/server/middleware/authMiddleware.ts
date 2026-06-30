@@ -51,3 +51,26 @@ export function authMiddleware(
     await next();
   };
 }
+
+/**
+ * Attaches the admin payload when a valid access token is present, but never
+ * rejects the request. Used on public read routes so the same handler can serve
+ * both anonymous visitors (e.g. the public landing site) and authenticated
+ * admins (who still get their branch-scoped view).
+ */
+export function optionalAuthMiddleware(): MiddlewareHandler<TAppEnv> {
+  return async (c, next) => {
+    const token = extractToken(c);
+    if (token) {
+      try {
+        const payload = await verifyAccessToken(token);
+        if (payload.type === tokenType.ACCESS) {
+          c.set("admin", payload);
+        }
+      } catch {
+        // Ignore invalid/expired tokens on public routes — treat as anonymous.
+      }
+    }
+    await next();
+  };
+}

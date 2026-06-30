@@ -14,7 +14,6 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppNoticesRouteImport } from './routes/_app/notices'
-import { Route as AppLayoutsRouteImport } from './routes/_app/layouts'
 import { Route as AppBranchesRouteImport } from './routes/_app/branches'
 import { Route as AppBoardOfDirectorsRouteImport } from './routes/_app/board-of-directors'
 import { Route as AppAdminsRouteImport } from './routes/_app/admins'
@@ -43,11 +42,6 @@ const AppNoticesRoute = AppNoticesRouteImport.update({
   path: '/notices',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutsRoute = AppLayoutsRouteImport.update({
-  id: '/layouts',
-  path: '/layouts',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppBranchesRoute = AppBranchesRouteImport.update({
   id: '/branches',
   path: '/branches',
@@ -70,7 +64,6 @@ export interface FileRoutesByFullPath {
   '/admins': typeof AppAdminsRoute
   '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
-  '/layouts': typeof AppLayoutsRoute
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
 }
@@ -79,7 +72,6 @@ export interface FileRoutesByTo {
   '/admins': typeof AppAdminsRoute
   '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
-  '/layouts': typeof AppLayoutsRoute
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
@@ -91,7 +83,6 @@ export interface FileRoutesById {
   '/_app/admins': typeof AppAdminsRoute
   '/_app/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/_app/branches': typeof AppBranchesRoute
-  '/_app/layouts': typeof AppLayoutsRoute
   '/_app/notices': typeof AppNoticesRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
@@ -104,7 +95,6 @@ export interface FileRouteTypes {
     | '/admins'
     | '/board-of-directors'
     | '/branches'
-    | '/layouts'
     | '/notices'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -113,7 +103,6 @@ export interface FileRouteTypes {
     | '/admins'
     | '/board-of-directors'
     | '/branches'
-    | '/layouts'
     | '/notices'
     | '/settings'
     | '/'
@@ -124,7 +113,6 @@ export interface FileRouteTypes {
     | '/_app/admins'
     | '/_app/board-of-directors'
     | '/_app/branches'
-    | '/_app/layouts'
     | '/_app/notices'
     | '/_app/settings'
     | '/_app/'
@@ -172,13 +160,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNoticesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/layouts': {
-      id: '/_app/layouts'
-      path: '/layouts'
-      fullPath: '/layouts'
-      preLoaderRoute: typeof AppLayoutsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/branches': {
       id: '/_app/branches'
       path: '/branches'
@@ -207,7 +188,6 @@ interface AppRouteChildren {
   AppAdminsRoute: typeof AppAdminsRoute
   AppBoardOfDirectorsRoute: typeof AppBoardOfDirectorsRoute
   AppBranchesRoute: typeof AppBranchesRoute
-  AppLayoutsRoute: typeof AppLayoutsRoute
   AppNoticesRoute: typeof AppNoticesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -217,7 +197,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminsRoute: AppAdminsRoute,
   AppBoardOfDirectorsRoute: AppBoardOfDirectorsRoute,
   AppBranchesRoute: AppBranchesRoute,
-  AppLayoutsRoute: AppLayoutsRoute,
   AppNoticesRoute: AppNoticesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

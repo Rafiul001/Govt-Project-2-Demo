@@ -1,6 +1,9 @@
 import db from "@/server/db/client";
 import { boardOfDirectorsTable } from "@/server/db/schemas";
-import { authMiddleware } from "@/server/middleware/authMiddleware";
+import {
+  authMiddleware,
+  optionalAuthMiddleware,
+} from "@/server/middleware/authMiddleware";
 import {
   badRequest,
   created,
@@ -17,16 +20,18 @@ import type { TAppEnv } from "@/server/types";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
   branchExists,
+  branchIdByName,
   canAccessBranch,
   isSuperAdmin,
   resolveBranchId,
   resolveBranchUpdate,
 } from "@/server/utils/scope";
+import type { TTokenPayload } from "@/shared/types";
 import {
   createBoardOfDirectorSchema,
   updateBoardOfDirectorSchema,
 } from "@/shared/validators/boardOfDirectors.validator";
-import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
+import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
 import { count, eq } from "drizzle-orm";
@@ -34,20 +39,42 @@ import { Hono } from "hono";
 
 const boardOfDirectorsRouter = new Hono<TAppEnv>();
 
-// Every board-of-directors route requires an authenticated admin.
-boardOfDirectorsRouter.use(authMiddleware());
+// Reads are public; mutations require an authenticated admin (per-route below).
 
-/** GET /api/v1/board-of-directors — list (branch-scoped, paginated). */
+/**
+ * GET /api/v1/board-of-directors — list (paginated).
+ *
+ * - Branch admin (dashboard): pinned to their own branch.
+ * - Super admin / public: optionally scoped by `?branchName=`.
+ *
+ * An unknown branch name yields an empty page.
+ */
 boardOfDirectorsRouter.get(
   "/",
-  zValidator("query", paginationQuerySchema),
+  optionalAuthMiddleware(),
+  zValidator("query", branchListQuerySchema),
   async (c) => {
-    const admin = c.get("admin");
-    const { page, pageSize } = c.req.valid("query");
+    const admin = c.get("admin") as TTokenPayload | undefined;
+    const { page, pageSize, branchName } = c.req.valid("query");
 
-    const where = isSuperAdmin(admin)
-      ? undefined
-      : eq(boardOfDirectorsTable.branchId, admin.branchId!);
+    let branchId: number | null | undefined;
+    if (admin && !isSuperAdmin(admin)) {
+      branchId = admin.branchId!;
+    } else if (branchName) {
+      branchId = await branchIdByName(branchName);
+      if (branchId === null) {
+        return ok(
+          c,
+          "Board of directors fetched successfully",
+          paginated([], 0, page, pageSize),
+        );
+      }
+    }
+
+    const where =
+      branchId != null
+        ? eq(boardOfDirectorsTable.branchId, branchId)
+        : undefined;
 
     const totalResult = await db
       .select({ value: count() })
@@ -71,12 +98,14 @@ boardOfDirectorsRouter.get(
   },
 );
 
-/** GET /api/v1/board-of-directors/:id */
+/** GET /api/v1/board-of-directors/:id — public. */
 boardOfDirectorsRouter.get(
   "/:id",
+  optionalAuthMiddleware(),
   zValidator("param", idParamSchema),
   async (c) => {
     const { id } = c.req.valid("param");
+    const admin = c.get("admin") as TTokenPayload | undefined;
 
     const [member] = await db
       .select()
@@ -87,7 +116,7 @@ boardOfDirectorsRouter.get(
     if (!member) {
       return notFound(c, "Board of director not found");
     }
-    if (!canAccessBranch(c.get("admin"), member.branchId)) {
+    if (admin && !canAccessBranch(admin, member.branchId)) {
       return forbidden(c);
     }
 
@@ -98,6 +127,7 @@ boardOfDirectorsRouter.get(
 /** POST /api/v1/board-of-directors */
 boardOfDirectorsRouter.post(
   "/",
+  authMiddleware(),
   zValidator("form", createBoardOfDirectorSchema),
   async (c) => {
     const admin = c.get("admin");
@@ -128,6 +158,7 @@ boardOfDirectorsRouter.post(
 /** PATCH /api/v1/board-of-directors/:id */
 boardOfDirectorsRouter.patch(
   "/:id",
+  authMiddleware(),
   zValidator("param", idParamSchema),
   zValidator("form", updateBoardOfDirectorSchema),
   async (c) => {
@@ -177,6 +208,7 @@ boardOfDirectorsRouter.patch(
 /** DELETE /api/v1/board-of-directors/:id */
 boardOfDirectorsRouter.delete(
   "/:id",
+  authMiddleware(),
   zValidator("param", idParamSchema),
   async (c) => {
     const { id } = c.req.valid("param");

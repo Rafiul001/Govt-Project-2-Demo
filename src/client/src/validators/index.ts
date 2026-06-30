@@ -26,7 +26,6 @@ const branchId = z
   .positive("Branch ID must be a positive number");
 
 export const adminTypeValues = ["SUPER_ADMIN", "BRANCH_ADMIN"] as const;
-export const sidebarPositionValues = ["left", "right"] as const;
 
 // --- Auth ---
 
@@ -144,24 +143,6 @@ export const updateBoardOfDirectorSchema = z.strictObject({
 export type TUpdateBoardOfDirectorForm = z.infer<
   typeof updateBoardOfDirectorSchema
 >;
-
-// --- Layout ---
-
-export const createLayoutSchema = z.strictObject({
-  branchId: branchId.optional(),
-  showLogo: z.boolean(),
-  showBanner: z.boolean(),
-  sidebarPosition: z.enum(sidebarPositionValues),
-});
-export type TCreateLayoutForm = z.infer<typeof createLayoutSchema>;
-
-export const updateLayoutSchema = z.strictObject({
-  branchId: branchId.optional(),
-  showLogo: z.boolean(),
-  showBanner: z.boolean(),
-  sidebarPosition: z.enum(sidebarPositionValues),
-});
-export type TUpdateLayoutForm = z.infer<typeof updateLayoutSchema>;
 
 // --- Notice ---
 

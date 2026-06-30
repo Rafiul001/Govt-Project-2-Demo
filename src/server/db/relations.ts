@@ -9,8 +9,6 @@ export const relations = defineRelations(schema, (r) => ({
     boardOfDirectors: r.many.boardOfDirectorsTable(),
     // One branch has many notices
     notices: r.many.noticesTable(),
-    // One branch has exactly one layout
-    layout: r.one.layoutsTable(),
   },
   adminsTable: {
     // Super admins have no branch, so this relation is optional.
@@ -29,13 +27,6 @@ export const relations = defineRelations(schema, (r) => ({
   noticesTable: {
     branch: r.one.branchesTable({
       from: r.noticesTable.branchId,
-      to: r.branchesTable.id,
-      optional: false,
-    }),
-  },
-  layoutsTable: {
-    branch: r.one.branchesTable({
-      from: r.layoutsTable.branchId,
       to: r.branchesTable.id,
       optional: false,
     }),

@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/*
+ * Bangladesh government portal palette.
+ *
+ * Bottle green (#006a4e) and red (#f42a41) are the national flag colours and
+ * the de-facto standard for govt sites. Exposed as Tailwind theme tokens so
+ * utilities like `bg-govt-green` / `text-govt-red` work throughout.
+ */
+@theme {
+  --color-govt-green: #006a4e;
+  --color-govt-green-dark: #00513b;
+  --color-govt-red: #f42a41;
+
+  --font-sans: var(--font-hind-siliguri), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+}

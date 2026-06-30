@@ -1,0 +1,67 @@
+"use client";
+
+import { ContactRow } from "@/components/molecules/ContactRow";
+import { SectionHeading } from "@/components/molecules/SectionHeading";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import type { TBranch } from "@/lib/types";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
+
+/** Contact block: branch address / phone / email + an embedded location map. */
+export function ContactSection({ branch }: { branch: TBranch | null }) {
+  const { t } = useLanguage();
+
+  if (!branch) return null;
+
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+    branch.address,
+  )}&output=embed`;
+
+  return (
+    <section id="contact" className="scroll-mt-20 bg-slate-50 py-14">
+      <div className="mx-auto max-w-7xl px-4">
+        <SectionHeading title={t.contact.title} subtitle={t.contact.subtitle} />
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-2">
+          <div className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <ContactRow
+              icon={MapPin}
+              label={t.contact.address}
+              value={branch.address}
+            />
+            {branch.phone ? (
+              <ContactRow
+                icon={Phone}
+                label={t.contact.phone}
+                value={branch.phone}
+                href={`tel:${branch.phone.replace(/\s/g, "")}`}
+              />
+            ) : null}
+            {branch.email ? (
+              <ContactRow
+                icon={Mail}
+                label={t.contact.email}
+                value={branch.email}
+                href={`mailto:${branch.email}`}
+              />
+            ) : null}
+            <ContactRow
+              icon={Clock}
+              label={t.contact.officeHours}
+              value={t.contact.officeHoursValue}
+            />
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+            <iframe
+              title={t.contact.mapTitle}
+              src={mapSrc}
+              className="h-full min-h-80 w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

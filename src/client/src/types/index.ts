@@ -26,7 +26,6 @@ export type TPageParams = {
 };
 
 export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
-export type TSidebarPosition = "left" | "right";
 
 // --- Entities ---
 
@@ -61,16 +60,6 @@ export type TBoardOfDirector = {
   avatar: string;
   order: number;
   branchId: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type TLayout = {
-  id: number;
-  branchId: number;
-  showLogo: boolean;
-  showBanner: boolean;
-  sidebarPosition: TSidebarPosition;
   createdAt: string;
   updatedAt: string;
 };
@@ -159,22 +148,6 @@ export type TUpdateBoardOfDirectorInput = {
   designation?: string;
   avatar?: File;
   order?: number;
-};
-
-// --- Layout ---
-
-export type TCreateLayoutInput = {
-  branchId?: number;
-  showLogo?: boolean;
-  showBanner?: boolean;
-  sidebarPosition?: TSidebarPosition;
-};
-
-export type TUpdateLayoutInput = {
-  branchId?: number;
-  showLogo?: boolean;
-  showBanner?: boolean;
-  sidebarPosition?: TSidebarPosition;
 };
 
 // --- Notice ---
