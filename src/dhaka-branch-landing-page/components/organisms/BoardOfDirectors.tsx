@@ -1,17 +1,21 @@
+"use client";
+
 import { DirectorCard } from "@/components/molecules/DirectorCard";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { TBoardOfDirector } from "@/lib/types";
 
 /** Officials / board-of-directors grid, ordered by display `order`. */
 export function BoardOfDirectors({ members }: { members: TBoardOfDirector[] }) {
+  const { t } = useLanguage();
   const ordered = [...members].sort((a, b) => a.order - b.order);
 
   return (
     <section id="board" className="scroll-mt-20 bg-white py-14">
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
-          title="পরিচালনা পর্ষদ"
-          subtitle="প্রতিষ্ঠানের নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।"
+          title={t.board.title}
+          subtitle={t.board.subtitle}
           align="center"
         />
 
@@ -23,7 +27,7 @@ export function BoardOfDirectors({ members }: { members: TBoardOfDirector[] }) {
           </div>
         ) : (
           <p className="mt-10 text-center text-sm text-slate-500">
-            পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।
+            {t.board.empty}
           </p>
         )}
       </div>

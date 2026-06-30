@@ -1,4 +1,7 @@
-import { formatBanglaDate } from "@/lib/format";
+"use client";
+
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { formatLocaleDate } from "@/lib/format";
 import type { TNotice } from "@/lib/types";
 import { Download, FileText } from "lucide-react";
 
@@ -7,6 +10,8 @@ import { Download, FileText } from "lucide-react";
  * (`src/client/.../molecules/NoticeCard.tsx`) but read-only for public viewing.
  */
 export function NoticeItem({ notice }: { notice: TNotice }) {
+  const { lang, t } = useLanguage();
+
   return (
     <article className="group flex gap-4 border-b border-slate-200 py-4 last:border-b-0">
       <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-md bg-govt-green/10 text-govt-green">
@@ -24,7 +29,7 @@ export function NoticeItem({ notice }: { notice: TNotice }) {
         ) : null}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
           <time dateTime={notice.createdAt}>
-            প্রকাশকাল: {formatBanglaDate(notice.createdAt)}
+            {t.notices.publishedOn}: {formatLocaleDate(notice.createdAt, lang)}
           </time>
           {notice.fileUrl ? (
             <a
@@ -34,7 +39,7 @@ export function NoticeItem({ notice }: { notice: TNotice }) {
               rel="noopener noreferrer"
             >
               <Download className="size-3.5" aria-hidden />
-              ডাউনলোড
+              {t.notices.download}
             </a>
           ) : null}
         </div>

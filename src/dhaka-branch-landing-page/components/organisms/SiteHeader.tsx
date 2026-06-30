@@ -1,4 +1,7 @@
-import { ORGANIZATION } from "@/lib/data";
+"use client";
+
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { dictionaries } from "@/lib/i18n";
 import type { TBranch } from "@/lib/types";
 import Image from "next/image";
 
@@ -8,12 +11,14 @@ import Image from "next/image";
  * right — the standard Bangladesh government portal header composition.
  */
 export function SiteHeader({ branch }: { branch: TBranch | null }) {
+  const { lang, t } = useLanguage();
+
   return (
     <header className="bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
         <Image
           src="/assets/govt-seal.svg"
-          alt="বাংলাদেশ সরকারের জাতীয় প্রতীক"
+          alt={t.header.emblemAlt}
           width={64}
           height={64}
           className="size-14 shrink-0 sm:size-16"
@@ -22,17 +27,23 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
 
         <div className="min-w-0 flex-1 text-center">
           <h1 className="truncate text-lg font-bold text-govt-green sm:text-2xl">
-            {ORGANIZATION.nameBn}
+            {t.org.name}
           </h1>
           {branch ? (
             <p className="truncate text-sm font-semibold text-govt-red sm:text-base">
-              {branch.name} শাখা
+              {branch.name} {t.header.branchSuffix}
             </p>
           ) : null}
-          <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">
-            {ORGANIZATION.nameEn}
-            {branch ? `, ${branch.name} Branch` : ""}
-          </p>
+          {/* Secondary line shows the English name as a subtitle when the page
+              is in Bangla; redundant when the page is already in English. */}
+          {lang === "bn" ? (
+            <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">
+              {dictionaries.en.org.name}
+              {branch
+                ? `, ${branch.name} ${dictionaries.en.header.branchSuffix}`
+                : ""}
+            </p>
+          ) : null}
         </div>
 
         {branch?.logo ? (
@@ -46,7 +57,7 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
         ) : (
           <Image
             src="/assets/flag.svg"
-            alt="বাংলাদেশের জাতীয় পতাকা"
+            alt={t.header.flagAlt}
             width={64}
             height={40}
             className="hidden h-10 w-16 shrink-0 rounded-sm border border-slate-200 object-cover sm:block"

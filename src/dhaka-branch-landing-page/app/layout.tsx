@@ -1,3 +1,4 @@
+import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import type { Metadata } from "next";
 import { Hind_Siliguri } from "next/font/google";
 import "./globals.css";
@@ -24,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="bn" className={`${hindSiliguri.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-slate-50">{children}</body>
+      <body className="flex min-h-full flex-col bg-slate-50">
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

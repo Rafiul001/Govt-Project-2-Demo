@@ -1,12 +1,24 @@
-import { importantLinks, ORGANIZATION } from "@/lib/data";
-import { toBanglaDigits } from "@/lib/format";
+"use client";
+
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { importantLinks } from "@/lib/data";
+import { toLocaleDigits } from "@/lib/format";
 import type { TBranch } from "@/lib/types";
 import { Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 
 /** Dark-green footer with contact, quick links, and copyright. */
 export function SiteFooter({ branch }: { branch: TBranch | null }) {
-  const year = toBanglaDigits(new Date().getFullYear());
+  const { lang, t } = useLanguage();
+  const year = toLocaleDigits(new Date().getFullYear(), lang);
+  const branchLabel = branch ? `, ${branch.name} ${t.header.branchSuffix}` : "";
+
+  const quickAccess = [
+    { label: t.nav.about, href: "#about" },
+    { label: t.nav.notices, href: "#notices" },
+    { label: t.nav.board, href: "#board" },
+    { label: t.nav.contact, href: "#contact" },
+  ];
 
   return (
     <footer className="bg-govt-green-dark text-slate-200">
@@ -22,21 +34,22 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
               className="size-11 shrink-0 brightness-0 invert"
             />
             <div>
-              <p className="font-bold text-white">{ORGANIZATION.nameBn}</p>
+              <p className="font-bold text-white">{t.org.name}</p>
               {branch ? (
-                <p className="text-sm text-slate-300">{branch.name} শাখা</p>
+                <p className="text-sm text-slate-300">
+                  {branch.name} {t.header.branchSuffix}
+                </p>
               ) : null}
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-slate-300">
-            জনগণের কল্যাণে স্বচ্ছ, জবাবদিহিমূলক ও মানসম্মত সেবা প্রদানে আমরা
-            অঙ্গীকারবদ্ধ।
+            {t.footer.tagline}
           </p>
         </div>
 
         {/* Contact */}
         <div>
-          <h3 className="mb-4 font-semibold text-white">যোগাযোগ</h3>
+          <h3 className="mb-4 font-semibold text-white">{t.footer.contact}</h3>
           <ul className="space-y-3 text-sm">
             {branch?.address ? (
               <li className="flex gap-2">
@@ -61,10 +74,12 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
 
         {/* Quick links */}
         <div>
-          <h3 className="mb-4 font-semibold text-white">গুরুত্বপূর্ণ লিংক</h3>
+          <h3 className="mb-4 font-semibold text-white">
+            {t.footer.importantLinks}
+          </h3>
           <ul className="space-y-2 text-sm">
             {importantLinks.slice(0, 5).map((link) => (
-              <li key={link.label}>
+              <li key={link.href}>
                 <a
                   href={link.href}
                   target={link.href.startsWith("http") ? "_blank" : undefined}
@@ -75,7 +90,7 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
                   }
                   className="text-slate-300 transition-colors hover:text-white"
                 >
-                  {link.label}
+                  {lang === "bn" ? link.labelBn : link.labelEn}
                 </a>
               </li>
             ))}
@@ -84,28 +99,17 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
 
         {/* Sections */}
         <div>
-          <h3 className="mb-4 font-semibold text-white">দ্রুত প্রবেশ</h3>
+          <h3 className="mb-4 font-semibold text-white">
+            {t.footer.quickAccess}
+          </h3>
           <ul className="space-y-2 text-sm">
-            <li>
-              <a href="#about" className="text-slate-300 hover:text-white">
-                আমাদের সম্পর্কে
-              </a>
-            </li>
-            <li>
-              <a href="#notices" className="text-slate-300 hover:text-white">
-                নোটিশ বোর্ড
-              </a>
-            </li>
-            <li>
-              <a href="#board" className="text-slate-300 hover:text-white">
-                পরিচালনা পর্ষদ
-              </a>
-            </li>
-            <li>
-              <a href="#contact" className="text-slate-300 hover:text-white">
-                যোগাযোগ
-              </a>
-            </li>
+            {quickAccess.map((item) => (
+              <li key={item.href}>
+                <a href={item.href} className="text-slate-300 hover:text-white">
+                  {item.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -113,10 +117,12 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-xs text-slate-400 sm:flex-row sm:text-left">
           <p>
-            © {year} {ORGANIZATION.nameBn}
-            {branch ? `, ${branch.name} শাখা` : ""}। সর্বস্বত্ব সংরক্ষিত।
+            © {year} {t.org.name}
+            {branchLabel}
+            {lang === "bn" ? "। " : ". "}
+            {t.footer.rightsReserved}
           </p>
-          <p>{ORGANIZATION.govLineBn}</p>
+          <p>{t.org.govLine}</p>
         </div>
       </div>
     </footer>

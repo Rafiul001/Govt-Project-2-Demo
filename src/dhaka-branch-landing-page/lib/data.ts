@@ -8,19 +8,32 @@
  * the API — see `lib/api.ts`.
  */
 
-/** Organization the portal belongs to. Shown in the masthead and footer. */
-export const ORGANIZATION = {
-  govLineBn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকার",
-  govLineEn: "Government of the People's Republic of Bangladesh",
-  nameBn: "জাতীয় উন্নয়ন কর্তৃপক্ষ",
-  nameEn: "National Development Authority",
-} as const;
+/**
+ * Organization identity (name + national-government line) now lives in the
+ * bilingual catalogue — see `org` in `lib/i18n.ts`.
+ */
 
 /** National e-government links shown on every Bangladesh govt portal. */
-export const importantLinks: { label: string; href: string }[] = [
-  { label: "বাংলাদেশ জাতীয় তথ্য বাতায়ন", href: "https://bangladesh.gov.bd" },
-  { label: "মাইগভ (MyGov)", href: "https://mygov.bd" },
-  { label: "ই-নথি", href: "https://www.nothi.gov.bd" },
-  { label: "অভিযোগ প্রতিকার ব্যবস্থা (GRS)", href: "https://grs.gov.bd" },
-  { label: "ই-টেন্ডারিং", href: "https://www.eprocure.gov.bd" },
+export const importantLinks: {
+  labelBn: string;
+  labelEn: string;
+  href: string;
+}[] = [
+  {
+    labelBn: "বাংলাদেশ জাতীয় তথ্য বাতায়ন",
+    labelEn: "Bangladesh National Web Portal",
+    href: "https://bangladesh.gov.bd",
+  },
+  { labelBn: "মাইগভ (MyGov)", labelEn: "MyGov", href: "https://mygov.bd" },
+  { labelBn: "ই-নথি", labelEn: "e-Nothi", href: "https://www.nothi.gov.bd" },
+  {
+    labelBn: "অভিযোগ প্রতিকার ব্যবস্থা (GRS)",
+    labelEn: "Grievance Redress System (GRS)",
+    href: "https://grs.gov.bd",
+  },
+  {
+    labelBn: "ই-টেন্ডারিং",
+    labelEn: "e-Tendering",
+    href: "https://www.eprocure.gov.bd",
+  },
 ];
