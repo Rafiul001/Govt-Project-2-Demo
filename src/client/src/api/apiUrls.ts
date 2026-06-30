@@ -8,6 +8,7 @@ export const API_URLS = {
   ADMIN: {
     LOGIN: "admin/login",
     LOGOUT: "admin/logout",
+    REFRESH: "admin/refresh",
     LIST: "admin",
     CREATE: "admin",
     ME: "admin/me",

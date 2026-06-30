@@ -16,14 +16,19 @@ import {
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
-import { generateAccessToken, generateRefreshToken } from "@/server/utils/jwt";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "@/server/utils/jwt";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
 import { branchExists } from "@/server/utils/scope";
-import { adminType } from "@/shared/types";
+import { adminType, tokenType } from "@/shared/types";
 import {
   adminLoginSchema,
   createAdminSchema,
+  refreshTokenSchema,
   updateAdminSchema,
   updateProfileSchema,
 } from "@/shared/validators/admin.validator";
@@ -37,6 +42,22 @@ import { Hono } from "hono";
 function publicAdmin(admin: TAdmin) {
   const { password: _password, ...rest } = admin;
   return rest;
+}
+
+/** Mint a fresh access/refresh token pair for the given admin. */
+async function issueTokens(
+  admin: Pick<TAdmin, "id" | "adminType" | "branchId">,
+) {
+  const tokenInput = {
+    sub: admin.id,
+    adminType: admin.adminType,
+    branchId: admin.branchId,
+  };
+  const [accessToken, refreshToken] = await Promise.all([
+    generateAccessToken(tokenInput),
+    generateRefreshToken(tokenInput),
+  ]);
+  return { accessToken, refreshToken };
 }
 
 const adminRouter = new Hono<TAppEnv>();
@@ -55,19 +76,51 @@ adminRouter.post("/login", zValidator("json", adminLoginSchema), async (c) => {
     return unAuthorized(c, "Invalid credentials");
   }
 
-  const tokenInput = {
-    sub: admin.id,
-    adminType: admin.adminType,
-    branchId: admin.branchId,
-  };
-  const accessToken = await generateAccessToken(tokenInput);
-  const refreshToken = await generateRefreshToken(tokenInput);
-
-  return ok(c, "Logged in successfully", {
-    accessToken,
-    refreshToken,
-  });
+  return ok(c, "Logged in successfully", await issueTokens(admin));
 });
+
+/**
+ * POST /api/v1/admin/refresh — exchange a valid refresh token for a fresh
+ * access/refresh token pair.
+ *
+ * The admin is re-loaded from the database so role/branch changes (or a deleted
+ * account) take effect on the next refresh rather than persisting for the life
+ * of the refresh token. Refresh tokens are rotated on every use.
+ */
+adminRouter.post(
+  "/refresh",
+  zValidator("json", refreshTokenSchema),
+  async (c) => {
+    const { refreshToken } = c.req.valid("json");
+
+    let payload;
+    try {
+      payload = await verifyRefreshToken(refreshToken);
+    } catch (err) {
+      const expired = err instanceof Error && err.name === "JwtTokenExpired";
+      return unAuthorized(
+        c,
+        expired ? "Refresh token expired" : "Invalid refresh token",
+      );
+    }
+
+    if (payload.type !== tokenType.REFRESH) {
+      return unAuthorized(c, "Invalid refresh token");
+    }
+
+    const [admin] = await db
+      .select()
+      .from(adminsTable)
+      .where(eq(adminsTable.id, payload.sub))
+      .limit(1);
+
+    if (!admin) {
+      return unAuthorized(c, "Invalid refresh token");
+    }
+
+    return ok(c, "Token refreshed successfully", await issueTokens(admin));
+  },
+);
 
 /** GET /api/v1/admin — list all admins (super admin only, paginated). */
 adminRouter.get(

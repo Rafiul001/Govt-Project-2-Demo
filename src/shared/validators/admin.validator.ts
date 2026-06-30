@@ -6,6 +6,10 @@ export const adminLoginSchema = z.strictObject({
   password: z.string().min(1, "Password is required"),
 });
 
+export const refreshTokenSchema = z.strictObject({
+  refreshToken: z.string().min(1, "Refresh token is required"),
+});
+
 // Admins created through the API are always branch admins (so `branchId` is
 // required). Super admins can only be seeded via the bootstrap script, never
 // created by another super admin through the panel.
@@ -36,6 +40,7 @@ export const updateProfileSchema = z.strictObject({
 });
 
 export type TAdminLoginInput = z.infer<typeof adminLoginSchema>;
+export type TRefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type TCreateAdminInput = z.infer<typeof createAdminSchema>;
 export type TUpdateAdminInput = z.infer<typeof updateAdminSchema>;
 export type TUpdateProfileInput = z.infer<typeof updateProfileSchema>;
