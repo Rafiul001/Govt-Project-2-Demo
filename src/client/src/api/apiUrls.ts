@@ -24,11 +24,6 @@ export const API_URLS = {
     CREATE: "board-of-directors",
     BY_ID: (id: number | string) => `board-of-directors/${id}`,
   },
-  LAYOUT: {
-    LIST: "layout",
-    CREATE: "layout",
-    BY_ID: (id: number | string) => `layout/${id}`,
-  },
   NOTICE: {
     LIST: "notice",
     CREATE: "notice",

@@ -13,7 +13,7 @@ export type TPaginationQuery = z.infer<typeof paginationQuerySchema>;
 
 /**
  * Pagination params plus an optional `branchName` filter. Used by the public
- * read routes (notices, board of directors, layouts) so a landing site can
+ * read routes (notices, board of directors) so a landing site can
  * scope the list to its branch by name, e.g. `?branchName=Dhaka`.
  */
 export const branchListQuerySchema = z.strictObject({

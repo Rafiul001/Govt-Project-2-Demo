@@ -9,4 +9,3 @@ export { BoardMemberCard } from "./BoardMemberCard";
 export { NoticeCard } from "./NoticeCard";
 export { NoticePreview } from "./NoticePreview";
 export { AdminCard } from "./AdminCard";
-export { LayoutCard } from "./LayoutCard";

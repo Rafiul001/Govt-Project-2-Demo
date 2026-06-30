@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import {
   Building2Icon,
   LayoutDashboardIcon,
-  LayoutTemplateIcon,
   MegaphoneIcon,
   SettingsIcon,
   ShieldUserIcon,
@@ -29,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
   { to: "/notices", label: "Notices", icon: MegaphoneIcon },
-  { to: "/layouts", label: "Layouts", icon: LayoutTemplateIcon },
   {
     to: "/admins",
     label: "Admins",

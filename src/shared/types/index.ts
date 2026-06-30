@@ -22,11 +22,3 @@ export interface TTokenPayload {
   branchId: number | null;
   type: TTokenType;
 }
-
-export const sidebarPosition = {
-  LEFT: "left",
-  RIGHT: "right",
-} as const;
-
-export const sidebarPositions = Object.values(sidebarPosition);
-export type TSidebarPositionTypes = (typeof sidebarPositions)[number];

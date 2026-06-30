@@ -17,11 +17,6 @@ export const queryKeys = {
       ["board-of-directors", "list", params] as const,
     detail: (id: number | string) => ["board-of-directors", id] as const,
   },
-  layouts: {
-    all: ["layouts"] as const,
-    list: (params: TPageParams) => ["layouts", "list", params] as const,
-    detail: (id: number | string) => ["layouts", id] as const,
-  },
   notices: {
     all: ["notices"] as const,
     list: (params: TPageParams) => ["notices", "list", params] as const,

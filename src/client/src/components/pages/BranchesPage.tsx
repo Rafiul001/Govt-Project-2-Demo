@@ -121,7 +121,7 @@ export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
           if (!open) setDeleting(null);
         }}
         title="Delete branch"
-        description={`Delete "${deleting?.name ?? "this branch"}"? This also removes its board members, notices and layout, and cannot be undone.`}
+        description={`Delete "${deleting?.name ?? "this branch"}"? This also removes its board members and notices, and cannot be undone.`}
         isLoading={deleteMutation.isPending}
         onConfirm={handleDelete}
       />
