@@ -3,9 +3,10 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n server,client -c blue,green \"bun run dev:server\" \"bun run dev:client\"",
+    "dev": "concurrently -n server,client,landing -c blue,green,magenta \"bun run dev:server\" \"bun run dev:client\" \"bun run dev:landing\"",
     "dev:server": "bun --watch src/index.ts",
     "dev:client": "cd src/client && bun run dev",
+    "dev:landing": "cd src/dhaka-branch-landing-page && bun run dev --port 3001",
     "build": "NODE_ENV=production bun build src/index.ts --outdir dist --target node",
     "start": "node --env-file-if-exists=.env dist/index.js"
   },
