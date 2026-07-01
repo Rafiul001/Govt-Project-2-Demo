@@ -72,11 +72,17 @@ async function apiGet<T>(path: string): Promise<T | null> {
   }
 }
 
+/** Every branch (public profiles) — backs the cross-branch "important links". */
+export async function getBranches(): Promise<TBranch[]> {
+  const data = await apiGet<TPaginated<TBranch>>(`/api/v1/branch?pageSize=100`);
+  return data?.items ?? [];
+}
+
 /** Branch profile (name, logo, banner, address, contact), resolved by name. */
 export async function getBranch(name?: string): Promise<TBranch | null> {
   const branchName = name ?? (await getBranchName());
-  const data = await apiGet<TPaginated<TBranch>>(`/api/v1/branch?pageSize=100`);
-  return data?.items.find((b) => b.name === branchName) ?? null;
+  const branches = await getBranches();
+  return branches.find((b) => b.name === branchName) ?? null;
 }
 
 /** Published notices for the branch, newest first. */

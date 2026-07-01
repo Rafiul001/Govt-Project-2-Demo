@@ -12,6 +12,7 @@
 export type TBranch = {
   id: number;
   name: string;
+  previewUrl: string | null;
   address: string;
   phone: string | null;
   email: string | null;

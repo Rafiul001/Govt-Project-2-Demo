@@ -11,12 +11,14 @@ import {
   getBanners,
   getBoardOfDirectors,
   getBranch,
+  getBranches,
   getNotices,
 } from "@/lib/api";
 
 export default async function Home() {
-  const [branch, banners, notices, board] = await Promise.all([
+  const [branch, branches, banners, notices, board] = await Promise.all([
     getBranch(),
+    getBranches(),
     getBanners(),
     getNotices(),
     getBoardOfDirectors(),
@@ -32,7 +34,7 @@ export default async function Home() {
           <HeroSlider banners={banners} bannerUrl={branch?.banner ?? null} />
         ) : null}
         <AboutSection />
-        <NoticeBoard notices={notices} />
+        <NoticeBoard notices={notices} branches={branches} />
         <BoardOfDirectors members={board} />
         <ContactSection branch={branch} />
       </main>

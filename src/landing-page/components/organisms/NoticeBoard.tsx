@@ -5,7 +5,7 @@ import { QuickLink } from "@/components/molecules/QuickLink";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { importantLinks } from "@/lib/data";
-import type { TNotice } from "@/lib/types";
+import type { TBranch, TNotice } from "@/lib/types";
 import Link from "next/link";
 
 /** Notices shown on the home page; the rest live on the `/notices` archive. */
@@ -14,9 +14,18 @@ const HOME_NOTICE_LIMIT = 4;
 /**
  * Notice board + important links — the two-column centrepiece of nearly every
  * Bangladesh govt portal. Notices come from the API (already published-only).
+ * The "important links" column lists every branch (linking to its own site);
+ * when no branch has a public URL yet it falls back to the national e-gov links.
  */
-export function NoticeBoard({ notices }: { notices: TNotice[] }) {
+export function NoticeBoard({
+  notices,
+  branches,
+}: {
+  notices: TNotice[];
+  branches: TBranch[];
+}) {
   const { lang, t } = useLanguage();
+  const branchLinks = branches.filter((b) => b.previewUrl);
   // Surface only the latest few here; "view all" leads to the full archive.
   const latest = notices
     .filter((n) => n.isPublished)
@@ -53,13 +62,21 @@ export function NoticeBoard({ notices }: { notices: TNotice[] }) {
         <aside>
           <SectionHeading title={t.notices.importantLinks} />
           <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-            {importantLinks.map((link) => (
-              <QuickLink
-                key={link.href}
-                label={lang === "bn" ? link.labelBn : link.labelEn}
-                href={link.href}
-              />
-            ))}
+            {branchLinks.length > 0
+              ? branchLinks.map((branch) => (
+                  <QuickLink
+                    key={branch.id}
+                    label={branch.name}
+                    href={branch.previewUrl!}
+                  />
+                ))
+              : importantLinks.map((link) => (
+                  <QuickLink
+                    key={link.href}
+                    label={lang === "bn" ? link.labelBn : link.labelEn}
+                    href={link.href}
+                  />
+                ))}
           </div>
         </aside>
       </div>
