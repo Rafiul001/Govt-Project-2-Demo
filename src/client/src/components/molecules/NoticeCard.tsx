@@ -2,7 +2,7 @@ import { Chip } from "@heroui/react";
 import { FileTextIcon, ImageIcon, MegaphoneIcon } from "lucide-react";
 import type { TNotice } from "../../types";
 
-type NoticeCardProps = {
+type TNoticeCardProps = {
   notice: TNotice;
   isSelected: boolean;
   onSelect: () => void;
@@ -16,7 +16,7 @@ const formatDate = (iso: string) =>
   });
 
 /** Inbox-style row for the notices list; selecting it opens the preview. */
-export function NoticeCard({ notice, isSelected, onSelect }: NoticeCardProps) {
+export function NoticeCard({ notice, isSelected, onSelect }: TNoticeCardProps) {
   return (
     <button
       type="button"
@@ -31,11 +31,7 @@ export function NoticeCard({ notice, isSelected, onSelect }: NoticeCardProps) {
       {/* Thumbnail */}
       <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-surface-tertiary">
         {notice.image ? (
-          <img
-            src={notice.image}
-            alt=""
-            className="size-full object-cover"
-          />
+          <img src={notice.image} alt="" className="size-full object-cover" />
         ) : (
           <div className="flex size-full items-center justify-center bg-accent/15 text-accent">
             <MegaphoneIcon className="size-6" />

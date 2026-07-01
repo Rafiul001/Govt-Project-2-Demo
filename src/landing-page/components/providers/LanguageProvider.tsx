@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_LANGUAGE, dictionaries, type Language } from "@/lib/i18n";
+import { DEFAULT_LANGUAGE, dictionaries, type TLanguage } from "@/lib/i18n";
 import {
   createContext,
   useCallback,
@@ -21,12 +21,12 @@ const STORAGE_KEY = "site-language";
 
 const listeners = new Set<() => void>();
 
-function getSnapshot(): Language {
+function getSnapshot(): TLanguage {
   const saved = window.localStorage.getItem(STORAGE_KEY);
   return saved === "bn" || saved === "en" ? saved : DEFAULT_LANGUAGE;
 }
 
-function getServerSnapshot(): Language {
+function getServerSnapshot(): TLanguage {
   return DEFAULT_LANGUAGE;
 }
 
@@ -40,33 +40,33 @@ function subscribe(callback: () => void) {
   };
 }
 
-function writeLanguage(lang: Language) {
+function writeLanguage(lang: TLanguage) {
   window.localStorage.setItem(STORAGE_KEY, lang);
   // `storage` events don't fire in the originating tab, so notify directly.
   listeners.forEach((l) => l());
 }
 
-type LanguageContextValue = {
-  lang: Language;
-  setLang: (lang: Language) => void;
+type TLanguageContextValue = {
+  lang: TLanguage;
+  setLang: (lang: TLanguage) => void;
   /** String catalogue for the active language. */
-  t: (typeof dictionaries)[Language];
+  t: (typeof dictionaries)[TLanguage];
 };
 
-const LanguageContext = createContext<LanguageContextValue | null>(null);
+const LanguageContext = createContext<TLanguageContextValue | null>(null);
 
 /** Holds the active site language and exposes the matching string catalogue. */
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const setLang = useCallback((next: Language) => writeLanguage(next), []);
+  const setLang = useCallback((next: TLanguage) => writeLanguage(next), []);
 
   // Keep the document language in sync for accessibility and font selection.
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const value = useMemo<LanguageContextValue>(
+  const value = useMemo<TLanguageContextValue>(
     () => ({ lang, setLang, t: dictionaries[lang] }),
     [lang, setLang],
   );

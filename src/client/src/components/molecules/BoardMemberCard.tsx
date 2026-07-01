@@ -2,7 +2,7 @@ import { Button } from "@heroui/react";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import type { TBoardOfDirector } from "../../types";
 
-type BoardMemberCardProps = {
+type TBoardMemberCardProps = {
   member: TBoardOfDirector;
   onEdit: () => void;
   onDelete: () => void;
@@ -13,7 +13,7 @@ export function BoardMemberCard({
   member,
   onEdit,
   onDelete,
-}: BoardMemberCardProps) {
+}: TBoardMemberCardProps) {
   return (
     <div className="group relative flex overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow) transition-shadow duration-300 hover:shadow-(--card-shadow-hover)">
       {/* Left accent bar */}

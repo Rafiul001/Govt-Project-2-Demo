@@ -1,6 +1,6 @@
 /** Small formatting helpers shared across the public site. */
 
-import type { Language } from "./i18n";
+import type { TLanguage } from "./i18n";
 
 const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
 
@@ -10,7 +10,10 @@ export function toBanglaDigits(input: string | number): string {
 }
 
 /** Render a number in the script of the active language. */
-export function toLocaleDigits(input: string | number, lang: Language): string {
+export function toLocaleDigits(
+  input: string | number,
+  lang: TLanguage,
+): string {
   return lang === "bn" ? toBanglaDigits(input) : String(input);
 }
 
@@ -18,7 +21,7 @@ export function toLocaleDigits(input: string | number, lang: Language): string {
  * Format an ISO date as a long date in the active language —
  * e.g. "২৮ জুন ২০২৬" (bn) or "28 June 2026" (en).
  */
-export function formatLocaleDate(iso: string, lang: Language): string {
+export function formatLocaleDate(iso: string, lang: TLanguage): string {
   const formatted = new Date(iso).toLocaleDateString(
     lang === "bn" ? "bn-BD" : "en-GB",
     { day: "numeric", month: "long", year: "numeric" },

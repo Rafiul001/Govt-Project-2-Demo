@@ -7,11 +7,17 @@ import { NoticeBoard } from "@/components/organisms/NoticeBoard";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getBoardOfDirectors, getBranch, getNotices } from "@/lib/api";
+import {
+  getBanners,
+  getBoardOfDirectors,
+  getBranch,
+  getNotices,
+} from "@/lib/api";
 
 export default async function Home() {
-  const [branch, notices, board] = await Promise.all([
+  const [branch, banners, notices, board] = await Promise.all([
     getBranch(),
+    getBanners(),
     getNotices(),
     getBoardOfDirectors(),
   ]);
@@ -22,7 +28,9 @@ export default async function Home() {
       <SiteHeader branch={branch} />
       <NavBar />
       <main className="flex-1">
-        <HeroSlider bannerUrl={branch?.banner ?? null} />
+        {banners.length > 0 ? (
+          <HeroSlider banners={banners} bannerUrl={branch?.banner ?? null} />
+        ) : null}
         <AboutSection />
         <NoticeBoard notices={notices} />
         <BoardOfDirectors members={board} />

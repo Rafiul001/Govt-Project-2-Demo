@@ -29,4 +29,9 @@ export const API_URLS = {
     CREATE: "notice",
     BY_ID: (id: number | string) => `notice/${id}`,
   },
+  BANNER: {
+    LIST: "banner",
+    CREATE: "banner",
+    BY_ID: (id: number | string) => `banner/${id}`,
+  },
 } as const;

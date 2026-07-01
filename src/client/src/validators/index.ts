@@ -204,3 +204,28 @@ export const updateNoticeSchema = z.strictObject({
   isPublished: z.boolean(),
 });
 export type TUpdateNoticeForm = z.infer<typeof updateNoticeSchema>;
+
+// --- Banner ---
+
+export const createBannerSchema = z.strictObject({
+  branchId: branchId.optional(),
+  title: z.string().trim().min(1, "Title is required").max(255),
+  subTitle: z.string().trim().min(1, "Subtitle is required").max(255),
+  image: optionalFile,
+  order: z.number().int().min(0).optional(),
+});
+export type TCreateBannerForm = z.infer<typeof createBannerSchema>;
+
+export const updateBannerSchema = z.strictObject({
+  branchId: branchId.optional(),
+  title: z.string().trim().min(1, "Title is required").max(255).optional(),
+  subTitle: z
+    .string()
+    .trim()
+    .min(1, "Subtitle is required")
+    .max(255)
+    .optional(),
+  image: optionalFile,
+  order: z.number().int().min(0).optional(),
+});
+export type TUpdateBannerForm = z.infer<typeof updateBannerSchema>;

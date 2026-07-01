@@ -15,13 +15,13 @@ import {
 } from "../molecules";
 import { AdminForm, FormModal, TablePagination } from "../organisms";
 
-type ListPageProps = {
+type TListPageProps = {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
 };
 
-export function AdminsPage({ page, pageSize, onPageChange }: ListPageProps) {
+export function AdminsPage({ page, pageSize, onPageChange }: TListPageProps) {
   const query = useAdmins({ page, pageSize });
   const branchesQuery = useBranches({ page: 1, pageSize: 100 });
   const deleteMutation = useDeleteAdmin();

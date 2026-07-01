@@ -14,13 +14,13 @@ import {
 } from "../molecules";
 import { BranchForm, FormModal, TablePagination } from "../organisms";
 
-type ListPageProps = {
+type TListPageProps = {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
 };
 
-export function BranchesPage({ page, pageSize, onPageChange }: ListPageProps) {
+export function BranchesPage({ page, pageSize, onPageChange }: TListPageProps) {
   const query = useBranches({ page, pageSize });
   const deleteMutation = useDeleteBranch();
 

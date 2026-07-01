@@ -2,14 +2,38 @@
 
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { toLocaleDigits } from "@/lib/format";
+import type { TBanner } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
-/** Auto-rotating hero banner with manual controls and dot navigation. */
-export function HeroSlider({ bannerUrl }: { bannerUrl: string | null }) {
+type TSlide = { title: string; subtitle: string; image: string | null };
+
+/**
+ * Auto-rotating hero banner with manual controls and dot navigation.
+ *
+ * Renders the branch's managed banners (from the dashboard) when available,
+ * each with its own backdrop image. Falls back to the bilingual static slides
+ * (with the branch banner as a shared backdrop) when no banners are set.
+ */
+export function HeroSlider({
+  banners,
+  bannerUrl,
+}: {
+  banners: TBanner[];
+  bannerUrl: string | null;
+}) {
   const { lang, t } = useLanguage();
-  const slides = t.hero.slides;
+
+  const slides: TSlide[] =
+    banners.length > 0
+      ? banners.map((b) => ({
+          title: b.title,
+          subtitle: b.subTitle,
+          image: b.image ?? bannerUrl,
+        }))
+      : t.hero.slides.map((s) => ({ ...s, image: bannerUrl }));
+
   const [index, setIndex] = useState(0);
 
   const go = useCallback(
@@ -23,6 +47,7 @@ export function HeroSlider({ bannerUrl }: { bannerUrl: string | null }) {
   }, [go]);
 
   const active = slides[index] ?? slides[0];
+  const activeImage = active?.image ?? null;
 
   return (
     <section
@@ -30,11 +55,12 @@ export function HeroSlider({ bannerUrl }: { bannerUrl: string | null }) {
       className="relative overflow-hidden bg-linear-to-br from-govt-green-dark via-govt-green to-govt-green-dark text-white"
       aria-roledescription="carousel"
     >
-      {/* Branch banner as a subtle, darkened backdrop when available */}
-      {bannerUrl ? (
+      {/* Active slide image as a subtle, darkened backdrop when available */}
+      {activeImage ? (
         <div className="absolute inset-0" aria-hidden>
           <Image
-            src={bannerUrl}
+            key={activeImage}
+            src={activeImage}
             alt=""
             fill
             priority

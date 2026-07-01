@@ -15,7 +15,7 @@ import {
 } from "../molecules";
 import { FormModal, NoticeForm, TablePagination } from "../organisms";
 
-type ListPageProps = {
+type TListPageProps = {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -28,7 +28,7 @@ export function NoticesPage({
   pageSize,
   onPageChange,
   initialSelectedId,
-}: ListPageProps) {
+}: TListPageProps) {
   const query = useNotices({ page, pageSize });
   const deleteMutation = useDeleteNotice();
 

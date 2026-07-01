@@ -9,13 +9,13 @@ import {
 } from "../../../validators";
 import { FileInput, TextInput } from "../../formInputs";
 
-type BranchFormProps = {
+type TBranchFormProps = {
   initial?: TBranch;
   onSuccess: () => void;
   onCancel: () => void;
 };
 
-export function BranchForm({ initial, onSuccess, onCancel }: BranchFormProps) {
+export function BranchForm({ initial, onSuccess, onCancel }: TBranchFormProps) {
   const isEdit = Boolean(initial);
   const createMutation = useCreateBranch();
   const updateMutation = useUpdateBranch();

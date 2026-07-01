@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 
-type PageHeaderProps = {
+type TPageHeaderProps = {
   title: string;
   description?: string;
   actions?: ReactNode;
 };
 
 /** Page title block with an optional description and right-aligned actions. */
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export function PageHeader({ title, description, actions }: TPageHeaderProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="space-y-1">
