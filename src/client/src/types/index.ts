@@ -25,6 +25,12 @@ export type TPageParams = {
   pageSize: number;
 };
 
+/** Banner list params: pagination plus optional search + branch filter. */
+export type TBannerListParams = TPageParams & {
+  search?: string;
+  branchName?: string;
+};
+
 export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
 
 // --- Entities ---
@@ -72,6 +78,17 @@ export type TNotice = {
   fileUrl: string | null;
   image: string | null;
   isPublished: boolean;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TBanner = {
+  id: number;
+  title: string;
+  subTitle: string;
+  image: string | null;
+  order: number;
   branchId: number;
   createdAt: string;
   updatedAt: string;
@@ -171,4 +188,22 @@ export type TUpdateNoticeInput = {
   file?: File;
   image?: File;
   isPublished?: boolean;
+};
+
+// --- Banner ---
+
+export type TCreateBannerInput = {
+  branchId?: number;
+  title: string;
+  subTitle: string;
+  image?: File;
+  order?: number;
+};
+
+export type TUpdateBannerInput = {
+  branchId?: number;
+  title?: string;
+  subTitle?: string;
+  image?: File;
+  order?: number;
 };

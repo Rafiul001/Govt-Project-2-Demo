@@ -18,7 +18,7 @@ import {
   TextInput,
 } from "../../formInputs";
 
-type BoardOfDirectorFormProps = {
+type TBoardOfDirectorFormProps = {
   initial?: TBoardOfDirector;
   onSuccess: () => void;
   onCancel: () => void;
@@ -28,7 +28,7 @@ export function BoardOfDirectorForm({
   initial,
   onSuccess,
   onCancel,
-}: BoardOfDirectorFormProps) {
+}: TBoardOfDirectorFormProps) {
   const isEdit = Boolean(initial);
   const admin = useCurrentAdmin();
   const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";

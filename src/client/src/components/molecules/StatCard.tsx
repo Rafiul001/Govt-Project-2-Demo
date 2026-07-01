@@ -1,14 +1,14 @@
 import { Card } from "@heroui/react";
 import type { ReactNode } from "react";
 
-type StatCardProps = {
+type TStatCardProps = {
   label: string;
   value: ReactNode;
   icon: ReactNode;
 };
 
 /** Dashboard summary tile. */
-export function StatCard({ label, value, icon }: StatCardProps) {
+export function StatCard({ label, value, icon }: TStatCardProps) {
   return (
     <Card>
       <Card.Content className="flex items-center gap-4 p-5">

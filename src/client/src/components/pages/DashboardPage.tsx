@@ -16,7 +16,7 @@ import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
 import { useNotices } from "../../hooks/useNotices";
 import type { TNotice } from "../../types";
 
-type IconType = ComponentType<{ className?: string }>;
+type TIconType = ComponentType<{ className?: string }>;
 
 function greeting() {
   const hour = new Date().getHours();
@@ -38,14 +38,14 @@ const shortDate = (iso: string) =>
     month: "short",
   });
 
-type StatTileProps = {
+type TStatTileProps = {
   to: string;
   label: string;
   value: number | string;
-  icon: IconType;
+  icon: TIconType;
 };
 
-function StatTile({ to, label, value, icon: Icon }: StatTileProps) {
+function StatTile({ to, label, value, icon: Icon }: TStatTileProps) {
   return (
     <Link
       to={to}

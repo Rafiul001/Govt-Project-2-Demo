@@ -10,13 +10,13 @@ import {
 } from "../../../validators";
 import { BranchSelect, FileInput, TextInput } from "../../formInputs";
 
-type AdminFormProps = {
+type TAdminFormProps = {
   initial?: TAdmin;
   onSuccess: () => void;
   onCancel: () => void;
 };
 
-export function AdminForm({ initial, onSuccess, onCancel }: AdminFormProps) {
+export function AdminForm({ initial, onSuccess, onCancel }: TAdminFormProps) {
   const isEdit = Boolean(initial);
   const createMutation = useCreateAdmin();
   const updateMutation = useUpdateAdmin();

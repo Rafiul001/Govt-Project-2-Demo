@@ -3,4 +3,5 @@ export const DB = {
   BRANCH: "branches",
   BOARD_OF_DIRECTORS: "boardofdirectors",
   NOTICE: "notices",
+  BANNER: "banners",
 } as const;

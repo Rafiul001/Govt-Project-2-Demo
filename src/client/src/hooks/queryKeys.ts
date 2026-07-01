@@ -1,4 +1,4 @@
-import type { TPageParams } from "../types";
+import type { TBannerListParams, TPageParams } from "../types";
 
 /** Centralized TanStack Query keys, so queries and invalidations stay in sync. */
 export const queryKeys = {
@@ -21,5 +21,10 @@ export const queryKeys = {
     all: ["notices"] as const,
     list: (params: TPageParams) => ["notices", "list", params] as const,
     detail: (id: number | string) => ["notices", id] as const,
+  },
+  banners: {
+    all: ["banners"] as const,
+    list: (params: TBannerListParams) => ["banners", "list", params] as const,
+    detail: (id: number | string) => ["banners", id] as const,
   },
 } as const;

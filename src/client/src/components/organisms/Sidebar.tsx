@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Building2Icon,
+  GalleryHorizontalIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
   SettingsIcon,
@@ -10,7 +11,7 @@ import {
 import type { ComponentType } from "react";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
 
-type NavItem = {
+type TNavItem = {
   to: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
@@ -18,7 +19,7 @@ type NavItem = {
   superAdminOnly?: boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: TNavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboardIcon, exact: true },
   {
     to: "/branches",
@@ -27,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
     superAdminOnly: true,
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
+  { to: "/banners", label: "Banners", icon: GalleryHorizontalIcon },
   { to: "/notices", label: "Notices", icon: MegaphoneIcon },
   {
     to: "/admins",

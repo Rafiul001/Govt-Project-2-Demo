@@ -17,7 +17,7 @@ import {
 } from "../molecules";
 import { BoardOfDirectorForm, FormModal, TablePagination } from "../organisms";
 
-type ListPageProps = {
+type TListPageProps = {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -27,7 +27,7 @@ export function BoardOfDirectorsPage({
   page,
   pageSize,
   onPageChange,
-}: ListPageProps) {
+}: TListPageProps) {
   const query = useBoardOfDirectors({ page, pageSize });
   const deleteMutation = useDeleteBoardOfDirector();
 

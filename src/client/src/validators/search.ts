@@ -21,3 +21,14 @@ export const noticesSearchSchema = listSearchSchema.extend({
 });
 
 export type TNoticesSearch = z.infer<typeof noticesSearchSchema>;
+
+/**
+ * Banners list accepts a free-text `search` and a `branchName` filter, both
+ * kept in the URL so the view is shareable and survives reloads.
+ */
+export const bannersSearchSchema = listSearchSchema.extend({
+  search: z.string().trim().min(1).optional().catch(undefined),
+  branchName: z.string().trim().min(1).optional().catch(undefined),
+});
+
+export type TBannersSearch = z.infer<typeof bannersSearchSchema>;

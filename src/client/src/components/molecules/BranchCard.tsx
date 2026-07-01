@@ -9,14 +9,14 @@ import {
 } from "lucide-react";
 import type { TBranch } from "../../types";
 
-type BranchCardProps = {
+type TBranchCardProps = {
   branch: TBranch;
   onEdit: () => void;
   onDelete: () => void;
 };
 
 /** Branch tile with banner, overlapping logo, and contact details. */
-export function BranchCard({ branch, onEdit, onDelete }: BranchCardProps) {
+export function BranchCard({ branch, onEdit, onDelete }: TBranchCardProps) {
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface-secondary shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-1 hover:shadow-(--card-shadow-hover)">
       {/* Banner */}

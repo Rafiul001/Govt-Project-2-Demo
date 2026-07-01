@@ -1,6 +1,6 @@
 import { Button, Modal } from "@heroui/react";
 
-type ConfirmDialogProps = {
+type TConfirmDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   title: string;
@@ -19,7 +19,7 @@ export function ConfirmDialog({
   confirmLabel = "Delete",
   isLoading,
   onConfirm,
-}: ConfirmDialogProps) {
+}: TConfirmDialogProps) {
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop>

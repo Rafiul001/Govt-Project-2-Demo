@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { TNotice } from "../../types";
 
-type NoticePreviewProps = {
+type TNoticePreviewProps = {
   notice: TNotice | null;
   onEdit: () => void;
   onDelete: () => void;
@@ -27,7 +27,7 @@ export function NoticePreview({
   notice,
   onEdit,
   onDelete,
-}: NoticePreviewProps) {
+}: TNoticePreviewProps) {
   if (!notice) {
     return (
       <div className="flex min-h-80 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface-secondary/50 p-10 text-center lg:h-full">

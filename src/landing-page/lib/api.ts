@@ -14,7 +14,7 @@
  */
 
 import { headers } from "next/headers";
-import type { TBoardOfDirector, TBranch, TNotice } from "./types";
+import type { TBanner, TBoardOfDirector, TBranch, TNotice } from "./types";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:3000";
 
@@ -94,6 +94,18 @@ export async function getNotices(
 /** Every notice for the branch — backs the full `/notices` archive page. */
 export async function getAllNotices(name?: string): Promise<TNotice[]> {
   return getNotices(name, 100);
+}
+
+/** Hero banners for the branch, ordered by display order. */
+export async function getBanners(
+  name?: string,
+  pageSize = 10,
+): Promise<TBanner[]> {
+  const branchName = name ?? (await getBranchName());
+  const data = await apiGet<TPaginated<TBanner>>(
+    `/api/v1/banner?branchName=${encodeURIComponent(branchName)}&pageSize=${pageSize}`,
+  );
+  return data?.items ?? [];
 }
 
 /** Board of directors for the branch, ordered by display order. */

@@ -1,7 +1,7 @@
 import { Modal } from "@heroui/react";
 import type { ReactNode } from "react";
 
-type FormModalProps = {
+type TFormModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   title: string;
@@ -14,7 +14,7 @@ export function FormModal({
   onOpenChange,
   title,
   children,
-}: FormModalProps) {
+}: TFormModalProps) {
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop>

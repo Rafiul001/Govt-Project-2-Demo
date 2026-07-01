@@ -1,11 +1,12 @@
 export { AppShell } from "./AppShell";
 export { Sidebar } from "./Sidebar";
 export { Topbar } from "./Topbar";
-export { DataTable, type DataTableColumn } from "./DataTable";
+export { DataTable, type TDataTableColumn } from "./DataTable";
 export { TablePagination } from "./TablePagination";
 export { FormModal } from "./FormModal";
 export { BranchForm } from "./forms/BranchForm";
 export { BoardOfDirectorForm } from "./forms/BoardOfDirectorForm";
+export { BannerForm } from "./forms/BannerForm";
 export { NoticeForm } from "./forms/NoticeForm";
 export { AdminForm } from "./forms/AdminForm";
 export { ProfileForm } from "./forms/ProfileForm";

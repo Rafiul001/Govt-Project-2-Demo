@@ -1,16 +1,16 @@
 import { Table } from "@heroui/react";
 import type { ReactNode } from "react";
 
-export type DataTableColumn<T> = {
+export type TDataTableColumn<T> = {
   key: string;
   header: string;
   isRowHeader?: boolean;
   render: (row: T) => ReactNode;
 };
 
-type DataTableProps<T> = {
+type TDataTableProps<T> = {
   ariaLabel: string;
-  columns: DataTableColumn<T>[];
+  columns: TDataTableColumn<T>[];
   rows: T[];
 };
 
@@ -19,7 +19,7 @@ export function DataTable<T extends { id: number }>({
   ariaLabel,
   columns,
   rows,
-}: DataTableProps<T>) {
+}: TDataTableProps<T>) {
   return (
     <Table>
       <Table.ScrollContainer className="rounded-xl border border-border">

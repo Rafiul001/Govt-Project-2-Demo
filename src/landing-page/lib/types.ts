@@ -43,3 +43,14 @@ export type TBoardOfDirector = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type TBanner = {
+  id: number;
+  title: string;
+  subTitle: string;
+  image: string | null;
+  order: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};

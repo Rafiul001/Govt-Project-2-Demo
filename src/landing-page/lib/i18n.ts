@@ -10,16 +10,16 @@
  * around it switches.
  */
 
-export type Language = "bn" | "en";
+export type TLanguage = "bn" | "en";
 
-export const LANGUAGES: { code: Language; label: string }[] = [
+export const LANGUAGES: { code: TLanguage; label: string }[] = [
   { code: "bn", label: "বাংলা" },
   { code: "en", label: "English" },
 ];
 
-export const DEFAULT_LANGUAGE: Language = "bn";
+export const DEFAULT_LANGUAGE: TLanguage = "bn";
 
-type Dictionary = {
+type TDictionary = {
   topBar: {
     nationalPortal: string;
     selectLanguage: string;
@@ -104,7 +104,7 @@ type Dictionary = {
   };
 };
 
-export const dictionaries: Record<Language, Dictionary> = {
+export const dictionaries: Record<TLanguage, TDictionary> = {
   bn: {
     topBar: {
       nationalPortal: "জাতীয় তথ্য বাতায়ন",
