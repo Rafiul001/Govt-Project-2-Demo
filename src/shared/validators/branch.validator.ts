@@ -53,6 +53,8 @@ export const updateBranchSchema = z
     email: optionalEmail,
     logo: fileSchema.optional(),
     banner: fileSchema.optional(),
+    // Multipart values arrive as strings; coerce the publish flag to a boolean.
+    isPublished: z.stringbool().optional(),
   })
   // Only enforce when both fields are present in the payload; a partial update
   // that omits `name` is re-checked against the stored name in the route.

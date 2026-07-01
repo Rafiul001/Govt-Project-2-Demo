@@ -91,6 +91,8 @@ export const updateBranchSchema = z
     email: optionalEmail,
     logo: optionalFile,
     banner: optionalFile,
+    // Set to true by the Publish button on the branch editor.
+    isPublished: z.boolean().optional(),
   })
   .refine(
     (v) =>

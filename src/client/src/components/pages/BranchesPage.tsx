@@ -1,4 +1,5 @@
 import { Button, toast } from "@heroui/react";
+import { useNavigate } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useBranches, useDeleteBranch } from "../../hooks/useBranches";
@@ -23,9 +24,9 @@ type TListPageProps = {
 export function BranchesPage({ page, pageSize, onPageChange }: TListPageProps) {
   const query = useBranches({ page, pageSize });
   const deleteMutation = useDeleteBranch();
+  const navigate = useNavigate();
 
   const [isCreating, setIsCreating] = useState(false);
-  const [editing, setEditing] = useState<TBranch | null>(null);
   const [deleting, setDeleting] = useState<TBranch | null>(null);
 
   const handleDelete = () => {
@@ -78,7 +79,12 @@ export function BranchesPage({ page, pageSize, onPageChange }: TListPageProps) {
               <BranchCard
                 key={branch.id}
                 branch={branch}
-                onEdit={() => setEditing(branch)}
+                onSelect={() =>
+                  navigate({
+                    to: "/branch/$id/edit",
+                    params: { id: String(branch.id) },
+                  })
+                }
                 onDelete={() => setDeleting(branch)}
               />
             ))}
@@ -93,25 +99,15 @@ export function BranchesPage({ page, pageSize, onPageChange }: TListPageProps) {
       )}
 
       <FormModal
-        isOpen={isCreating || editing !== null}
+        isOpen={isCreating}
         onOpenChange={(open) => {
-          if (!open) {
-            setIsCreating(false);
-            setEditing(null);
-          }
+          if (!open) setIsCreating(false);
         }}
-        title={editing ? "Edit branch" : "Add branch"}
+        title="Add branch"
       >
         <BranchForm
-          initial={editing ?? undefined}
-          onSuccess={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
-          onCancel={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
+          onSuccess={() => setIsCreating(false)}
+          onCancel={() => setIsCreating(false)}
         />
       </FormModal>
 

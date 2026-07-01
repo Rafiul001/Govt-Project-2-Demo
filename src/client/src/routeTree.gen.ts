@@ -18,6 +18,7 @@ import { Route as AppBranchesRouteImport } from './routes/_app/branches'
 import { Route as AppBoardOfDirectorsRouteImport } from './routes/_app/board-of-directors'
 import { Route as AppBannersRouteImport } from './routes/_app/banners'
 import { Route as AppAdminsRouteImport } from './routes/_app/admins'
+import { Route as AppBranchIdEditRouteImport } from './routes/_app/branch.$id.edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -63,6 +64,11 @@ const AppAdminsRoute = AppAdminsRouteImport.update({
   path: '/admins',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBranchIdEditRoute = AppBranchIdEditRouteImport.update({
+  id: '/branch/$id/edit',
+  path: '/branch/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/branches': typeof AppBranchesRoute
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
+  '/branch/$id/edit': typeof AppBranchIdEditRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
+  '/branch/$id/edit': typeof AppBranchIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_app/notices': typeof AppNoticesRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/branch/$id/edit': typeof AppBranchIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/notices'
     | '/settings'
+    | '/branch/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/notices'
     | '/settings'
     | '/'
+    | '/branch/$id/edit'
   id:
     | '__root__'
     | '/_app'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_app/notices'
     | '/_app/settings'
     | '/_app/'
+    | '/_app/branch/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/branch/$id/edit': {
+      id: '/_app/branch/$id/edit'
+      path: '/branch/$id/edit'
+      fullPath: '/branch/$id/edit'
+      preLoaderRoute: typeof AppBranchIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -211,6 +230,7 @@ interface AppRouteChildren {
   AppNoticesRoute: typeof AppNoticesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppBranchIdEditRoute: typeof AppBranchIdEditRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -221,6 +241,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNoticesRoute: AppNoticesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppBranchIdEditRoute: AppBranchIdEditRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

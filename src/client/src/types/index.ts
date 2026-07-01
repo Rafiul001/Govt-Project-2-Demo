@@ -44,6 +44,7 @@ export type TBranch = {
   email: string | null;
   logo: string | null;
   banner: string | null;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -126,6 +127,7 @@ export type TUpdateBranchInput = {
   email?: string;
   logo?: File;
   banner?: File;
+  isPublished?: boolean;
 };
 
 // --- Admin ---
