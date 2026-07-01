@@ -31,6 +31,11 @@ export type TListParams = TPageParams & {
   branchName?: string;
 };
 
+/** List params for sub-menus: list params plus an optional `menuId` filter. */
+export type TSubmenuListParams = TListParams & {
+  menuId?: number;
+};
+
 export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
 
 // --- Entities ---
@@ -208,4 +213,82 @@ export type TUpdateBannerInput = {
   subTitle?: string;
   image?: File;
   order?: number;
+};
+
+// --- Menu / Sub-menu / Page (dynamic navigation) ---
+
+export type TMenu = {
+  id: number;
+  titleBn: string | null;
+  titleEn: string | null;
+  slug: string;
+  order: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TSubmenu = {
+  id: number;
+  titleBn: string | null;
+  titleEn: string | null;
+  slug: string;
+  order: number;
+  menuId: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TPage = {
+  id: number;
+  bannerTitleBn: string | null;
+  bannerTitleEn: string | null;
+  bannerImage: string | null;
+  contentBn: string | null;
+  contentEn: string | null;
+  isPublished: boolean;
+  submenuId: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TCreateMenuInput = {
+  branchId?: number;
+  titleBn?: string;
+  titleEn?: string;
+  order?: number;
+};
+
+export type TUpdateMenuInput = {
+  branchId?: number;
+  titleBn?: string;
+  titleEn?: string;
+  order?: number;
+};
+
+export type TCreateSubmenuInput = {
+  branchId?: number;
+  menuId: number;
+  titleBn?: string;
+  titleEn?: string;
+  order?: number;
+};
+
+export type TUpdateSubmenuInput = {
+  branchId?: number;
+  menuId?: number;
+  titleBn?: string;
+  titleEn?: string;
+  order?: number;
+};
+
+export type TUpdatePageInput = {
+  bannerTitleBn?: string;
+  bannerTitleEn?: string;
+  bannerImage?: File;
+  contentBn?: string;
+  contentEn?: string;
+  isPublished?: boolean;
 };

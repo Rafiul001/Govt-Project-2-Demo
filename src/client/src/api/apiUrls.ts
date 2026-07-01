@@ -34,4 +34,18 @@ export const API_URLS = {
     CREATE: "banner",
     BY_ID: (id: number | string) => `banner/${id}`,
   },
+  MENU: {
+    LIST: "menu",
+    CREATE: "menu",
+    BY_ID: (id: number | string) => `menu/${id}`,
+  },
+  SUBMENU: {
+    LIST: "submenu",
+    CREATE: "submenu",
+    BY_ID: (id: number | string) => `submenu/${id}`,
+  },
+  PAGE: {
+    BY_ID: (id: number | string) => `page/${id}`,
+    BY_SUBMENU: (submenuId: number | string) => `page/by-submenu/${submenuId}`,
+  },
 } as const;

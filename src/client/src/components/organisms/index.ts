@@ -8,6 +8,8 @@ export { ListFilters } from "./ListFilters";
 export { BranchForm } from "./forms/BranchForm";
 export { BoardOfDirectorForm } from "./forms/BoardOfDirectorForm";
 export { BannerForm } from "./forms/BannerForm";
+export { MenuForm } from "./forms/MenuForm";
+export { SubmenuForm } from "./forms/SubmenuForm";
 export { NoticeForm } from "./forms/NoticeForm";
 export { AdminForm } from "./forms/AdminForm";
 export { ProfileForm } from "./forms/ProfileForm";

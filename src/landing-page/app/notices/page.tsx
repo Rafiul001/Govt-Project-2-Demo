@@ -3,7 +3,7 @@ import { NoticesArchive } from "@/components/organisms/NoticesArchive";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getAllNotices, getBranch } from "@/lib/api";
+import { getAllNotices, getBranch, getNavTree } from "@/lib/api";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,10 +22,11 @@ export default async function NoticesPage({
 }: {
   searchParams: Promise<{ id?: string }>;
 }) {
-  const [{ id }, branch, notices] = await Promise.all([
+  const [{ id }, branch, notices, menus] = await Promise.all([
     searchParams,
     getBranch(),
     getAllNotices(),
+    getNavTree(),
   ]);
 
   const parsedId = id ? Number(id) : NaN;
@@ -35,7 +36,7 @@ export default async function NoticesPage({
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar />
+      <NavBar menus={menus} />
       <main className="flex-1">
         <NoticesArchive notices={notices} initialNoticeId={initialNoticeId} />
       </main>

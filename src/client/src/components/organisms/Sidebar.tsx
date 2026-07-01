@@ -3,6 +3,7 @@ import {
   Building2Icon,
   GalleryHorizontalIcon,
   LayoutDashboardIcon,
+  ListTreeIcon,
   MegaphoneIcon,
   SettingsIcon,
   ShieldUserIcon,
@@ -29,6 +30,7 @@ const NAV_ITEMS: TNavItem[] = [
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
   { to: "/banners", label: "Banners", icon: GalleryHorizontalIcon },
+  { to: "/menus", label: "Menus & Pages", icon: ListTreeIcon },
   { to: "/notices", label: "Notices", icon: MegaphoneIcon },
   {
     to: "/admins",

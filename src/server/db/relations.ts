@@ -11,6 +11,12 @@ export const relations = defineRelations(schema, (r) => ({
     notices: r.many.noticesTable(),
     // One branch has many banners
     banners: r.many.bannersTable(),
+    // One branch has many menus
+    menus: r.many.menusTable(),
+    // One branch has many sub-menus
+    submenus: r.many.submenusTable(),
+    // One branch has many pages
+    pages: r.many.pagesTable(),
   },
   adminsTable: {
     // Super admins have no branch, so this relation is optional.
@@ -37,6 +43,44 @@ export const relations = defineRelations(schema, (r) => ({
     branch: r.one.branchesTable({
       from: r.bannersTable.branchId,
       to: r.branchesTable.id,
+      optional: false,
+    }),
+  },
+  menusTable: {
+    branch: r.one.branchesTable({
+      from: r.menusTable.branchId,
+      to: r.branchesTable.id,
+      optional: false,
+    }),
+    // One menu has many sub-menus
+    submenus: r.many.submenusTable(),
+  },
+  submenusTable: {
+    branch: r.one.branchesTable({
+      from: r.submenusTable.branchId,
+      to: r.branchesTable.id,
+      optional: false,
+    }),
+    menu: r.one.menusTable({
+      from: r.submenusTable.menuId,
+      to: r.menusTable.id,
+      optional: false,
+    }),
+    // One sub-menu has exactly one page
+    page: r.one.pagesTable({
+      from: r.submenusTable.id,
+      to: r.pagesTable.submenuId,
+    }),
+  },
+  pagesTable: {
+    branch: r.one.branchesTable({
+      from: r.pagesTable.branchId,
+      to: r.branchesTable.id,
+      optional: false,
+    }),
+    submenu: r.one.submenusTable({
+      from: r.pagesTable.submenuId,
+      to: r.submenusTable.id,
       optional: false,
     }),
   },
