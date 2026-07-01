@@ -23,7 +23,7 @@ import {
 } from "@/server/utils/jwt";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import { hashPassword, verifyPassword } from "@/server/utils/password";
-import { branchExists } from "@/server/utils/scope";
+import { branchExists, branchIdByName } from "@/server/utils/scope";
 import { adminType, tokenType } from "@/shared/types";
 import {
   adminLoginSchema,
@@ -32,10 +32,10 @@ import {
   updateAdminSchema,
   updateProfileSchema,
 } from "@/shared/validators/admin.validator";
-import { paginationQuerySchema } from "@/shared/validators/pagination.validator";
+import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 /** Strip the password hash before returning an admin to the client. */
@@ -122,20 +122,52 @@ adminRouter.post(
   },
 );
 
-/** GET /api/v1/admin — list all admins (super admin only, paginated). */
+/**
+ * GET /api/v1/admin — list all admins (super admin only, paginated).
+ *
+ * Optionally filtered by `?branchName=` and a free-text `?search=` matched
+ * against the admin name/username. An unknown branch name yields an empty page.
+ */
 adminRouter.get(
   "/",
   authMiddleware([adminType.SUPER_ADMIN]),
-  zValidator("query", paginationQuerySchema),
+  zValidator("query", branchListQuerySchema),
   async (c) => {
-    const { page, pageSize } = c.req.valid("query");
+    const { page, pageSize, branchName, search } = c.req.valid("query");
 
-    const totalResult = await db.select({ value: count() }).from(adminsTable);
+    let branchId: number | undefined;
+    if (branchName) {
+      const resolved = await branchIdByName(branchName);
+      if (resolved === null) {
+        return ok(
+          c,
+          "Admins fetched successfully",
+          paginated([], 0, page, pageSize),
+        );
+      }
+      branchId = resolved;
+    }
+
+    const where = and(
+      branchId != null ? eq(adminsTable.branchId, branchId) : undefined,
+      search
+        ? or(
+            ilike(adminsTable.name, `%${search}%`),
+            ilike(adminsTable.username, `%${search}%`),
+          )
+        : undefined,
+    );
+
+    const totalResult = await db
+      .select({ value: count() })
+      .from(adminsTable)
+      .where(where);
     const total = totalResult[0]?.value ?? 0;
 
     const admins = await db
       .select()
       .from(adminsTable)
+      .where(where)
       .orderBy(adminsTable.id)
       .limit(pageSize)
       .offset(pageOffset(page, pageSize));

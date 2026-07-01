@@ -13,16 +13,33 @@ import {
   LoadingState,
   PageHeader,
 } from "../molecules";
-import { AdminForm, FormModal, TablePagination } from "../organisms";
+import {
+  AdminForm,
+  FormModal,
+  ListFilters,
+  TablePagination,
+} from "../organisms";
 
 type TListPageProps = {
   page: number;
   pageSize: number;
+  search?: string;
+  branchName?: string;
   onPageChange: (page: number) => void;
+  onSearchChange: (value: string) => void;
+  onBranchChange: (value: string) => void;
 };
 
-export function AdminsPage({ page, pageSize, onPageChange }: TListPageProps) {
-  const query = useAdmins({ page, pageSize });
+export function AdminsPage({
+  page,
+  pageSize,
+  search,
+  branchName,
+  onPageChange,
+  onSearchChange,
+  onBranchChange,
+}: TListPageProps) {
+  const query = useAdmins({ page, pageSize, search, branchName });
   const branchesQuery = useBranches({ page: 1, pageSize: 100 });
   const deleteMutation = useDeleteAdmin();
 
@@ -41,12 +58,13 @@ export function AdminsPage({ page, pageSize, onPageChange }: TListPageProps) {
     });
   };
 
-  const branchName = (id: number | null) =>
+  const branchLabel = (id: number | null) =>
     branchesQuery.data?.items.find((b) => b.id === id)?.name;
 
   const items = query.data?.items ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = query.data?.totalPages ?? 1;
+  const isFiltered = Boolean(search) || Boolean(branchName);
 
   return (
     <div className="space-y-6">
@@ -61,21 +79,36 @@ export function AdminsPage({ page, pageSize, onPageChange }: TListPageProps) {
         }
       />
 
+      <ListFilters
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search by name or username…"
+        branchName={branchName}
+        onBranchChange={onBranchChange}
+      />
+
       {query.isLoading ? (
         <LoadingState />
       ) : query.isError ? (
         <ErrorState message={getApiErrorMessage(query.error)} />
       ) : total === 0 ? (
-        <EmptyState
-          title="No admins found"
-          description="Create the first administrator."
-          action={
-            <Button variant="primary" onPress={() => setIsCreating(true)}>
-              <PlusIcon className="size-4" />
-              Add admin
-            </Button>
-          }
-        />
+        isFiltered ? (
+          <EmptyState
+            title="No admins match your filters"
+            description="Try a different search term or branch."
+          />
+        ) : (
+          <EmptyState
+            title="No admins found"
+            description="Create the first administrator."
+            action={
+              <Button variant="primary" onPress={() => setIsCreating(true)}>
+                <PlusIcon className="size-4" />
+                Add admin
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -83,7 +116,7 @@ export function AdminsPage({ page, pageSize, onPageChange }: TListPageProps) {
               <AdminCard
                 key={admin.id}
                 admin={admin}
-                branchName={branchName(admin.branchId)}
+                branchName={branchLabel(admin.branchId)}
                 onEdit={() => setEditing(admin)}
                 onDelete={() => setDeleting(admin)}
               />

@@ -13,12 +13,21 @@ import {
   NoticePreview,
   PageHeader,
 } from "../molecules";
-import { FormModal, NoticeForm, TablePagination } from "../organisms";
+import {
+  FormModal,
+  ListFilters,
+  NoticeForm,
+  TablePagination,
+} from "../organisms";
 
 type TListPageProps = {
   page: number;
   pageSize: number;
+  search?: string;
+  branchName?: string;
   onPageChange: (page: number) => void;
+  onSearchChange: (value: string) => void;
+  onBranchChange: (value: string) => void;
   /** Optional notice id to preview on first render (e.g. deep-linked). */
   initialSelectedId?: number;
 };
@@ -26,10 +35,14 @@ type TListPageProps = {
 export function NoticesPage({
   page,
   pageSize,
+  search,
+  branchName,
   onPageChange,
+  onSearchChange,
+  onBranchChange,
   initialSelectedId,
 }: TListPageProps) {
-  const query = useNotices({ page, pageSize });
+  const query = useNotices({ page, pageSize, search, branchName });
   const deleteMutation = useDeleteNotice();
 
   const [isCreating, setIsCreating] = useState(false);
@@ -55,6 +68,7 @@ export function NoticesPage({
   const total = query.data?.total ?? 0;
   const totalPages = query.data?.totalPages ?? 1;
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  const isFiltered = Boolean(search) || Boolean(branchName);
 
   return (
     <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
@@ -69,21 +83,36 @@ export function NoticesPage({
         }
       />
 
+      <ListFilters
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search by title or description…"
+        branchName={branchName}
+        onBranchChange={onBranchChange}
+      />
+
       {query.isLoading ? (
         <LoadingState />
       ) : query.isError ? (
         <ErrorState message={getApiErrorMessage(query.error)} />
       ) : total === 0 ? (
-        <EmptyState
-          title="No notices yet"
-          description="Create your first notice to publish it on the site."
-          action={
-            <Button variant="primary" onPress={() => setIsCreating(true)}>
-              <PlusIcon className="size-4" />
-              Add notice
-            </Button>
-          }
-        />
+        isFiltered ? (
+          <EmptyState
+            title="No notices match your filters"
+            description="Try a different search term or branch."
+          />
+        ) : (
+          <EmptyState
+            title="No notices yet"
+            description="Create your first notice to publish it on the site."
+            action={
+              <Button variant="primary" onPress={() => setIsCreating(true)}>
+                <PlusIcon className="size-4" />
+                Add notice
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="flex flex-col gap-5 lg:min-h-0 lg:flex-1 lg:flex-row">
           {/* List */}

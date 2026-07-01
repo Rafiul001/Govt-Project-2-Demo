@@ -1,19 +1,6 @@
 import { z } from "zod";
 import { fileSchema } from "./file.validator";
 
-/**
- * Banner list query: pagination + optional branch scope (`?branchName=`) and a
- * free-text `?search=` matched against the banner title/subtitle.
- */
-export const bannerListQuerySchema = z.strictObject({
-  page: z.coerce.number().int().positive().catch(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).catch(10).default(10),
-  branchName: z.string().trim().min(1).optional(),
-  search: z.string().trim().min(1).optional(),
-});
-
-export type TBannerListQuery = z.infer<typeof bannerListQuerySchema>;
-
 export const createBannerSchema = z.strictObject({
   // Multipart form values arrive as strings, so coerce numeric fields.
   // Used only by super admins; branch admins take the branch from their token.

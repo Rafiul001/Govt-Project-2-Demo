@@ -4,6 +4,7 @@ export { Topbar } from "./Topbar";
 export { DataTable, type TDataTableColumn } from "./DataTable";
 export { TablePagination } from "./TablePagination";
 export { FormModal } from "./FormModal";
+export { ListFilters } from "./ListFilters";
 export { BranchForm } from "./forms/BranchForm";
 export { BoardOfDirectorForm } from "./forms/BoardOfDirectorForm";
 export { BannerForm } from "./forms/BannerForm";

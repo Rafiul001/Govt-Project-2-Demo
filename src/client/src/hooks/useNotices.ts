@@ -7,23 +7,24 @@ import {
 import { apiClient } from "../api/apiClient";
 import { API_URLS } from "../api/apiUrls";
 import { toFormData } from "../api/formData";
+import { toListSearchParams } from "../api/listParams";
 import type {
   TApiResponse,
   TCreateNoticeInput,
+  TListParams,
   TNotice,
-  TPageParams,
   TPaginated,
   TUpdateNoticeInput,
 } from "../types";
 import { queryKeys } from "./queryKeys";
 
-/** List notices (branch-scoped, paginated server-side). */
-export function useNotices(params: TPageParams) {
+/** List notices (branch-scoped, paginated, filterable by search + branch). */
+export function useNotices(params: TListParams) {
   return useQuery({
     queryKey: queryKeys.notices.list(params),
     queryFn: async () => {
       const res = await apiClient
-        .get(API_URLS.NOTICE.LIST, { searchParams: { ...params } })
+        .get(API_URLS.NOTICE.LIST, { searchParams: toListSearchParams(params) })
         .json<TApiResponse<TPaginated<TNotice>>>();
       return res.data;
     },

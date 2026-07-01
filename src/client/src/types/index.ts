@@ -25,8 +25,8 @@ export type TPageParams = {
   pageSize: number;
 };
 
-/** Banner list params: pagination plus optional search + branch filter. */
-export type TBannerListParams = TPageParams & {
+/** List params: pagination plus optional free-text search + branch filter. */
+export type TListParams = TPageParams & {
   search?: string;
   branchName?: string;
 };

@@ -28,10 +28,10 @@ import {
 } from "@/server/utils/scope";
 import type { TTokenPayload } from "@/shared/types";
 import {
-  bannerListQuerySchema,
   createBannerSchema,
   updateBannerSchema,
 } from "@/shared/validators/banner.validator";
+import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
 import { and, count, eq, ilike, or } from "drizzle-orm";
@@ -52,7 +52,7 @@ const bannerRouter = new Hono<TAppEnv>();
 bannerRouter.get(
   "/",
   optionalAuthMiddleware(),
-  zValidator("query", bannerListQuerySchema),
+  zValidator("query", branchListQuerySchema),
   async (c) => {
     const admin = c.get("admin") as TTokenPayload | undefined;
     const { page, pageSize, branchName, search } = c.req.valid("query");

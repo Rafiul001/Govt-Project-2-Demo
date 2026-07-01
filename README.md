@@ -18,7 +18,10 @@ three parts:
 ## Screenshots
 
 A tour of the admin panel. Every list screen is built from reusable cards, and
-the whole UI supports light/dark mode with three accent colors.
+the whole UI supports light/dark mode with three accent colors. List screens
+(Board of Directors, Notices, Admins, Banners) share a debounced **search box**
+and — for super admins — a **branch filter**, with a **clear-filters** action;
+all filter state lives in the URL search params.
 
 ### Dashboard
 
@@ -46,6 +49,12 @@ Horizontal profile cards showing each member's photo, name, designation, and
 display order.
 
 ![Board of Directors](docs/screenshots/board-of-directors.png)
+
+### Banners
+
+Hero-slider banners for each branch — a landscape image with a title, subtitle,
+and display order — shown as a responsive card grid with floating edit/delete
+actions. These drive the rotating hero on the branch's public landing site.
 
 ### Notices
 
@@ -76,8 +85,8 @@ update your own avatar and password.
 
 The public-facing side ([`src/landing-page/`](src/landing-page/)). One Next.js
 deployment serves **every branch**: the branch is resolved from the request
-subdomain, and all content (branch profile, notices, board of directors) is
-fetched live from the API and scoped to that branch. Each site is bilingual with
+subdomain, and all content (branch profile, hero banners, notices, board of
+directors) is fetched live from the API and scoped to that branch. Each site is bilingual with
 a Bengali/English toggle — below, **Dhaka** is shown in English and **Sylhet** in
 Bengali.
 
@@ -294,7 +303,8 @@ src/
 │   │       ├── adminRouter.ts              # /api/v1/admin routes
 │   │       ├── branchRouter.ts             # /api/v1/branch routes
 │   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
-│   │       └── noticeRouter.ts             # /api/v1/notice routes
+│   │       ├── noticeRouter.ts             # /api/v1/notice routes
+│   │       └── bannerRouter.ts             # /api/v1/banner routes
 │   ├── service/
 │   │   └── cloudinary/
 │   │       ├── client.ts       # Configured Cloudinary client + URL helpers
@@ -314,7 +324,8 @@ src/
 │           ├── adminSchema.ts
 │           ├── branchSchema.ts
 │           ├── boardOfDirectorsSchema.ts
-│           └── noticeSchema.ts
+│           ├── noticeSchema.ts
+│           └── bannerSchema.ts
 └── shared/
     ├── types/
     │   └── index.ts          # Shared enums/types (adminType, tokenType, …)
@@ -325,7 +336,8 @@ src/
         ├── branch.validator.ts           # Zod schemas for branch requests
         ├── boardOfDirectors.validator.ts # Zod schemas for board requests
         ├── notice.validator.ts           # Zod schemas for notice requests
-        ├── pagination.validator.ts       # Shared `?page`/`?pageSize` query schema
+        ├── banner.validator.ts           # Zod schemas for banner requests
+        ├── pagination.validator.ts       # Shared pagination + `?branchName`/`?search` query schema
         ├── params.validator.ts           # Shared `:id` path-param schema
         └── file.validator.ts             # Shared upload schema (max 5 MB)
 ```
@@ -366,11 +378,13 @@ Endpoints that accept files use **`multipart/form-data`** (not JSON): all fields
 are sent as form fields, and each uploaded file must be at most **5 MB**. Files
 are stored on Cloudinary and only the resulting delivery URL is persisted.
 
-**Pagination.** Every `GET` list endpoint is paginated via the `?page` and
-`?pageSize` query params (validated with
-[`paginationQuerySchema`](src/shared/validators/pagination.validator.ts);
-defaults `page=1`, `pageSize=10`, max `pageSize=100`). Their `data` is a
-paginated envelope rather than a bare array:
+**Pagination, search & branch filter.** Every `GET` list endpoint is paginated
+via the `?page` and `?pageSize` query params (defaults `page=1`, `pageSize=10`,
+max `pageSize=100`). The board-of-directors, notice, banner, and admin lists
+also accept an optional **`?branchName=`** (scope the list to one branch) and a
+free-text **`?search=`** matched against that resource's key columns — validated
+with [`branchListQuerySchema`](src/shared/validators/pagination.validator.ts).
+Their `data` is a paginated envelope rather than a bare array:
 
 ```jsonc
 {
@@ -383,7 +397,7 @@ paginated envelope rather than a bare array:
 | Method   | Path                             | Auth             | Body                  | Description                                    |
 | -------- | -------------------------------- | ---------------- | --------------------- | ---------------------------------------------- |
 | `POST`   | `/api/v1/admin/login`            | Public           | `json`                | Log in; returns `accessToken` + `refreshToken` |
-| `GET`    | `/api/v1/admin`                  | Super admin only | —                     | List admins (paginated)                        |
+| `GET`    | `/api/v1/admin`                  | Super admin only | —                     | List admins (paginated; `?search=`, `?branchName=`) |
 | `POST`   | `/api/v1/admin`                  | Super admin only | `form` (avatar)       | Create a branch admin (`branchId` required)    |
 | `POST`   | `/api/v1/admin/logout`           | Any admin        | —                     | Logout (stateless acknowledgement)             |
 | `GET`    | `/api/v1/branch`                 | Public           | —                     | List branches (paginated)                      |
@@ -401,6 +415,11 @@ paginated envelope rather than a bare array:
 | `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file)  | Create a notice                                |
 | `PATCH`  | `/api/v1/notice/:id`             | Any admin        | `form` (image, file)  | Update a notice                                |
 | `DELETE` | `/api/v1/notice/:id`             | Any admin        | —                     | Delete a notice (+ its image & PDF)            |
+| `GET`    | `/api/v1/banner`                 | Public           | —                     | List banners (branch-scoped, paginated)        |
+| `GET`    | `/api/v1/banner/:id`             | Public           | —                     | Get one banner                                 |
+| `POST`   | `/api/v1/banner`                 | Any admin        | `form` (image)        | Create a banner                                |
+| `PATCH`  | `/api/v1/banner/:id`             | Any admin        | `form` (image)        | Update a banner                                |
+| `DELETE` | `/api/v1/banner/:id`             | Any admin        | —                     | Delete a banner (+ its image)                  |
 
 > **Public reads.** The `GET` routes above are public — they power the landing
 > sites, which fetch each branch's profile, notices, and board members with no
@@ -421,9 +440,10 @@ paginated envelope rather than a bare array:
 | `branches`         | `DB.BRANCH`             | Organization branches (parent entity)            |
 | `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                        |
 | `notices`          | `DB.NOTICE`             | Notices published by a branch                    |
+| `banners`          | `DB.BANNER`             | Hero-slider banners of a branch                  |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
-`TBoardOfDirector`, `TNotice`).
+`TBoardOfDirector`, `TNotice`, `TBanner`).
 
 The `branches` table also has a unique, optional **`previewUrl`** — the public
 URL of the branch's landing site, whose subdomain must be the branch name (e.g.
@@ -436,6 +456,7 @@ A **branch** is the parent entity:
 
 - One branch **has many** board of directors (`boardofdirectors.branchId → branches.id`)
 - One branch **has many** notices (`notices.branchId → branches.id`)
+- One branch **has many** banners (`banners.branchId → branches.id`)
 
 All child foreign keys are `ON DELETE CASCADE`. Query-time relations are defined
 with Drizzle's `defineRelations` in
@@ -449,6 +470,7 @@ const branch = await db.query.branchesTable.findFirst({
   with: {
     boardOfDirectors: true,
     notices: true,
+    banners: true,
   },
 });
 ```
@@ -468,14 +490,17 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   unauthenticated users to login, and super-admin-only screens (Branches,
   Admins) redirect branch admins away. Tokens live in a persisted Zustand store;
   the `ky` client attaches the `Bearer` token and clears it on a `401`.
-- **Screens** — Dashboard, Branches, Board of Directors, Notices, Admins, and
-  Settings, each composed from `molecules` → `organisms` → `pages`.
+- **Screens** — Dashboard, Branches, Board of Directors, Banners, Notices,
+  Admins, and Settings, each composed from `molecules` → `organisms` → `pages`.
 - **Forms** — TanStack Form with the Zod schemas in
   [`src/client/src/validators`](src/client/src/validators/) (`onChange`
   validation). When a super admin must pick a branch, the field is a dropdown
   populated from `/api/v1/branch`.
-- **Lists** — server-paginated; the page/size live in the URL search params
-  (validated with Zod) and feed the TanStack Query hooks. Each resource is
+- **Lists** — server-paginated; the page/size (plus an optional `search` term
+  and `branchName` filter) live in the URL search params (validated with Zod)
+  and feed the TanStack Query hooks. Board of Directors, Notices, Admins, and
+  Banners share a reusable filter toolbar — a debounced search box, a
+  super-admin-only branch dropdown, and a clear-filters action. Each resource is
   presented as a responsive **card grid** rather than a table (Notices uses a
   master–detail layout with an inline PDF preview) — see
   [Screenshots](#screenshots).
@@ -501,9 +526,13 @@ per-branch build.
 - **Bilingual** — every page has a Bengali/English toggle (Bengali is the
   default for a government portal); see the screenshots above.
 - **Content** — hero, About, Notice Board, Board of Directors, Important Links,
-  and a Contact section with an embedded map. Branch profile, notices, and board
-  members are live from the API; the org identity and standard e-government links
-  are static config.
+  and a Contact section with an embedded map. Branch profile, hero banners,
+  notices, and board members are live from the API. The rotating **hero** is
+  driven by the branch's managed banners (it falls back to the bilingual static
+  slides when none are set), and **Important Links** lists every branch — each
+  linking to its own site via its `previewUrl` (falling back to the national
+  e-government links when no branch URL is set). The org identity is static
+  config.
 
 | Variable        | Required | Description                                  | Default                 |
 | --------------- | -------- | -------------------------------------------- | ----------------------- |

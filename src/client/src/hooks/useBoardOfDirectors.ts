@@ -7,23 +7,26 @@ import {
 import { apiClient } from "../api/apiClient";
 import { API_URLS } from "../api/apiUrls";
 import { toFormData } from "../api/formData";
+import { toListSearchParams } from "../api/listParams";
 import type {
   TApiResponse,
   TBoardOfDirector,
   TCreateBoardOfDirectorInput,
-  TPageParams,
+  TListParams,
   TPaginated,
   TUpdateBoardOfDirectorInput,
 } from "../types";
 import { queryKeys } from "./queryKeys";
 
-/** List board of directors (branch-scoped, paginated server-side). */
-export function useBoardOfDirectors(params: TPageParams) {
+/** List board of directors (branch-scoped, paginated, filterable). */
+export function useBoardOfDirectors(params: TListParams) {
   return useQuery({
     queryKey: queryKeys.boardOfDirectors.list(params),
     queryFn: async () => {
       const res = await apiClient
-        .get(API_URLS.BOARD_OF_DIRECTORS.LIST, { searchParams: { ...params } })
+        .get(API_URLS.BOARD_OF_DIRECTORS.LIST, {
+          searchParams: toListSearchParams(params),
+        })
         .json<TApiResponse<TPaginated<TBoardOfDirector>>>();
       return res.data;
     },

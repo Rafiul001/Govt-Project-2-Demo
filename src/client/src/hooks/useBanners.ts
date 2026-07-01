@@ -7,31 +7,24 @@ import {
 import { apiClient } from "../api/apiClient";
 import { API_URLS } from "../api/apiUrls";
 import { toFormData } from "../api/formData";
+import { toListSearchParams } from "../api/listParams";
 import type {
   TApiResponse,
   TBanner,
-  TBannerListParams,
   TCreateBannerInput,
+  TListParams,
   TPaginated,
   TUpdateBannerInput,
 } from "../types";
 import { queryKeys } from "./queryKeys";
 
 /** List banners (branch-scoped, paginated, filterable by search + branch). */
-export function useBanners(params: TBannerListParams) {
+export function useBanners(params: TListParams) {
   return useQuery({
     queryKey: queryKeys.banners.list(params),
     queryFn: async () => {
-      // Only forward defined filters so we never send `search=undefined`.
-      const searchParams: Record<string, string> = {
-        page: String(params.page),
-        pageSize: String(params.pageSize),
-      };
-      if (params.search) searchParams.search = params.search;
-      if (params.branchName) searchParams.branchName = params.branchName;
-
       const res = await apiClient
-        .get(API_URLS.BANNER.LIST, { searchParams })
+        .get(API_URLS.BANNER.LIST, { searchParams: toListSearchParams(params) })
         .json<TApiResponse<TPaginated<TBanner>>>();
       return res.data;
     },

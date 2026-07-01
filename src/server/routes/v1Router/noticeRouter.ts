@@ -39,7 +39,7 @@ import {
 import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 const noticeRouter = new Hono<TAppEnv>();
@@ -61,7 +61,7 @@ noticeRouter.get(
   zValidator("query", branchListQuerySchema),
   async (c) => {
     const admin = c.get("admin") as TTokenPayload | undefined;
-    const { page, pageSize, branchName } = c.req.valid("query");
+    const { page, pageSize, branchName, search } = c.req.valid("query");
 
     let branchId: number | null | undefined;
     if (admin && !isSuperAdmin(admin)) {
@@ -81,6 +81,12 @@ noticeRouter.get(
     const where = and(
       admin ? undefined : eq(noticesTable.isPublished, true),
       branchId != null ? eq(noticesTable.branchId, branchId) : undefined,
+      search
+        ? or(
+            ilike(noticesTable.title, `%${search}%`),
+            ilike(noticesTable.description, `%${search}%`),
+          )
+        : undefined,
     );
 
     const totalResult = await db

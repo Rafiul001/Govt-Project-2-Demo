@@ -15,20 +15,33 @@ import {
   LoadingState,
   PageHeader,
 } from "../molecules";
-import { BoardOfDirectorForm, FormModal, TablePagination } from "../organisms";
+import {
+  BoardOfDirectorForm,
+  FormModal,
+  ListFilters,
+  TablePagination,
+} from "../organisms";
 
 type TListPageProps = {
   page: number;
   pageSize: number;
+  search?: string;
+  branchName?: string;
   onPageChange: (page: number) => void;
+  onSearchChange: (value: string) => void;
+  onBranchChange: (value: string) => void;
 };
 
 export function BoardOfDirectorsPage({
   page,
   pageSize,
+  search,
+  branchName,
   onPageChange,
+  onSearchChange,
+  onBranchChange,
 }: TListPageProps) {
-  const query = useBoardOfDirectors({ page, pageSize });
+  const query = useBoardOfDirectors({ page, pageSize, search, branchName });
   const deleteMutation = useDeleteBoardOfDirector();
 
   const [isCreating, setIsCreating] = useState(false);
@@ -49,6 +62,7 @@ export function BoardOfDirectorsPage({
   const items = query.data?.items ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = query.data?.totalPages ?? 1;
+  const isFiltered = Boolean(search) || Boolean(branchName);
 
   return (
     <div className="space-y-6">
@@ -63,21 +77,36 @@ export function BoardOfDirectorsPage({
         }
       />
 
+      <ListFilters
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search by name or designation…"
+        branchName={branchName}
+        onBranchChange={onBranchChange}
+      />
+
       {query.isLoading ? (
         <LoadingState />
       ) : query.isError ? (
         <ErrorState message={getApiErrorMessage(query.error)} />
       ) : total === 0 ? (
-        <EmptyState
-          title="No board members yet"
-          description="Add the first board member to get started."
-          action={
-            <Button variant="primary" onPress={() => setIsCreating(true)}>
-              <PlusIcon className="size-4" />
-              Add member
-            </Button>
-          }
-        />
+        isFiltered ? (
+          <EmptyState
+            title="No board members match your filters"
+            description="Try a different search term or branch."
+          />
+        ) : (
+          <EmptyState
+            title="No board members yet"
+            description="Add the first board member to get started."
+            action={
+              <Button variant="primary" onPress={() => setIsCreating(true)}>
+                <PlusIcon className="size-4" />
+                Add member
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
