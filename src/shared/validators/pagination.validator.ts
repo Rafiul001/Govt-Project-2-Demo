@@ -26,3 +26,17 @@ export const branchListQuerySchema = z.strictObject({
 });
 
 export type TBranchListQuery = z.infer<typeof branchListQuerySchema>;
+
+/**
+ * Branch list params plus an optional `menuId` filter — used by the sub-menu
+ * list route so the dashboard can show the sub-menus of a single menu.
+ */
+export const submenuListQuerySchema = z.strictObject({
+  page: z.coerce.number().int().positive().catch(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).catch(10).default(10),
+  branchName: z.string().trim().min(1).optional(),
+  search: z.string().trim().min(1).optional(),
+  menuId: z.coerce.number().int().positive().optional(),
+});
+
+export type TSubmenuListQuery = z.infer<typeof submenuListQuerySchema>;

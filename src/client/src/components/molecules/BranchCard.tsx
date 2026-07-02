@@ -11,14 +11,29 @@ import type { TBranch } from "../../types";
 
 type TBranchCardProps = {
   branch: TBranch;
-  onEdit: () => void;
+  /** Open the full-screen editor for this branch. */
+  onSelect: () => void;
   onDelete: () => void;
 };
 
-/** Branch tile with banner, overlapping logo, and contact details. */
-export function BranchCard({ branch, onEdit, onDelete }: TBranchCardProps) {
+/**
+ * Branch tile with banner, overlapping logo, and contact details. Selecting the
+ * card opens the branch editor; the pencil does the same, delete is separate.
+ */
+export function BranchCard({ branch, onSelect, onDelete }: TBranchCardProps) {
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface-secondary shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-1 hover:shadow-(--card-shadow-hover)">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-surface-secondary shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-1 hover:shadow-(--card-shadow-hover) focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
       {/* Banner */}
       <div className="relative h-36 overflow-hidden">
         {branch.banner ? (
@@ -33,14 +48,17 @@ export function BranchCard({ branch, onEdit, onDelete }: TBranchCardProps) {
         <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
 
         {/* Floating action buttons */}
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-white/20 bg-black/30 p-1 shadow-lg backdrop-blur-md">
+        <div
+          onClick={(event) => event.stopPropagation()}
+          className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-white/20 bg-black/30 p-1 shadow-lg backdrop-blur-md"
+        >
           <Button
             isIconOnly
             size="sm"
             variant="ghost"
             aria-label="Edit"
             className="size-8 min-w-8 rounded-full border-0 bg-transparent text-white hover:bg-white/20"
-            onPress={onEdit}
+            onPress={onSelect}
           >
             <PencilIcon className="size-4" strokeWidth={2.25} />
           </Button>
@@ -89,6 +107,7 @@ export function BranchCard({ branch, onEdit, onDelete }: TBranchCardProps) {
             href={branch.previewUrl}
             target="_blank"
             rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <GlobeIcon className="size-4 shrink-0 text-accent" />

@@ -10,7 +10,10 @@ type TSwitchInputProps = {
 export function SwitchInput({ field, label }: TSwitchInputProps) {
   return (
     <Switch
-      className="flex flex-row items-center justify-start gap-3"
+      // `relative` anchors the visually-hidden checkbox React Aria positions
+      // absolutely; without a positioned ancestor it resolves against <body>
+      // and stretches the document when the switch sits below the fold.
+      className="relative flex flex-row items-center justify-start gap-3"
       name={field.name}
       isSelected={Boolean(field.state.value)}
       onChange={(isSelected) => field.handleChange(isSelected)}

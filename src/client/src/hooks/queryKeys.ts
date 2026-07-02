@@ -1,4 +1,4 @@
-import type { TListParams, TPageParams } from "../types";
+import type { TListParams, TPageParams, TSubmenuListParams } from "../types";
 
 /** Centralized TanStack Query keys, so queries and invalidations stay in sync. */
 export const queryKeys = {
@@ -26,5 +26,20 @@ export const queryKeys = {
     all: ["banners"] as const,
     list: (params: TListParams) => ["banners", "list", params] as const,
     detail: (id: number | string) => ["banners", id] as const,
+  },
+  menus: {
+    all: ["menus"] as const,
+    list: (params: TListParams) => ["menus", "list", params] as const,
+    detail: (id: number | string) => ["menus", id] as const,
+  },
+  submenus: {
+    all: ["submenus"] as const,
+    list: (params: TSubmenuListParams) => ["submenus", "list", params] as const,
+    detail: (id: number | string) => ["submenus", id] as const,
+  },
+  pages: {
+    all: ["pages"] as const,
+    bySubmenu: (submenuId: number | string) =>
+      ["pages", "by-submenu", submenuId] as const,
   },
 } as const;

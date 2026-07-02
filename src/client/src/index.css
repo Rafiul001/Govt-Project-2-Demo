@@ -77,3 +77,41 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+/*
+ * Typography inside the MDXEditor rich-text area (`contentEditableClassName`).
+ * Tailwind's preflight flattens headings/lists, which makes the WYSIWYG view
+ * indistinguishable from plain text; restore a modest scale.
+ */
+.mdx-content h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-block: 0.75rem 0.5rem;
+}
+.mdx-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-block: 0.75rem 0.5rem;
+}
+.mdx-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-block: 0.5rem 0.25rem;
+}
+.mdx-content ul {
+  list-style: disc;
+  padding-inline-start: 1.5rem;
+}
+.mdx-content ol {
+  list-style: decimal;
+  padding-inline-start: 1.5rem;
+}
+.mdx-content blockquote {
+  border-inline-start: 3px solid var(--border);
+  padding-inline-start: 0.75rem;
+  color: var(--muted);
+}
+.mdx-content img {
+  max-width: 100%;
+  height: auto;
+}

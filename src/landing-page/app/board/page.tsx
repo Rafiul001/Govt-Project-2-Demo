@@ -3,7 +3,7 @@ import { NavBar } from "@/components/organisms/NavBar";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getAllBoardOfDirectors, getBranch } from "@/lib/api";
+import { getAllBoardOfDirectors, getBranch, getNavTree } from "@/lib/api";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,16 +18,17 @@ export const metadata: Metadata = {
  * members" or the "Board of Directors" nav item.
  */
 export default async function BoardPage() {
-  const [branch, board] = await Promise.all([
+  const [branch, board, menus] = await Promise.all([
     getBranch(),
     getAllBoardOfDirectors(),
+    getNavTree(),
   ]);
 
   return (
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar />
+      <NavBar menus={menus} />
       <main className="flex-1">
         <BoardArchive members={board} />
       </main>

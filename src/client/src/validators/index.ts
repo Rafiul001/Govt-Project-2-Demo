@@ -91,6 +91,8 @@ export const updateBranchSchema = z
     email: optionalEmail,
     logo: optionalFile,
     banner: optionalFile,
+    // Set to true by the Publish button on the branch editor.
+    isPublished: z.boolean().optional(),
   })
   .refine(
     (v) =>
@@ -229,3 +231,58 @@ export const updateBannerSchema = z.strictObject({
   order: z.number().int().min(0).optional(),
 });
 export type TUpdateBannerForm = z.infer<typeof updateBannerSchema>;
+
+// --- Menu / Sub-menu / Page (bilingual) ---
+
+// Titles are bilingual: each language is optional, but at least one must be
+// filled in. The message is attached to the Bangla field so it surfaces in the
+// form. The URL slug is derived server-side from the title.
+const TITLE_REQUIRED = "Provide a title in Bangla or English";
+const bnTitle = z.string().trim().max(255).optional();
+const enTitle = z.string().trim().max(255).optional();
+const hasAnyTitle = (v: { titleBn?: string; titleEn?: string }) =>
+  Boolean(v.titleBn?.trim() || v.titleEn?.trim());
+
+export const createMenuSchema = z
+  .strictObject({
+    branchId: branchId.optional(),
+    titleBn: bnTitle,
+    titleEn: enTitle,
+    order: z.number().int().min(0).optional(),
+  })
+  .refine(hasAnyTitle, { path: ["titleBn"], message: TITLE_REQUIRED });
+export type TCreateMenuForm = z.infer<typeof createMenuSchema>;
+
+export const updateMenuSchema = createMenuSchema;
+export type TUpdateMenuForm = z.infer<typeof updateMenuSchema>;
+
+export const createSubmenuSchema = z
+  .strictObject({
+    branchId: branchId.optional(),
+    menuId: z.number("Menu is required").int().positive(),
+    titleBn: bnTitle,
+    titleEn: enTitle,
+    order: z.number().int().min(0).optional(),
+  })
+  .refine(hasAnyTitle, { path: ["titleBn"], message: TITLE_REQUIRED });
+export type TCreateSubmenuForm = z.infer<typeof createSubmenuSchema>;
+
+export const updateSubmenuSchema = createSubmenuSchema;
+export type TUpdateSubmenuForm = z.infer<typeof updateSubmenuSchema>;
+
+// The page editor always edits an existing page (created with its sub-menu), so
+// every field is optional; at least one banner-title language is still required.
+export const updatePageSchema = z
+  .strictObject({
+    bannerTitleBn: bnTitle,
+    bannerTitleEn: enTitle,
+    bannerImage: optionalFile,
+    contentBn: z.string().optional(),
+    contentEn: z.string().optional(),
+    isPublished: z.boolean().optional(),
+  })
+  .refine((v) => Boolean(v.bannerTitleBn?.trim() || v.bannerTitleEn?.trim()), {
+    path: ["bannerTitleBn"],
+    message: "Provide a banner title in Bangla or English",
+  });
+export type TUpdatePageForm = z.infer<typeof updatePageSchema>;

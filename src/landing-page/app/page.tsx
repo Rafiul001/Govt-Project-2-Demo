@@ -12,23 +12,25 @@ import {
   getBoardOfDirectors,
   getBranch,
   getBranches,
+  getNavTree,
   getNotices,
 } from "@/lib/api";
 
 export default async function Home() {
-  const [branch, branches, banners, notices, board] = await Promise.all([
+  const [branch, branches, banners, notices, board, menus] = await Promise.all([
     getBranch(),
     getBranches(),
     getBanners(),
     getNotices(),
     getBoardOfDirectors(),
+    getNavTree(),
   ]);
 
   return (
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar />
+      <NavBar menus={menus} />
       <main className="flex-1">
         {banners.length > 0 ? (
           <HeroSlider banners={banners} bannerUrl={branch?.banner ?? null} />

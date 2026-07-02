@@ -1,4 +1,10 @@
-import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { DB } from "../constant";
 
 export const branchesTable = pgTable(DB.BRANCH, {
@@ -12,6 +18,9 @@ export const branchesTable = pgTable(DB.BRANCH, {
   email: varchar({ length: 255 }),
   logo: varchar({ length: 255 }),
   banner: varchar({ length: 255 }),
+  // Whether the branch has been published from the branch editor. New branches
+  // start unpublished until a super admin publishes them from /branch/:id/edit.
+  isPublished: boolean().notNull().default(false),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()

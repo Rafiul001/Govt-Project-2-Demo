@@ -19,6 +19,21 @@ export const LANGUAGES: { code: TLanguage; label: string }[] = [
 
 export const DEFAULT_LANGUAGE: TLanguage = "bn";
 
+/**
+ * Picks a bilingual value for the active language, falling back to the other
+ * language when the preferred one is empty. Used for API-sourced content
+ * (menus, sub-menus, pages) stored per language. Returns "" when neither is set.
+ */
+export function pickLang(
+  lang: TLanguage,
+  bn: string | null | undefined,
+  en: string | null | undefined,
+): string {
+  const preferred = lang === "bn" ? bn : en;
+  const fallback = lang === "bn" ? en : bn;
+  return (preferred?.trim() ? preferred : fallback) ?? "";
+}
+
 type TDictionary = {
   topBar: {
     nationalPortal: string;

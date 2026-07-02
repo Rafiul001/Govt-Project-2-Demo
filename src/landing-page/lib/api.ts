@@ -14,7 +14,14 @@
  */
 
 import { headers } from "next/headers";
-import type { TBanner, TBoardOfDirector, TBranch, TNotice } from "./types";
+import type {
+  TBanner,
+  TBoardOfDirector,
+  TBranch,
+  TDynamicPage,
+  TNavMenu,
+  TNotice,
+} from "./types";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:3000";
 
@@ -131,4 +138,34 @@ export async function getAllBoardOfDirectors(
   name?: string,
 ): Promise<TBoardOfDirector[]> {
   return getBoardOfDirectors(name, 100);
+}
+
+/**
+ * Published navigation tree for the branch — menus with their published
+ * sub-menus. Backs the NavBar dropdowns. Empty when the branch has no
+ * published pages (or on a transient API failure).
+ */
+export async function getNavTree(name?: string): Promise<TNavMenu[]> {
+  const branchName = name ?? (await getBranchName());
+  const data = await apiGet<TNavMenu[]>(
+    `/api/v1/nav?branchName=${encodeURIComponent(branchName)}`,
+  );
+  return data ?? [];
+}
+
+/**
+ * A single published page resolved by its menu + sub-menu slugs, for the
+ * branch. Returns `null` when the page is missing or unpublished (→ 404 page).
+ */
+export async function getDynamicPage(
+  menuSlug: string,
+  submenuSlug: string,
+  name?: string,
+): Promise<TDynamicPage | null> {
+  const branchName = name ?? (await getBranchName());
+  return apiGet<TDynamicPage>(
+    `/api/v1/nav/page?branchName=${encodeURIComponent(branchName)}` +
+      `&menu=${encodeURIComponent(menuSlug)}` +
+      `&submenu=${encodeURIComponent(submenuSlug)}`,
+  );
 }
