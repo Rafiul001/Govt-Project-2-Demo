@@ -78,7 +78,13 @@ export function MarkdownInput({
               linkPlugin(),
               linkDialogPlugin(),
               tablePlugin(),
-              imagePlugin({ imageUploadHandler: onImageUpload }),
+              imagePlugin({
+                imageUploadHandler: onImageUpload,
+                // Adds width/height fields to the image settings dialog, so a
+                // drag-resize can be adjusted or cleared (empty = natural
+                // size, capped to the page column on the public site).
+                allowSetImageDimensions: true,
+              }),
               diffSourcePlugin({ viewMode: "rich-text" }),
               toolbarPlugin({
                 toolbarContents: () => (
