@@ -19,6 +19,18 @@ export function usePageBySubmenu(submenuId: number) {
   });
 }
 
+/** Upload an image for a page's markdown content; resolves to its URL. */
+export function useUploadPageImage() {
+  return useMutation({
+    mutationFn: async ({ id, image }: { id: number; image: File }) => {
+      const res = await apiClient
+        .post(API_URLS.PAGE.IMAGE(id), { body: toFormData({ image }) })
+        .json<TApiResponse<{ url: string }>>();
+      return res.data;
+    },
+  });
+}
+
 /** Update a page (multipart, optional banner image). */
 export function useUpdatePage() {
   const queryClient = useQueryClient();

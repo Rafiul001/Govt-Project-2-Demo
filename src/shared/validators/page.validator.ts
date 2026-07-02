@@ -19,3 +19,11 @@ export const updatePageSchema = z.strictObject({
 });
 
 export type TUpdatePageInput = z.infer<typeof updatePageSchema>;
+
+// Image uploaded from the markdown editor; the route returns the Cloudinary
+// URL, which the editor embeds into the page content as `![](url)`.
+export const uploadPageImageSchema = z.strictObject({
+  image: fileSchema,
+});
+
+export type TUploadPageImageInput = z.infer<typeof uploadPageImageSchema>;

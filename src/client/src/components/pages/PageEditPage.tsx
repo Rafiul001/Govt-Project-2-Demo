@@ -5,7 +5,11 @@ import { ArrowLeftIcon, SaveIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBranch } from "../../hooks/useBranches";
 import { useMenu } from "../../hooks/useMenus";
-import { usePageBySubmenu, useUpdatePage } from "../../hooks/usePages";
+import {
+  usePageBySubmenu,
+  useUpdatePage,
+  useUploadPageImage,
+} from "../../hooks/usePages";
 import { useSubmenu } from "../../hooks/useSubmenus";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { displayTitle } from "../../lib/displayTitle";
@@ -13,8 +17,8 @@ import type { TBranch, TMenu, TPage, TSubmenu } from "../../types";
 import { updatePageSchema, type TUpdatePageForm } from "../../validators";
 import {
   FileInput,
+  MarkdownInput,
   SwitchInput,
-  TextAreaInput,
   TextInput,
 } from "../formInputs";
 import { ErrorState, LoadingState } from "../molecules";
@@ -85,8 +89,27 @@ function PageEditor({
   branch: TBranch;
 }) {
   const updateMutation = useUpdatePage();
+  const uploadImageMutation = useUploadPageImage();
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Upload a content image picked in the markdown editor; the editor embeds
+  // the returned Cloudinary URL into the markdown.
+  const uploadContentImage = useCallback(
+    async (image: File) => {
+      try {
+        const { url } = await uploadImageMutation.mutateAsync({
+          id: page.id,
+          image,
+        });
+        return url;
+      } catch (error) {
+        toast.danger(getApiErrorMessage(error));
+        throw error;
+      }
+    },
+    [uploadImageMutation.mutateAsync, page.id],
+  );
 
   // Resizable split: `leftPct` is the form pane's width as a % of the row.
   const splitRef = useRef<HTMLDivElement>(null);
@@ -269,21 +292,21 @@ function PageEditor({
           </form.Field>
           <form.Field name="contentBn">
             {(field) => (
-              <TextAreaInput
+              <MarkdownInput
                 field={field}
-                label="Content — বাংলা (Markdown)"
-                rows={12}
-                placeholder="# শিরোনাম&#10;&#10;মার্কডাউন-এ পৃষ্ঠার বিষয়বস্তু লিখুন…"
+                label="Content — বাংলা"
+                placeholder="পৃষ্ঠার বিষয়বস্তু লিখুন…"
+                onImageUpload={uploadContentImage}
               />
             )}
           </form.Field>
           <form.Field name="contentEn">
             {(field) => (
-              <TextAreaInput
+              <MarkdownInput
                 field={field}
-                label="Content — English (Markdown)"
-                rows={12}
-                placeholder="# Heading&#10;&#10;Write the page content in Markdown…"
+                label="Content — English"
+                placeholder="Write the page content…"
+                onImageUpload={uploadContentImage}
               />
             )}
           </form.Field>

@@ -1,5 +1,5 @@
 import db from "@/server/db/client";
-import { menusTable } from "@/server/db/schemas";
+import { menusTable, pagesTable, submenusTable } from "@/server/db/schemas";
 import {
   authMiddleware,
   optionalAuthMiddleware,
@@ -11,6 +11,7 @@ import {
   notFound,
   ok,
 } from "@/server/responses";
+import { deletePageImages } from "@/server/service/pageImageCleanup";
 import type { TAppEnv } from "@/server/types";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
@@ -267,7 +268,22 @@ menuRouter.delete(
       return forbidden(c);
     }
 
+    // Snapshot the image references of every page under this menu before the
+    // cascade (menu → sub-menus → pages) removes the rows.
+    const pages = await db
+      .select({
+        bannerImage: pagesTable.bannerImage,
+        contentBn: pagesTable.contentBn,
+        contentEn: pagesTable.contentEn,
+      })
+      .from(pagesTable)
+      .innerJoin(submenusTable, eq(pagesTable.submenuId, submenusTable.id))
+      .where(eq(submenusTable.menuId, id));
+
     await db.delete(menusTable).where(eq(menusTable.id, id));
+
+    await deletePageImages(pages);
+
     return ok(c, "Menu deleted successfully");
   },
 );

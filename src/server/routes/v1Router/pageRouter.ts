@@ -4,13 +4,25 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "@/server/middleware/authMiddleware";
-import { badRequest, forbidden, notFound, ok } from "@/server/responses";
-import { replaceImage } from "@/server/service/cloudinary/imageUpload";
+import {
+  badRequest,
+  created,
+  forbidden,
+  notFound,
+  ok,
+} from "@/server/responses";
+import {
+  replaceImage,
+  uploadImage,
+} from "@/server/service/cloudinary/imageUpload";
 import type { TAppEnv } from "@/server/types";
 import { canAccessBranch } from "@/server/utils/scope";
 import { emptyToNull } from "@/server/utils/text";
 import type { TTokenPayload } from "@/shared/types";
-import { updatePageSchema } from "@/shared/validators/page.validator";
+import {
+  updatePageSchema,
+  uploadPageImageSchema,
+} from "@/shared/validators/page.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
@@ -138,6 +150,39 @@ pageRouter.patch(
     await db.update(pagesTable).set(updates).where(eq(pagesTable.id, id));
 
     return ok(c, "Page updated successfully");
+  },
+);
+
+/**
+ * POST /api/v1/page/:id/image — upload an image for use inside the page's
+ * markdown content. Returns the Cloudinary URL the editor embeds; the asset is
+ * deleted together with the page (see pageImageCleanup).
+ */
+pageRouter.post(
+  "/:id/image",
+  authMiddleware(),
+  zValidator("param", idParamSchema),
+  zValidator("form", uploadPageImageSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const admin = c.get("admin");
+    const { image } = c.req.valid("form");
+
+    const [page] = await db
+      .select()
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1);
+
+    if (!page) {
+      return notFound(c, "Page not found");
+    }
+    if (!canAccessBranch(admin, page.branchId)) {
+      return forbidden(c);
+    }
+
+    const uploaded = await uploadImage(image);
+    return created(c, "Image uploaded successfully", { url: uploaded.url });
   },
 );
 

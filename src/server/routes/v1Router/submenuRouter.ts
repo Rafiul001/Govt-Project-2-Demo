@@ -11,6 +11,7 @@ import {
   notFound,
   ok,
 } from "@/server/responses";
+import { deletePageImages } from "@/server/service/pageImageCleanup";
 import type { TAppEnv } from "@/server/types";
 import { pageOffset, paginated } from "@/server/utils/pagination";
 import {
@@ -282,7 +283,10 @@ submenuRouter.patch(
   },
 );
 
-/** DELETE /api/v1/submenu/:id — cascades to its page. */
+/**
+ * DELETE /api/v1/submenu/:id — cascades to its page, then removes the page's
+ * Cloudinary images (banner + any embedded in the markdown content).
+ */
 submenuRouter.delete(
   "/:id",
   authMiddleware(),
@@ -303,7 +307,23 @@ submenuRouter.delete(
       return forbidden(c);
     }
 
+    // Snapshot the page's image references before the cascade removes the row.
+    const [page] = await db
+      .select({
+        bannerImage: pagesTable.bannerImage,
+        contentBn: pagesTable.contentBn,
+        contentEn: pagesTable.contentEn,
+      })
+      .from(pagesTable)
+      .where(eq(pagesTable.submenuId, id))
+      .limit(1);
+
     await db.delete(submenusTable).where(eq(submenusTable.id, id));
+
+    if (page) {
+      await deletePageImages([page]);
+    }
+
     return ok(c, "Sub-menu deleted successfully");
   },
 );
