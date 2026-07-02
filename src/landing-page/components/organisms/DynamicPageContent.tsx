@@ -93,7 +93,7 @@ export function DynamicPageContent({
       </section>
 
       {/* Markdown body */}
-      <section className="mx-auto max-w-4xl px-4 py-10">
+      <section className="mx-auto max-w-7xl px-4 py-10">
         {content.trim() ? (
           <div className="markdown-body space-y-4 text-slate-800">
             <Markdown
