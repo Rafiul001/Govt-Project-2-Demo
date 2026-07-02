@@ -2,13 +2,7 @@ import { Button, toast } from "@heroui/react";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, SaveIcon } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBranch } from "../../hooks/useBranches";
 import { useMenu } from "../../hooks/useMenus";
 import { usePageBySubmenu, useUpdatePage } from "../../hooks/usePages";
@@ -217,12 +211,9 @@ function PageEditor({
   }, [form, postPreview]);
 
   return (
-    // The whole editor grows with its content and scrolls inside the dashboard's
-    // own scroll area (`main`). Keeping a single scroll region — instead of a
-    // fixed-height pane with a nested `overflow-y-auto` form — avoids the
-    // competing-scroll jump you get when a short inner pane fights the page.
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow)">
-      <div className="flex items-center gap-3 border-b border-border bg-surface-secondary px-5 py-3">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow)">
+      {/* Header */}
+      <header className="flex items-center gap-3 border-b border-border px-5 py-3">
         <Button
           isIconOnly
           size="sm"
@@ -247,15 +238,14 @@ function PageEditor({
             {page.isPublished ? "Published" : "Draft — not public yet"}
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Resizable split: form | preview. Stacks on small screens; on lg+ the
-          divider drags to set the form/preview width ratio. */}
-      <div ref={splitRef} className="flex flex-col lg:flex-row">
-        {/* Left: editable content — flows naturally, scrolls with the page. */}
+      {/* Resizable split: form | preview */}
+      <div ref={splitRef} className="flex flex-1 overflow-hidden">
+        {/* Left: editable content */}
         <form
-          style={{ "--left": `${leftPct}%` } as CSSProperties}
-          className="flex w-full shrink-0 flex-col gap-4 p-6 lg:w-(--left)"
+          style={{ width: `${leftPct}%` }}
+          className="flex shrink-0 flex-col gap-4 overflow-y-auto p-6"
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -304,7 +294,7 @@ function PageEditor({
           </form.Field>
         </form>
 
-        {/* Drag handle — resizes the split on lg+ screens. */}
+        {/* Drag handle */}
         <div
           role="separator"
           aria-orientation="vertical"
@@ -312,46 +302,38 @@ function PageEditor({
             event.preventDefault();
             setDragging(true);
           }}
-          className={`group hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent lg:flex ${
+          className={`group flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent ${
             dragging ? "bg-accent" : ""
           }`}
         >
           <div className="h-8 w-0.5 rounded-full bg-white/60 group-hover:bg-white" />
         </div>
 
-        {/* Right: live preview — sticky so it stays in view while the form
-            scrolls. A single sticky element (not its own scroll container)
-            keeps the page's scroll behaviour normal. */}
-        <div className="min-w-0 flex-1 border-t border-border lg:border-t-0">
-          <div className="sticky top-16 h-[calc(100vh-9rem)] min-h-96">
-            <div className="relative size-full bg-slate-100">
-              <iframe
-                ref={iframeRef}
-                title="Page preview"
-                src={`${LANDING_URL}/preview/page`}
-                className={`size-full border-0 ${
-                  dragging ? "pointer-events-none select-none" : ""
-                }`}
-                onLoad={() => void postPreview(form.state.values)}
-              />
+        {/* Right: live preview + save */}
+        <div className="relative min-w-0 flex-1 bg-slate-100">
+          <iframe
+            ref={iframeRef}
+            title="Page preview"
+            src={`${LANDING_URL}/preview/page`}
+            className={`size-full border-0 ${dragging ? "pointer-events-none select-none" : ""}`}
+            onLoad={() => void postPreview(form.state.values)}
+          />
 
-              <div className="absolute bottom-6 right-6">
-                <form.Subscribe selector={(state) => state.isSubmitting}>
-                  {(isSubmitting) => (
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      className="shadow-lg"
-                      isDisabled={isSubmitting}
-                      onPress={() => void form.handleSubmit()}
-                    >
-                      <SaveIcon className="size-4" />
-                      {isSubmitting ? "Saving…" : "Save"}
-                    </Button>
-                  )}
-                </form.Subscribe>
-              </div>
-            </div>
+          <div className="absolute bottom-6 right-6">
+            <form.Subscribe selector={(state) => state.isSubmitting}>
+              {(isSubmitting) => (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="shadow-lg"
+                  isDisabled={isSubmitting}
+                  onPress={() => void form.handleSubmit()}
+                >
+                  <SaveIcon className="size-4" />
+                  {isSubmitting ? "Saving…" : "Save"}
+                </Button>
+              )}
+            </form.Subscribe>
           </div>
         </div>
       </div>
