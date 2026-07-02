@@ -5,7 +5,23 @@ import { pickLang } from "@/lib/i18n";
 import Image from "next/image";
 import type { ComponentProps } from "react";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+
+/**
+ * The markdown editor serializes resized images as inline HTML
+ * (`<img width height src>`), so raw HTML must be rendered — but sanitized,
+ * since page content ends up on the public site. The default (GitHub) schema
+ * drops width/height on images; allow them so resizing survives.
+ */
+const SANITIZE_SCHEMA = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    img: [...(defaultSchema.attributes?.img ?? []), "width", "height"],
+  },
+};
 
 type TDynamicPageContentProps = {
   bannerTitleBn: string | null;
@@ -80,7 +96,11 @@ export function DynamicPageContent({
       <section className="mx-auto max-w-4xl px-4 py-10">
         {content.trim() ? (
           <div className="markdown-body space-y-4 text-slate-800">
-            <Markdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, [rehypeSanitize, SANITIZE_SCHEMA]]}
+              components={MARKDOWN_COMPONENTS}
+            >
               {content}
             </Markdown>
           </div>
@@ -98,14 +118,23 @@ export function DynamicPageContent({
 
 /** Tailwind styling for rendered Markdown elements (no typography plugin). */
 const MARKDOWN_COMPONENTS: ComponentProps<typeof Markdown>["components"] = {
-  h1: (props) => <h2 className="mt-6 text-2xl font-bold text-slate-900" {...props} />,
-  h2: (props) => <h2 className="mt-6 text-xl font-bold text-slate-900" {...props} />,
-  h3: (props) => <h3 className="mt-5 text-lg font-semibold text-slate-900" {...props} />,
+  h1: (props) => (
+    <h2 className="mt-6 text-2xl font-bold text-slate-900" {...props} />
+  ),
+  h2: (props) => (
+    <h2 className="mt-6 text-xl font-bold text-slate-900" {...props} />
+  ),
+  h3: (props) => (
+    <h3 className="mt-5 text-lg font-semibold text-slate-900" {...props} />
+  ),
   p: (props) => <p className="leading-relaxed" {...props} />,
   ul: (props) => <ul className="list-disc space-y-1 pl-6" {...props} />,
   ol: (props) => <ol className="list-decimal space-y-1 pl-6" {...props} />,
   a: (props) => (
-    <a className="text-govt-green underline hover:text-govt-green-dark" {...props} />
+    <a
+      className="text-govt-green underline hover:text-govt-green-dark"
+      {...props}
+    />
   ),
   blockquote: (props) => (
     <blockquote
@@ -119,9 +148,14 @@ const MARKDOWN_COMPONENTS: ComponentProps<typeof Markdown>["components"] = {
     </div>
   ),
   th: (props) => (
-    <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left font-semibold" {...props} />
+    <th
+      className="border border-slate-300 bg-slate-100 px-3 py-2 text-left font-semibold"
+      {...props}
+    />
   ),
-  td: (props) => <td className="border border-slate-300 px-3 py-2" {...props} />,
+  td: (props) => (
+    <td className="border border-slate-300 px-3 py-2" {...props} />
+  ),
   code: (props) => (
     <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm" {...props} />
   ),
