@@ -1,0 +1,20 @@
+# systemd unit for the Hono API server
+# Install: sudo cp api.service /etc/systemd/system/govt-api.service
+#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-api
+
+[Unit]
+Description=Govt Project API server (Hono)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/govt-project/api
+# Build first: bun run build  → dist/index.js (targets node)
+# .env with DATABASE_URL, PORT=3000, Cloudinary keys, etc. lives in WorkingDirectory
+ExecStart=/usr/bin/node --env-file-if-exists=.env dist/index.js
+Restart=on-failure
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

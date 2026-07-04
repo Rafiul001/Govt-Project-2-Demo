@@ -1,0 +1,19 @@
+# systemd unit for the Next.js landing page
+# Install: sudo cp landing.service /etc/systemd/system/govt-landing.service
+#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-landing
+
+[Unit]
+Description=Govt Project landing page (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/govt-project/landing-page
+# Build first on the server: bun install && bun run build (inside src/landing-page)
+ExecStart=/usr/bin/env bunx next start -p 3001
+Restart=on-failure
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

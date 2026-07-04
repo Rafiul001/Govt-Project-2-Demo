@@ -7,8 +7,15 @@
     "dev:server": "bun --watch src/index.ts",
     "dev:client": "cd src/client && bun run dev",
     "dev:landing": "cd src/landing-page && bun run dev --port 3001",
+    "install:all": "bun install && cd src/client && bun install && cd ../landing-page && bun install",
     "build": "NODE_ENV=production bun build src/index.ts --outdir dist --target node",
-    "start": "node --env-file-if-exists=.env dist/index.js"
+    "build:client": "cd src/client && bun run build",
+    "build:landing": "cd src/landing-page && bun run build",
+    "build:all": "bun run build && bun run build:client && bun run build:landing",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "start:client": "cd src/client && npx vite preview --port 3000",
+    "start:landing": "cd src/landing-page && npx next start --port 3001",
+    "start:all": "concurrently -n server,client,landing -c blue,green,magenta \"npm run start\" \"npm run start:client\" \"npm run start:landing\""
   },
   "private": true,
   "devDependencies": {
