@@ -1,0 +1,27 @@
+# systemd unit for the Next.js landing page — TEST BOX variant, runs straight
+# from the repo clone at /var/www/demo-govt-project as the login user.
+# `next` is resolved from the app's own node_modules, so only node is needed.
+# Check the node path first (`which node`) and adjust ExecStart if it differs.
+#
+# Install: sudo cp deploy/landing-test.service /etc/systemd/system/govt-landing.service
+#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-landing
+
+[Unit]
+Description=Govt Project landing page (Next.js, test box)
+After=network.target
+
+[Service]
+Type=simple
+User=rafiul
+WorkingDirectory=/var/www/demo-govt-project/src/landing-page
+# Build first (from the repo root):
+#   NEXT_PUBLIC_DASHBOARD_URL=http://app.example.com bun run build:landing
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3001
+Restart=on-failure
+Environment=NODE_ENV=production
+# API is on the same box; bare hosts fall back to this branch:
+Environment=API_BASE_URL=http://127.0.0.1:3000
+Environment=BRANCH_NAME=Dhaka
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+# systemd unit for the Hono API — TEST BOX variant, runs straight from the
+# repo clone at /var/www/demo-govt-project as the login user.
+# Check the node path first (`which node`) and adjust ExecStart if it differs
+# (e.g. an nvm install lives under /home/rafiul/.nvm/...).
+#
+# Install: sudo cp deploy/api-test.service /etc/systemd/system/govt-api.service
+#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-api
+
+[Unit]
+Description=Govt Project API server (Hono, test box)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=rafiul
+WorkingDirectory=/var/www/demo-govt-project
+# Build first: bun run build  → dist/index.js (targets node)
+# .env with DATABASE_URL, PORT=3000, Cloudinary keys, etc. lives in the repo root
+ExecStart=/usr/bin/node --env-file-if-exists=.env dist/index.js
+Restart=on-failure
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
