@@ -148,9 +148,11 @@ Bengali.
    landing site (`src/landing-page/`) dependencies — each is its own package:
 
    ```bash
-   bun install
-   cd src/client && bun install && cd ../..
-   cd src/landing-page && bun install && cd ../..
+   bun run install:all
+   # equivalent to:
+   #   bun install
+   #   cd src/client && bun install && cd ../..
+   #   cd src/landing-page && bun install && cd ../..
    ```
 
 2. **Configure environment**
@@ -230,14 +232,23 @@ Bengali.
 
 Root scripts:
 
-| Script                | Description                                              |
-| --------------------- | ------------------------------------------------------- |
-| `bun run dev`         | Run backend + admin panel + landing site concurrently   |
-| `bun run dev:server`  | Start only the backend in watch mode (`src/index.ts`)   |
-| `bun run dev:client`  | Start only the admin panel Vite dev server              |
-| `bun run dev:landing` | Start only the landing site (Next.js, port 3001)        |
-| `bun run build`       | Bundle the backend to `dist/` (`NODE_ENV=production`)   |
-| `bun run start`       | Run the built backend bundle with Node (`dist/index.js`) |
+Development runs on **Bun**; production builds run on **Node**.
+
+| Script                  | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `bun run install:all`   | Install dependencies for backend + admin panel + landing site  |
+| `bun run dev`           | Run backend + admin panel + landing site concurrently          |
+| `bun run dev:server`    | Start only the backend in watch mode (`src/index.ts`)          |
+| `bun run dev:client`    | Start only the admin panel Vite dev server                     |
+| `bun run dev:landing`   | Start only the landing site (Next.js, port 3001)               |
+| `bun run build`         | Bundle the backend to `dist/` (`--target node`)                |
+| `bun run build:client`  | Build the admin panel to `src/client/dist/`                    |
+| `bun run build:landing` | Build the landing site (`next build`)                          |
+| `bun run build:all`     | Build all three                                                |
+| `bun run start`         | Run the built backend with **Node** (`dist/index.js`)          |
+| `bun run start:client`  | Serve the built admin panel locally (`vite preview`, Node)     |
+| `bun run start:landing` | Serve the built landing site (`next start`, Node, port 3001)   |
+| `bun run start:all`     | Run all three production builds concurrently (Node)            |
 
 Admin panel scripts (run from `src/client/`):
 
@@ -420,6 +431,23 @@ Their `data` is a paginated envelope rather than a bare array:
 | `POST`   | `/api/v1/banner`                 | Any admin        | `form` (image)        | Create a banner                                |
 | `PATCH`  | `/api/v1/banner/:id`             | Any admin        | `form` (image)        | Update a banner                                |
 | `DELETE` | `/api/v1/banner/:id`             | Any admin        | —                     | Delete a banner (+ its image)                  |
+| `GET`    | `/api/v1/menu`                   | Public           | —                     | List menus (branch-scoped, paginated)          |
+| `GET`    | `/api/v1/menu/:id`               | Public           | —                     | Get one menu                                   |
+| `POST`   | `/api/v1/menu`                   | Any admin        | `json`                | Create a menu                                  |
+| `PATCH`  | `/api/v1/menu/:id`               | Any admin        | `json`                | Update a menu                                  |
+| `DELETE` | `/api/v1/menu/:id`               | Any admin        | —                     | Delete a menu (cascades sub-menus + pages)     |
+| `GET`    | `/api/v1/submenu`                | Public           | —                     | List sub-menus (paginated)                     |
+| `GET`    | `/api/v1/submenu/:id`            | Public           | —                     | Get one sub-menu                               |
+| `POST`   | `/api/v1/submenu`                | Any admin        | `json`                | Create a sub-menu (+ its blank draft page)     |
+| `PATCH`  | `/api/v1/submenu/:id`            | Any admin        | `json`                | Update a sub-menu                              |
+| `DELETE` | `/api/v1/submenu/:id`            | Any admin        | —                     | Delete a sub-menu (+ its page and page media)  |
+| `GET`    | `/api/v1/page/by-submenu/:id`    | Public           | —                     | Get the page belonging to a sub-menu           |
+| `GET`    | `/api/v1/page/:id`               | Public           | —                     | Get one page                                   |
+| `PATCH`  | `/api/v1/page/:id`               | Any admin        | `form` (banner)       | Update a page (banner, content, publish state) |
+| `POST`   | `/api/v1/page/:id/image`         | Any admin        | `form` (image)        | Upload a content image; returns its URL        |
+| `POST`   | `/api/v1/page/:id/image/import`  | Any admin        | `json` (url)          | Import a pasted image (URL/data URI) to Cloudinary |
+| `GET`    | `/api/v1/nav`                    | Public           | —                     | Published menu tree for a branch (`?branchName=`) |
+| `GET`    | `/api/v1/nav/page`               | Public           | —                     | One published page by `?branchName=&menu=&submenu=` |
 
 > **Public reads.** The `GET` routes above are public — they power the landing
 > sites, which fetch each branch's profile, notices, and board members with no
@@ -441,6 +469,9 @@ Their `data` is a paginated envelope rather than a bare array:
 | `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                        |
 | `notices`          | `DB.NOTICE`             | Notices published by a branch                    |
 | `banners`          | `DB.BANNER`             | Hero-slider banners of a branch                  |
+| `menus`            | `DB.MENU`               | Top-level nav menus of a branch's public site    |
+| `submenus`         | `DB.SUBMENU`            | Sub-menu entries under a menu                    |
+| `pages`            | `DB.PAGE`               | The page behind a sub-menu (banner + markdown)   |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
 `TBoardOfDirector`, `TNotice`, `TBanner`).
@@ -457,6 +488,9 @@ A **branch** is the parent entity:
 - One branch **has many** board of directors (`boardofdirectors.branchId → branches.id`)
 - One branch **has many** notices (`notices.branchId → branches.id`)
 - One branch **has many** banners (`banners.branchId → branches.id`)
+- One branch **has many** menus (`menus.branchId → branches.id`); a menu
+  **has many** sub-menus (`submenus.menuId → menus.id`), and each sub-menu
+  **has one** page (`pages.submenuId → submenus.id`)
 
 All child foreign keys are `ON DELETE CASCADE`. Query-time relations are defined
 with Drizzle's `defineRelations` in
@@ -534,10 +568,79 @@ per-branch build.
   e-government links when no branch URL is set). The org identity is static
   config.
 
-| Variable        | Required | Description                                  | Default                 |
-| --------------- | -------- | -------------------------------------------- | ----------------------- |
-| `API_BASE_URL`  | no       | Base URL of the Hono API the site fetches    | `http://localhost:3000` |
-| `BRANCH_NAME`   | no       | Fallback branch when the host has no subdomain | `Dhaka`               |
+| Variable                    | Required | Description                                                        | Default                 |
+| --------------------------- | -------- | ------------------------------------------------------------------ | ----------------------- |
+| `API_BASE_URL`              | no       | Base URL of the Hono API the site fetches (server-side)            | `http://localhost:3000` |
+| `BRANCH_NAME`               | no       | Fallback branch when the host has no subdomain                     | `Dhaka`                 |
+| `NEXT_PUBLIC_DASHBOARD_URL` | no       | Origin of the admin panel, allowed to drive the `/preview/*` pages (build-time) | `http://localhost:5173` |
+
+## Production Deployment
+
+Development runs on **Bun**; production runs on **Node** behind **nginx**. The
+ready-made configs live in [`deploy/`](deploy/):
+
+| File                                                 | Purpose                                                         |
+| ---------------------------------------------------- | ---------------------------------------------------------------- |
+| [`deploy/nginx.conf`](deploy/nginx.conf)             | nginx vhosts — **production** (HTTPS, wildcard cert, HSTS)       |
+| [`deploy/nginx-demo.conf`](deploy/nginx-demo.conf)   | nginx vhosts — public demo on a real domain, **HTTP only**       |
+| [`deploy/nginx-test.conf`](deploy/nginx-test.conf)   | nginx vhosts — KVM/LAN testing via `/etc/hosts`, **HTTP only**   |
+| [`deploy/api.service`](deploy/api.service)           | systemd unit — Hono API (`node dist/index.js`, port 3000)        |
+| [`deploy/landing.service`](deploy/landing.service)   | systemd unit — landing site (`next start`, port 3001)            |
+
+Enable exactly **one** of the three nginx configs — they define the same
+upstreams. The HTTP-only variants require the front-ends to be built with
+`http://` origins (`VITE_LANDING_URL`, `NEXT_PUBLIC_DASHBOARD_URL`); see the
+comments in each file.
+
+### Host layout
+
+One domain serves everything (replace `example.com` throughout):
+
+- **`example.com` / `*.example.com`** — the landing sites. The branch is
+  resolved from the subdomain at request time, so creating a branch in the
+  dashboard needs **no nginx change** — but it does require a **wildcard TLS
+  certificate** (`certbot certonly --preferred-challenges dns -d example.com -d '*.example.com'`)
+  and a wildcard DNS `A` record.
+- **`app.example.com`** — the admin panel, served as static files. The panel
+  calls the API at a **relative `/api/v1`** (proxied by Vite in dev), so nginx
+  proxies `location /api/` to the Hono process — same-origin, no CORS.
+- **`api.example.com`** — optional direct API host for external consumers.
+
+### Build & deploy
+
+```bash
+# 1. Build everything (backend targets Node, no Bun on the server needed
+#    for the API). Set the panel's landing origin at build time:
+VITE_LANDING_URL=https://example.com bun run build:all
+# For the landing site, the dashboard origin is baked in at build time too:
+#   NEXT_PUBLIC_DASHBOARD_URL=https://app.example.com (set when running build:landing)
+
+# 2. Copy artifacts to the server:
+#    dist/                → /var/www/govt-project/api        (+ .env)
+#    src/client/dist/     → /var/www/govt-project/client
+#    src/landing-page/    → /var/www/govt-project/landing-page (built, with node_modules)
+
+# 3. Install the systemd units and nginx config:
+sudo cp deploy/api.service /etc/systemd/system/govt-api.service
+sudo cp deploy/landing.service /etc/systemd/system/govt-landing.service
+sudo systemctl daemon-reload && sudo systemctl enable --now govt-api govt-landing
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/govt-project.conf
+sudo ln -s /etc/nginx/sites-available/govt-project.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Production environment summary:
+
+| App           | Runtime           | Env (where it's read)                                                                 |
+| ------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| API           | Node (systemd)    | `.env` next to `dist/index.js` — see [Getting Started](#getting-started)               |
+| Admin panel   | static via nginx  | `VITE_LANDING_URL` — **build-time** (landing origin for previews & page links)         |
+| Landing sites | Node (systemd)    | `API_BASE_URL`, `BRANCH_NAME` (runtime); `NEXT_PUBLIC_DASHBOARD_URL` (**build-time**)  |
+
+The nginx config also sets the production security headers — including a
+`frame-ancestors` policy on the landing sites that allows **only** the admin
+panel to embed them (the page editor's live preview is an iframe of the
+branch's landing origin).
 
 ## Conventions
 

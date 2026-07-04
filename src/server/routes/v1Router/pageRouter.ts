@@ -12,6 +12,7 @@ import {
   ok,
 } from "@/server/responses";
 import {
+  importImageFromUrl,
   replaceImage,
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
@@ -20,6 +21,7 @@ import { canAccessBranch } from "@/server/utils/scope";
 import { emptyToNull } from "@/server/utils/text";
 import type { TTokenPayload } from "@/shared/types";
 import {
+  importPageImageSchema,
   updatePageSchema,
   uploadPageImageSchema,
 } from "@/shared/validators/page.validator";
@@ -183,6 +185,46 @@ pageRouter.post(
 
     const uploaded = await uploadImage(image);
     return created(c, "Image uploaded successfully", { url: uploaded.url });
+  },
+);
+
+/**
+ * POST /api/v1/page/:id/image/import — import an image referenced by pasted
+ * markdown (remote URL or data URI) into Cloudinary and return its new URL.
+ * The editor swaps the pasted reference for the returned URL, so published
+ * pages never depend on third-party image hosts.
+ */
+pageRouter.post(
+  "/:id/image/import",
+  authMiddleware(),
+  zValidator("param", idParamSchema),
+  zValidator("json", importPageImageSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const admin = c.get("admin");
+    const { url } = c.req.valid("json");
+
+    const [page] = await db
+      .select()
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1);
+
+    if (!page) {
+      return notFound(c, "Page not found");
+    }
+    if (!canAccessBranch(admin, page.branchId)) {
+      return forbidden(c);
+    }
+
+    try {
+      const uploaded = await importImageFromUrl(url);
+      return created(c, "Image imported successfully", { url: uploaded.url });
+    } catch {
+      // Cloudinary could not fetch the source (hotlink-blocked, dead link,
+      // not an image, …) — a client problem with the pasted content, not ours.
+      return badRequest(c, "Could not fetch the referenced image");
+    }
   },
 );
 

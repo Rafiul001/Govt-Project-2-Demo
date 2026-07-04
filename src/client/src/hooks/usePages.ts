@@ -31,6 +31,21 @@ export function useUploadPageImage() {
   });
 }
 
+/**
+ * Import an image referenced by pasted markdown (remote URL or data URI) into
+ * Cloudinary; resolves to the imported URL the editor should embed instead.
+ */
+export function useImportPageImage() {
+  return useMutation({
+    mutationFn: async ({ id, url }: { id: number; url: string }) => {
+      const res = await apiClient
+        .post(API_URLS.PAGE.IMAGE_IMPORT(id), { json: { url } })
+        .json<TApiResponse<{ url: string }>>();
+      return res.data;
+    },
+  });
+}
+
 /** Update a page (multipart, optional banner image). */
 export function useUpdatePage() {
   const queryClient = useQueryClient();

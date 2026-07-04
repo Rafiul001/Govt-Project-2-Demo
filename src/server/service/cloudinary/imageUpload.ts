@@ -44,6 +44,23 @@ export const uploadImage = async (file: File): Promise<TUploadedImage> => {
 };
 
 /**
+ * Import an image into Cloudinary from a remote http(s) URL or a `data:` URI —
+ * used for images referenced by pasted markdown, which would otherwise keep
+ * pointing at a source we don't control (hotlink-blocked, expiring, or
+ * unreachable from visitors' browsers). Cloudinary fetches the source itself,
+ * so our server never touches the remote host.
+ */
+export const importImageFromUrl = async (
+  src: string,
+): Promise<TUploadedImage> => {
+  const result = await cloudinary.uploader.upload(src, {
+    folder: FOLDER,
+    resource_type: RESOURCE_TYPE,
+  });
+  return { url: result.secure_url, publicId: result.public_id };
+};
+
+/**
  * Replace an existing image with a new File.
  * Uploads the new file, then removes the old one by its stored URL.
  */

@@ -1,11 +1,19 @@
 import { Button, toast } from "@heroui/react";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, SaveIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Columns2Icon,
+  ExternalLinkIcon,
+  EyeIcon,
+  PencilIcon,
+  SaveIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBranch } from "../../hooks/useBranches";
 import { useMenu } from "../../hooks/useMenus";
 import {
+  useImportPageImage,
   usePageBySubmenu,
   useUpdatePage,
   useUploadPageImage,
@@ -25,6 +33,19 @@ import { ErrorState, LoadingState } from "../molecules";
 
 /** Origin of the public landing site, embedded as the live preview iframe. */
 const LANDING_URL = import.meta.env.VITE_LANDING_URL ?? "http://localhost:3001";
+
+/**
+ * Landing-site origin for a branch — the branch name becomes the subdomain
+ * (`Barishal` → `http://barishal.localhost:3001`), mirroring how the public
+ * site resolves its branch from the request host. Serving the preview iframe
+ * from this origin makes every relative link inside it (nav menus, logo,
+ * notices) resolve to the branch's real landing site.
+ */
+function branchLandingOrigin(branchName: string): string {
+  const url = new URL(LANDING_URL);
+  url.host = `${branchName.toLowerCase()}.${url.host}`;
+  return url.origin;
+}
 
 /** Read a picked file as a data URL so it survives a cross-origin postMessage. */
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -90,8 +111,14 @@ function PageEditor({
 }) {
   const updateMutation = useUpdatePage();
   const uploadImageMutation = useUploadPageImage();
+  const importImageMutation = useImportPageImage();
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // The preview iframe lives on the branch's own landing origin, so its nav
+  // is the branch's real navigation and links browse the real site.
+  const landingOrigin = branchLandingOrigin(branch.name);
+  const pageUrl = `${landingOrigin}/${menu.slug}/${submenu.slug}`;
 
   // Upload a content image picked in the markdown editor; the editor embeds
   // the returned Cloudinary URL into the markdown.
@@ -111,10 +138,35 @@ function PageEditor({
     [uploadImageMutation.mutateAsync, page.id],
   );
 
+  // Re-host an image referenced by pasted markdown (external URL or data URI)
+  // on Cloudinary. Resolves to null when the source can't be fetched — the
+  // editor counts failures and shows one summary warning.
+  const importContentImage = useCallback(
+    async (src: string) => {
+      try {
+        const { url } = await importImageMutation.mutateAsync({
+          id: page.id,
+          url: src,
+        });
+        return url;
+      } catch {
+        return null;
+      }
+    },
+    [importImageMutation.mutateAsync, page.id],
+  );
+
   // Resizable split: `leftPct` is the form pane's width as a % of the row.
   const splitRef = useRef<HTMLDivElement>(null);
   const [leftPct, setLeftPct] = useState(50);
   const [dragging, setDragging] = useState(false);
+
+  // Editor layout: form + preview side by side, or one of them full-width.
+  // The preview iframe stays mounted (just hidden) so switching modes doesn't
+  // reload it and lose the postMessage state.
+  const [viewMode, setViewMode] = useState<"split" | "preview" | "edit">(
+    "split",
+  );
 
   useEffect(() => {
     if (!dragging) return;
@@ -199,11 +251,12 @@ function PageEditor({
             contentEn: values.contentEn ?? "",
           },
         },
-        LANDING_URL,
+        landingOrigin,
       );
     },
     [
       branch,
+      landingOrigin,
       menu.titleBn,
       menu.titleEn,
       submenu.titleBn,
@@ -222,7 +275,7 @@ function PageEditor({
   // current values so nothing is missed if our earlier post raced it.
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      if (event.origin !== LANDING_URL) return;
+      if (event.origin !== landingOrigin) return;
       if (
         (event.data as { type?: string } | undefined)?.type === "preview-ready"
       ) {
@@ -231,7 +284,7 @@ function PageEditor({
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [form, postPreview]);
+  }, [form, postPreview, landingOrigin]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow)">
@@ -257,18 +310,72 @@ function PageEditor({
             Edit page — {displayTitle(menu.titleBn, menu.titleEn)} /{" "}
             {displayTitle(submenu.titleBn, submenu.titleEn)}
           </h1>
-          <p className="text-sm text-muted">
+          <p className="flex items-center gap-2 text-sm text-muted">
             {page.isPublished ? "Published" : "Draft — not public yet"}
+            <span aria-hidden>·</span>
+            <a
+              href={pageUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-w-0 items-center gap-1 text-accent hover:underline"
+              title={
+                page.isPublished
+                  ? "Open the public page"
+                  : "Public URL once published"
+              }
+            >
+              <span className="truncate">
+                {pageUrl.replace(/^https?:\/\//, "")}
+              </span>
+              <ExternalLinkIcon className="size-3.5 shrink-0" />
+            </a>
           </p>
+        </div>
+
+        {/* View mode: side-by-side / preview only / edit only */}
+        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border border-border p-1">
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "split" ? "primary" : "ghost"}
+            aria-label="Side-by-side view"
+            onPress={() => setViewMode("split")}
+          >
+            <Columns2Icon className="size-4" />
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "preview" ? "primary" : "ghost"}
+            aria-label="Preview only"
+            onPress={() => setViewMode("preview")}
+          >
+            <EyeIcon className="size-4" />
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "edit" ? "primary" : "ghost"}
+            aria-label="Edit only"
+            onPress={() => setViewMode("edit")}
+          >
+            <PencilIcon className="size-4" />
+          </Button>
         </div>
       </header>
 
-      {/* Resizable split: form | preview */}
-      <div ref={splitRef} className="flex flex-1 overflow-hidden">
+      {/* Resizable split: form | preview (or one pane full-width) */}
+      <div ref={splitRef} className="relative flex flex-1 overflow-hidden">
         {/* Left: editable content */}
         <form
-          style={{ width: `${leftPct}%` }}
-          className="flex shrink-0 flex-col gap-4 overflow-y-auto p-6"
+          style={viewMode === "split" ? { width: `${leftPct}%` } : undefined}
+          className={`flex-col gap-4 overflow-y-auto p-6 ${
+            viewMode === "preview"
+              ? "hidden"
+              : viewMode === "edit"
+                ? "flex w-full"
+                : "flex shrink-0"
+          }`}
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -297,6 +404,7 @@ function PageEditor({
                 label="Content — বাংলা"
                 placeholder="পৃষ্ঠার বিষয়বস্তু লিখুন…"
                 onImageUpload={uploadContentImage}
+                onImageImport={importContentImage}
               />
             )}
           </form.Field>
@@ -307,6 +415,7 @@ function PageEditor({
                 label="Content — English"
                 placeholder="Write the page content…"
                 onImageUpload={uploadContentImage}
+                onImageImport={importContentImage}
               />
             )}
           </form.Field>
@@ -317,47 +426,54 @@ function PageEditor({
           </form.Field>
         </form>
 
-        {/* Drag handle */}
+        {/* Drag handle (only meaningful when both panes are visible) */}
+        {viewMode === "split" ? (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            className={`group flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent ${
+              dragging ? "bg-accent" : ""
+            }`}
+          >
+            <div className="h-8 w-0.5 rounded-full bg-white/60 group-hover:bg-white" />
+          </div>
+        ) : null}
+
+        {/* Right: live preview (kept mounted across mode switches) */}
         <div
-          role="separator"
-          aria-orientation="vertical"
-          onMouseDown={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          className={`group flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent ${
-            dragging ? "bg-accent" : ""
+          className={`min-w-0 flex-1 bg-slate-100 ${
+            viewMode === "edit" ? "hidden" : ""
           }`}
         >
-          <div className="h-8 w-0.5 rounded-full bg-white/60 group-hover:bg-white" />
-        </div>
-
-        {/* Right: live preview + save */}
-        <div className="relative min-w-0 flex-1 bg-slate-100">
           <iframe
             ref={iframeRef}
             title="Page preview"
-            src={`${LANDING_URL}/preview/page`}
+            src={`${landingOrigin}/preview/page`}
             className={`size-full border-0 ${dragging ? "pointer-events-none select-none" : ""}`}
             onLoad={() => void postPreview(form.state.values)}
           />
+        </div>
 
-          <div className="absolute bottom-6 right-6">
-            <form.Subscribe selector={(state) => state.isSubmitting}>
-              {(isSubmitting) => (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="shadow-lg"
-                  isDisabled={isSubmitting}
-                  onPress={() => void form.handleSubmit()}
-                >
-                  <SaveIcon className="size-4" />
-                  {isSubmitting ? "Saving…" : "Save"}
-                </Button>
-              )}
-            </form.Subscribe>
-          </div>
+        {/* Save floats over whichever pane(s) are visible */}
+        <div className="absolute bottom-6 right-6">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                variant="primary"
+                size="lg"
+                className="shadow-lg"
+                isDisabled={isSubmitting}
+                onPress={() => void form.handleSubmit()}
+              >
+                <SaveIcon className="size-4" />
+                {isSubmitting ? "Saving…" : "Save"}
+              </Button>
+            )}
+          </form.Subscribe>
         </div>
       </div>
     </div>

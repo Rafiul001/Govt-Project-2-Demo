@@ -27,3 +27,20 @@ export const uploadPageImageSchema = z.strictObject({
 });
 
 export type TUploadPageImageInput = z.infer<typeof uploadPageImageSchema>;
+
+// An image referenced by pasted markdown, imported server-side into Cloudinary
+// so the page never depends on a host we don't control. Accepts a remote
+// http(s) URL or an inline data URI (pastes from some editors embed base64).
+// The generous max length exists for data URIs; sent as JSON, not multipart.
+export const importPageImageSchema = z.strictObject({
+  url: z
+    .string()
+    .max(10_000_000)
+    .refine(
+      (value) =>
+        /^https?:\/\//i.test(value) || value.startsWith("data:image/"),
+      "url must be an http(s) URL or a data:image/… URI",
+    ),
+});
+
+export type TImportPageImageInput = z.infer<typeof importPageImageSchema>;

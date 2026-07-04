@@ -67,9 +67,10 @@ type TPaginated<T> = {
 async function apiGet<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
-      // Re-fetch at most once a minute; keeps the public site fresh without
-      // hammering the API on every request.
-      next: { revalidate: 60 },
+      // Always fetch fresh: dashboard edits (page content, published state,
+      // deletions) must show on the public site immediately — a deleted page
+      // 404s and drops out of the nav on the next request.
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const json = (await res.json()) as TApiResponse<T>;

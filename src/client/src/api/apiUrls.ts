@@ -48,5 +48,6 @@ export const API_URLS = {
     BY_ID: (id: number | string) => `page/${id}`,
     BY_SUBMENU: (submenuId: number | string) => `page/by-submenu/${submenuId}`,
     IMAGE: (id: number | string) => `page/${id}/image`,
+    IMAGE_IMPORT: (id: number | string) => `page/${id}/image/import`,
   },
 } as const;
