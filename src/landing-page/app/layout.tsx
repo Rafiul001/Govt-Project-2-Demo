@@ -24,7 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn" className={`${hindSiliguri.variable} h-full antialiased`}>
+    // globals.css sets `scroll-behavior: smooth`; this attribute tells Next.js
+    // so it can suppress smooth-scrolling during route transitions.
+    <html
+      lang="bn"
+      data-scroll-behavior="smooth"
+      className={`${hindSiliguri.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col bg-slate-50">
         <LanguageProvider>{children}</LanguageProvider>
       </body>

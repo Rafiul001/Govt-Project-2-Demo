@@ -30,7 +30,7 @@ import {
   SwitchInput,
   TextInput,
 } from "../formInputs";
-import { ErrorState, LoadingState } from "../molecules";
+import { ErrorState, LoadingButton, LoadingState } from "../molecules";
 
 /** Origin of the public landing site, embedded as the live preview iframe. */
 const LANDING_URL = import.meta.env.VITE_LANDING_URL ?? "http://localhost:3001";
@@ -472,16 +472,16 @@ function PageEditor({
         <div className="absolute bottom-6 right-6">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <Button
+              <LoadingButton
                 variant="primary"
                 size="lg"
                 className="shadow-lg"
-                isDisabled={isSubmitting}
+                isLoading={isSubmitting}
                 onPress={() => void form.handleSubmit()}
               >
-                <SaveIcon className="size-4" />
+                {isSubmitting ? null : <SaveIcon className="size-4" />}
                 {isSubmitting ? "Saving…" : "Save"}
-              </Button>
+              </LoadingButton>
             )}
           </form.Subscribe>
         </div>

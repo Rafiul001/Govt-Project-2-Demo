@@ -16,6 +16,7 @@ import {
   TextAreaInput,
   TextInput,
 } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TNoticeFormProps = {
   initial?: TNotice;
@@ -123,9 +124,13 @@ export function NoticeForm({ initial, onSuccess, onCancel }: TNoticeFormProps) {
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

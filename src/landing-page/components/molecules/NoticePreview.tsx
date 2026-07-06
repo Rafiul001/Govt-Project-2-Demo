@@ -12,34 +12,18 @@ function isPdf(url: string): boolean {
 }
 
 /**
- * Full preview of a single notice — the detail pane on the left of the
- * `/notices` archive. Shows the notice image, complete description, publish
- * date, an inline preview of the attached PDF (when one exists), and a
- * download link for whichever notice is selected in the list.
+ * Full preview of a single notice — the detail pane of the `/notices`
+ * archive. The title and publish date sit on top, followed by the notice
+ * image, complete description, an inline preview of the attached PDF (when
+ * one exists), and a download link for whichever notice is selected.
  */
 export function NoticePreview({ notice }: { notice: TNotice }) {
   const { lang, t } = useLanguage();
 
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      {/* Notice image, or an icon placeholder */}
-      <div className="relative aspect-video w-full bg-govt-green/5">
-        {notice.image ? (
-          <Image
-            src={notice.image}
-            alt={notice.title}
-            fill
-            sizes="(max-width: 1024px) 100vw, 640px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-govt-green/40">
-            <FileText className="size-16" aria-hidden />
-          </div>
-        )}
-      </div>
-
-      <div className="p-6">
+      {/* Title + meta on top */}
+      <div className="border-b border-slate-200 p-6 pb-4">
         <h2 className="text-xl font-bold leading-snug text-slate-800">
           {notice.title}
         </h2>
@@ -64,9 +48,28 @@ export function NoticePreview({ notice }: { notice: TNotice }) {
             </a>
           ) : null}
         </div>
+      </div>
 
+      {/* Notice image, or an icon placeholder */}
+      <div className="relative aspect-video w-full bg-govt-green/5">
+        {notice.image ? (
+          <Image
+            src={notice.image}
+            alt={notice.title}
+            fill
+            sizes="(max-width: 1024px) 100vw, 640px"
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center text-govt-green/40">
+            <FileText className="size-16" aria-hidden />
+          </div>
+        )}
+      </div>
+
+      <div className="p-6">
         {notice.description ? (
-          <p className="mt-4 whitespace-pre-line leading-relaxed text-slate-600">
+          <p className="whitespace-pre-line leading-relaxed text-slate-600">
             {notice.description}
           </p>
         ) : null}

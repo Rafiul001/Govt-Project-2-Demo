@@ -10,6 +10,7 @@ import {
   type TCreateAdminForm,
 } from "../../../validators";
 import { BranchSelect, FileInput, TextInput } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TAdminFormProps = {
   initial?: TAdmin;
@@ -122,9 +123,13 @@ export function AdminForm({ initial, onSuccess, onCancel }: TAdminFormProps) {
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

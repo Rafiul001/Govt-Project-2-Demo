@@ -8,6 +8,7 @@ import {
   type TUpdateProfileForm,
 } from "../../../validators";
 import { FileInput, TextInput } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 /** Lets the signed-in admin change their own avatar and/or password. */
 export function ProfileForm() {
@@ -65,9 +66,13 @@ export function ProfileForm() {
       <div className="flex justify-end pt-2">
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               Save changes
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

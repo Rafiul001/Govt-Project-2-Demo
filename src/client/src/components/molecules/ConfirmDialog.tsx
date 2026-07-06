@@ -1,4 +1,5 @@
 import { Button, Modal } from "@heroui/react";
+import { LoadingButton } from "./LoadingButton";
 
 type TConfirmDialogProps = {
   isOpen: boolean;
@@ -37,13 +38,13 @@ export function ConfirmDialog({
               <Button variant="ghost" onPress={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button
+              <LoadingButton
                 variant="danger"
-                isDisabled={isLoading}
+                isLoading={isLoading}
                 onPress={onConfirm}
               >
                 {confirmLabel}
-              </Button>
+              </LoadingButton>
             </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>

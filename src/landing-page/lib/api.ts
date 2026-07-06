@@ -105,9 +105,37 @@ export async function getNotices(
   return data?.items ?? [];
 }
 
-/** Every notice for the branch — backs the full `/notices` archive page. */
-export async function getAllNotices(name?: string): Promise<TNotice[]> {
-  return getNotices(name, 100);
+/** One page of the notice archive, as returned by the API. */
+export type TNoticesPage = TPaginated<TNotice>;
+
+const EMPTY_NOTICES_PAGE: TNoticesPage = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: 10,
+  totalPages: 1,
+};
+
+/**
+ * A page of published notices for the branch — backs the `/notices` archive.
+ * Search and pagination are done by the API (query params), not in the page.
+ */
+export async function getNoticesPage(opts: {
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  name?: string;
+}): Promise<TNoticesPage> {
+  const branchName = opts.name ?? (await getBranchName());
+  const params = new URLSearchParams({
+    branchName,
+    page: String(opts.page ?? 1),
+    pageSize: String(opts.pageSize ?? 10),
+  });
+  if (opts.search) params.set("search", opts.search);
+
+  const data = await apiGet<TPaginated<TNotice>>(`/api/v1/notice?${params}`);
+  return data ?? EMPTY_NOTICES_PAGE;
 }
 
 /** Hero banners for the branch, ordered by display order. */

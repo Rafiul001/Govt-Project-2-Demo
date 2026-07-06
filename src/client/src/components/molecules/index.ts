@@ -3,6 +3,7 @@ export { StatCard } from "./StatCard";
 export { LoadingState, ErrorState, EmptyState } from "./StateBlocks";
 export { ThemeModeToggle } from "./ThemeModeToggle";
 export { ConfirmDialog } from "./ConfirmDialog";
+export { LoadingButton } from "./LoadingButton";
 export { SpriteIcon } from "./SpriteIcon";
 export { BranchCard } from "./BranchCard";
 export { BoardMemberCard } from "./BoardMemberCard";

@@ -9,7 +9,7 @@ import { filePatch, fileRemoved } from "../../lib/fileField";
 import type { TBranch } from "../../types";
 import { createBranchSchema, type TCreateBranchForm } from "../../validators";
 import { FileInput, TextInput } from "../formInputs";
-import { ErrorState, LoadingState } from "../molecules";
+import { ErrorState, LoadingButton, LoadingState } from "../molecules";
 
 /**
  * Origin of the public landing site, embedded as the live preview iframe. The
@@ -281,16 +281,16 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           <div className="absolute bottom-6 right-6">
             <form.Subscribe selector={(state) => state.isSubmitting}>
               {(isSubmitting) => (
-                <Button
+                <LoadingButton
                   variant="primary"
                   size="lg"
                   className="shadow-lg"
-                  isDisabled={isSubmitting}
+                  isLoading={isSubmitting}
                   onPress={() => void form.handleSubmit()}
                 >
-                  <RocketIcon className="size-4" />
+                  {isSubmitting ? null : <RocketIcon className="size-4" />}
                   {isSubmitting ? "Publishing…" : "Publish"}
-                </Button>
+                </LoadingButton>
               )}
             </form.Subscribe>
           </div>

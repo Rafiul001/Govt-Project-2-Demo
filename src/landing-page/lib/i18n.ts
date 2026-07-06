@@ -86,6 +86,12 @@ type TDictionary = {
     backHome: string;
     count: string;
     empty: string;
+    searchPlaceholder: string;
+    searchAction: string;
+    noResults: string;
+    pageWord: string;
+    prev: string;
+    next: string;
   };
   board: {
     title: string;
@@ -203,6 +209,12 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       backHome: "← প্রচ্ছদে ফিরুন",
       count: "টি নোটিশ",
       empty: "এই মুহূর্তে প্রকাশিত কোনো নোটিশ নেই।",
+      searchPlaceholder: "শিরোনাম বা বিবরণ দিয়ে খুঁজুন…",
+      searchAction: "খুঁজুন",
+      noResults: "অনুসন্ধানে কোনো নোটিশ পাওয়া যায়নি।",
+      pageWord: "পৃষ্ঠা",
+      prev: "পূর্ববর্তী",
+      next: "পরবর্তী",
     },
     board: {
       title: "পরিচালনা পর্ষদ",
@@ -322,6 +334,12 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       backHome: "← Back to Home",
       count: "notices",
       empty: "There are no published notices at this time.",
+      searchPlaceholder: "Search by title or description…",
+      searchAction: "Search",
+      noResults: "No notices matched your search.",
+      pageWord: "Page",
+      prev: "Previous",
+      next: "Next",
     },
     board: {
       title: "Board of Directors",

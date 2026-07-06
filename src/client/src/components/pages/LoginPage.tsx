@@ -1,10 +1,11 @@
-import { Button, Card, toast } from "@heroui/react";
+import { Card, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { useLogin } from "../../hooks/useAuth";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { loginSchema, type TLoginForm } from "../../validators";
 import { TextInput } from "../formInputs";
+import { LoadingButton } from "../molecules";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -65,14 +66,14 @@ export function LoginPage() {
             </form.Field>
             <form.Subscribe selector={(state) => state.isSubmitting}>
               {(isSubmitting) => (
-                <Button
+                <LoadingButton
                   type="submit"
                   variant="primary"
                   fullWidth
-                  isDisabled={isSubmitting}
+                  isLoading={isSubmitting}
                 >
                   {isSubmitting ? "Signing in…" : "Sign in"}
-                </Button>
+                </LoadingButton>
               )}
             </form.Subscribe>
           </form>

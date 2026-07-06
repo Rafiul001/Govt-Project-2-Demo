@@ -8,6 +8,7 @@ import {
   type TCreateSubmenuForm,
 } from "../../../validators";
 import { NumberInput, TextInput } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TSubmenuFormProps = {
   /** Parent menu — supplies the menuId and branchId for the sub-menu. */
@@ -92,9 +93,13 @@ export function SubmenuForm({
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

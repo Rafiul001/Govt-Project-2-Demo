@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Building2Icon,
   GalleryHorizontalIcon,
@@ -18,6 +18,8 @@ type TNavItem = {
   icon: ComponentType<{ className?: string }>;
   exact?: boolean;
   superAdminOnly?: boolean;
+  /** Extra path prefixes (editor routes) that keep this item highlighted. */
+  activePrefixes?: string[];
 };
 
 const NAV_ITEMS: TNavItem[] = [
@@ -27,10 +29,16 @@ const NAV_ITEMS: TNavItem[] = [
     label: "Branches",
     icon: Building2Icon,
     superAdminOnly: true,
+    activePrefixes: ["/branch"],
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
   { to: "/banners", label: "Banners", icon: GalleryHorizontalIcon },
-  { to: "/menus", label: "Menus & Pages", icon: ListTreeIcon },
+  {
+    to: "/menus",
+    label: "Menus & Pages",
+    icon: ListTreeIcon,
+    activePrefixes: ["/pages"],
+  },
   { to: "/notices", label: "Notices", icon: MegaphoneIcon },
   {
     to: "/admins",
@@ -41,10 +49,18 @@ const NAV_ITEMS: TNavItem[] = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+/** Whether `pathname` is `prefix` itself or a sub-path of it. */
+function matchesPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 /** Fixed left navigation for the admin shell. */
 export function Sidebar() {
   const admin = useCurrentAdmin();
   const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col gap-6 border-r border-border bg-surface p-4">
@@ -57,23 +73,30 @@ export function Sidebar() {
 
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin).map(
-          ({ to, label, icon: Icon, exact }) => (
-            <Link
-              key={to}
-              to={to}
-              activeOptions={{ exact }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-              activeProps={{
-                className: "bg-accent text-accent-foreground",
-              }}
-              inactiveProps={{
-                className: "text-muted hover:bg-surface-secondary",
-              }}
-            >
-              <Icon className="size-5" />
-              {label}
-            </Link>
-          ),
+          ({ to, label, icon: Icon, exact, activePrefixes }) => {
+            // Active state is computed from the pathname (not the Link's own
+            // matching) so editor routes living outside the item's path — e.g.
+            // /pages/:id/edit under "Menus & Pages" — keep it highlighted.
+            const isActive = exact
+              ? pathname === to
+              : [to, ...(activePrefixes ?? [])].some((prefix) =>
+                  matchesPrefix(pathname, prefix),
+                );
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted hover:bg-surface-secondary"
+                }`}
+              >
+                <Icon className="size-5" />
+                {label}
+              </Link>
+            );
+          },
         )}
       </nav>
     </aside>

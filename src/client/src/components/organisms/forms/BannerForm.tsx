@@ -15,6 +15,7 @@ import {
   NumberInput,
   TextInput,
 } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TBannerFormProps = {
   initial?: TBanner;
@@ -108,9 +109,13 @@ export function BannerForm({ initial, onSuccess, onCancel }: TBannerFormProps) {
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

@@ -18,6 +18,7 @@ import {
   NumberInput,
   TextInput,
 } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TBoardOfDirectorFormProps = {
   initial?: TBoardOfDirector;
@@ -115,9 +116,13 @@ export function BoardOfDirectorForm({
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

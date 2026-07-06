@@ -6,6 +6,7 @@ import { getApiErrorMessage } from "../../../lib/apiError";
 import type { TMenu } from "../../../types";
 import { createMenuSchema, type TCreateMenuForm } from "../../../validators";
 import { BranchSelect, NumberInput, TextInput } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TMenuFormProps = {
   initial?: TMenu;
@@ -86,9 +87,13 @@ export function MenuForm({ initial, onSuccess, onCancel }: TMenuFormProps) {
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>

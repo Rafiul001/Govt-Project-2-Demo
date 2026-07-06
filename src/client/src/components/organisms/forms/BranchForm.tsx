@@ -9,6 +9,7 @@ import {
   type TCreateBranchForm,
 } from "../../../validators";
 import { FileInput, TextInput } from "../../formInputs";
+import { LoadingButton } from "../../molecules";
 
 type TBranchFormProps = {
   initial?: TBranch;
@@ -120,9 +121,13 @@ export function BranchForm({ initial, onSuccess, onCancel }: TBranchFormProps) {
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" variant="primary" isDisabled={isSubmitting}>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
               {isEdit ? "Save changes" : "Create"}
-            </Button>
+            </LoadingButton>
           )}
         </form.Subscribe>
       </div>
