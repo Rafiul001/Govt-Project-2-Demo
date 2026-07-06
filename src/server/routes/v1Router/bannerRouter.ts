@@ -169,7 +169,7 @@ bannerRouter.patch(
   async (c) => {
     const { id } = c.req.valid("param");
     const admin = c.get("admin");
-    const { image, branchId, ...rest } = c.req.valid("form");
+    const { image, removeImage, branchId, ...rest } = c.req.valid("form");
 
     const [banner] = await db
       .select()
@@ -190,12 +190,18 @@ bannerRouter.patch(
       return notFound(c, "Branch not found");
     }
 
+    // The remove flag only applies when no replacement file was uploaded.
+    if (!image && removeImage) {
+      await deleteImage(banner.image ?? "");
+    }
+
     const updates = {
       ...rest,
       ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(image && {
         image: (await replaceImage(banner.image ?? "", image)).url,
       }),
+      ...(!image && removeImage && { image: null }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

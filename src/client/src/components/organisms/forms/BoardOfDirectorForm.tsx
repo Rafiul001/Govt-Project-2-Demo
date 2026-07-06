@@ -6,6 +6,7 @@ import {
 } from "../../../hooks/useBoardOfDirectors";
 import { useCurrentAdmin } from "../../../hooks/useCurrentAdmin";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import type { TBoardOfDirector } from "../../../types";
 import {
   createBoardOfDirectorSchema,
@@ -52,7 +53,8 @@ export function BoardOfDirectorForm({
             name: value.name,
             designation: value.designation,
             order: value.order,
-            avatar: value.avatar,
+            avatar: filePatch(value.avatar),
+            removeAvatar: fileRemoved(value.avatar),
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Board member updated");
@@ -61,7 +63,7 @@ export function BoardOfDirectorForm({
             name: value.name,
             designation: value.designation,
             order: value.order,
-            avatar: value.avatar,
+            avatar: filePatch(value.avatar),
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Board member created");
@@ -97,7 +99,14 @@ export function BoardOfDirectorForm({
         </form.Field>
       ) : null}
       <form.Field name="avatar">
-        {(field) => <FileInput field={field} label="Avatar" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Avatar"
+            accept="image/*"
+            existingUrl={initial?.avatar}
+          />
+        )}
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-2">

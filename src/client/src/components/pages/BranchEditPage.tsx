@@ -5,6 +5,7 @@ import { ArrowLeftIcon, RocketIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBranch, useUpdateBranch } from "../../hooks/useBranches";
 import { getApiErrorMessage } from "../../lib/apiError";
+import { filePatch, fileRemoved } from "../../lib/fileField";
 import type { TBranch } from "../../types";
 import { createBranchSchema, type TCreateBranchForm } from "../../validators";
 import { FileInput, TextInput } from "../formInputs";
@@ -95,8 +96,10 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           address: value.address,
           phone: value.phone || undefined,
           email: value.email || undefined,
-          logo: value.logo,
-          banner: value.banner,
+          logo: filePatch(value.logo),
+          banner: filePatch(value.banner),
+          removeLogo: fileRemoved(value.logo),
+          removeBanner: fileRemoved(value.banner),
           isPublished: true,
         });
         toast.success("Branch published");
@@ -115,14 +118,19 @@ function BranchEditor({ branch }: { branch: TBranch }) {
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
 
+      // `null` means the saved file is marked for removal, so preview none.
       const logo =
         values.logo instanceof File
           ? await readFileAsDataUrl(values.logo)
-          : branch.logo;
+          : values.logo === null
+            ? null
+            : branch.logo;
       const banner =
         values.banner instanceof File
           ? await readFileAsDataUrl(values.banner)
-          : branch.banner;
+          : values.banner === null
+            ? null
+            : branch.banner;
 
       const previewBranch: TBranch = {
         ...branch,
@@ -225,12 +233,22 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           </form.Field>
           <form.Field name="logo">
             {(field) => (
-              <FileInput field={field} label="Logo" accept="image/*" />
+              <FileInput
+                field={field}
+                label="Logo"
+                accept="image/*"
+                existingUrl={branch.logo}
+              />
             )}
           </form.Field>
           <form.Field name="banner">
             {(field) => (
-              <FileInput field={field} label="Banner" accept="image/*" />
+              <FileInput
+                field={field}
+                label="Banner"
+                accept="image/*"
+                existingUrl={branch.banner}
+              />
             )}
           </form.Field>
         </form>

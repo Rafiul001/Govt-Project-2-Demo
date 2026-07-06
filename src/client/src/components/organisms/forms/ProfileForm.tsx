@@ -2,6 +2,7 @@ import { Button, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useUpdateProfile } from "../../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import {
   updateProfileSchema,
   type TUpdateProfileForm,
@@ -26,7 +27,8 @@ export function ProfileForm() {
       try {
         await updateMutation.mutateAsync({
           password: value.password ? value.password : undefined,
-          avatar: value.avatar,
+          avatar: filePatch(value.avatar),
+          removeAvatar: fileRemoved(value.avatar),
         });
         toast.success("Profile updated");
         formApi.reset();

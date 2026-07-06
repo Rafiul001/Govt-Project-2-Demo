@@ -21,6 +21,9 @@ export const updateNoticeSchema = z.strictObject({
   description: z.string().optional(),
   file: fileSchema.optional(),
   image: fileSchema.optional(),
+  // Delete the stored PDF/image (ignored when a new file is uploaded).
+  removeFile: z.stringbool().optional(),
+  removeImage: z.stringbool().optional(),
   isPublished: z.stringbool().optional(),
 });
 

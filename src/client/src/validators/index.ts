@@ -18,7 +18,9 @@ const fileSchema = z
   .instanceof(File)
   .refine((file) => file.size <= MAX_FILE_SIZE, "File must not exceed 5 MB");
 
-const optionalFile = fileSchema.optional();
+// `File` = new upload, `undefined` = keep the saved file, `null` = remove it
+// (edit forms translate `null` into the matching `remove*` API flag).
+const optionalFile = fileSchema.nullish();
 
 const branchId = z
   .number("Branch ID is required")

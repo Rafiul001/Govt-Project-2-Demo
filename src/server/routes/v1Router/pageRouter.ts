@@ -12,6 +12,7 @@ import {
   ok,
 } from "@/server/responses";
 import {
+  deleteImage,
   importImageFromUrl,
   replaceImage,
   uploadImage,
@@ -101,6 +102,7 @@ pageRouter.patch(
     const admin = c.get("admin");
     const {
       bannerImage,
+      removeBannerImage,
       bannerTitleBn,
       bannerTitleEn,
       contentBn,
@@ -134,6 +136,11 @@ pageRouter.patch(
       return badRequest(c, "Provide a banner title in Bangla or English");
     }
 
+    // The remove flag only applies when no replacement file was uploaded.
+    if (!bannerImage && removeBannerImage) {
+      await deleteImage(page.bannerImage ?? "");
+    }
+
     const updates = {
       ...(bannerTitleBn !== undefined && { bannerTitleBn: newBannerTitleBn }),
       ...(bannerTitleEn !== undefined && { bannerTitleEn: newBannerTitleEn }),
@@ -144,6 +151,7 @@ pageRouter.patch(
         bannerImage: (await replaceImage(page.bannerImage ?? "", bannerImage))
           .url,
       }),
+      ...(!bannerImage && removeBannerImage && { bannerImage: null }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

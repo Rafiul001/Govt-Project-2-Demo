@@ -53,6 +53,9 @@ export const updateBranchSchema = z
     email: optionalEmail,
     logo: fileSchema.optional(),
     banner: fileSchema.optional(),
+    // Delete the stored logo/banner (ignored when a new file is uploaded).
+    removeLogo: z.stringbool().optional(),
+    removeBanner: z.stringbool().optional(),
     // Multipart values arrive as strings; coerce the publish flag to a boolean.
     isPublished: z.stringbool().optional(),
   })

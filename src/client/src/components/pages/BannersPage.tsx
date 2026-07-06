@@ -2,6 +2,7 @@ import { Button, toast } from "@heroui/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useBanners, useDeleteBanner } from "../../hooks/useBanners";
+import { useBranches } from "../../hooks/useBranches";
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TBanner } from "../../types";
 import {
@@ -18,6 +19,22 @@ import {
   ListFilters,
   TablePagination,
 } from "../organisms";
+
+/** Groups banners by branch, preserving the list's order within each group. */
+function groupBannersByBranch(
+  banners: TBanner[],
+): { branchId: number; banners: TBanner[] }[] {
+  const groups = new Map<number, TBanner[]>();
+  for (const banner of banners) {
+    const group = groups.get(banner.branchId);
+    if (group) group.push(banner);
+    else groups.set(banner.branchId, [banner]);
+  }
+  return [...groups.entries()].map(([branchId, grouped]) => ({
+    branchId,
+    banners: grouped,
+  }));
+}
 
 type TListPageProps = {
   page: number;
@@ -40,6 +57,12 @@ export function BannersPage({
 }: TListPageProps) {
   const query = useBanners({ page, pageSize, search, branchName });
   const deleteMutation = useDeleteBanner();
+  // Banners are listed across branches, so resolve branch names to group under.
+  // The branch list is public data and small (one row per branch).
+  const branchesQuery = useBranches({ page: 1, pageSize: 100 });
+  const branchNameById = new Map(
+    (branchesQuery.data?.items ?? []).map((b) => [b.id, b.name]),
+  );
 
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TBanner | null>(null);
@@ -106,16 +129,23 @@ export function BannersPage({
         )
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((banner) => (
-              <BannerCard
-                key={banner.id}
-                banner={banner}
-                onEdit={() => setEditing(banner)}
-                onDelete={() => setDeleting(banner)}
-              />
-            ))}
-          </div>
+          {groupBannersByBranch(items).map(({ branchId, banners }) => (
+            <section key={branchId} className="space-y-2">
+              <h2 className="px-1 text-sm font-semibold uppercase tracking-wide text-muted">
+                {branchNameById.get(branchId) ?? `Branch #${branchId}`}
+              </h2>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {banners.map((banner) => (
+                  <BannerCard
+                    key={banner.id}
+                    banner={banner}
+                    onEdit={() => setEditing(banner)}
+                    onDelete={() => setDeleting(banner)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
           <TablePagination
             page={page}
             totalPages={totalPages}

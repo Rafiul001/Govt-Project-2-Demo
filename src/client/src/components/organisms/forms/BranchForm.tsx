@@ -2,6 +2,7 @@ import { Button, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useCreateBranch, useUpdateBranch } from "../../../hooks/useBranches";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import type { TBranch } from "../../../types";
 import {
   createBranchSchema,
@@ -39,11 +40,16 @@ export function BranchForm({ initial, onSuccess, onCancel }: TBranchFormProps) {
           address: value.address,
           phone: value.phone || undefined,
           email: value.email || undefined,
-          logo: value.logo,
-          banner: value.banner,
+          logo: filePatch(value.logo),
+          banner: filePatch(value.banner),
         };
         if (initial) {
-          await updateMutation.mutateAsync({ id: initial.id, ...payload });
+          await updateMutation.mutateAsync({
+            id: initial.id,
+            ...payload,
+            removeLogo: fileRemoved(value.logo),
+            removeBanner: fileRemoved(value.banner),
+          });
           toast.success("Branch updated");
         } else {
           await createMutation.mutateAsync(payload);
@@ -88,10 +94,24 @@ export function BranchForm({ initial, onSuccess, onCancel }: TBranchFormProps) {
         {(field) => <TextInput field={field} label="Email" type="email" />}
       </form.Field>
       <form.Field name="logo">
-        {(field) => <FileInput field={field} label="Logo" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Logo"
+            accept="image/*"
+            existingUrl={initial?.logo}
+          />
+        )}
       </form.Field>
       <form.Field name="banner">
-        {(field) => <FileInput field={field} label="Banner" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Banner"
+            accept="image/*"
+            existingUrl={initial?.banner}
+          />
+        )}
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-2">

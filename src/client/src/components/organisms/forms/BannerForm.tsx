@@ -3,6 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useCreateBanner, useUpdateBanner } from "../../../hooks/useBanners";
 import { useCurrentAdmin } from "../../../hooks/useCurrentAdmin";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import type { TBanner } from "../../../types";
 import {
   createBannerSchema,
@@ -45,7 +46,8 @@ export function BannerForm({ initial, onSuccess, onCancel }: TBannerFormProps) {
             title: value.title,
             subTitle: value.subTitle,
             order: value.order,
-            image: value.image,
+            image: filePatch(value.image),
+            removeImage: fileRemoved(value.image),
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Banner updated");
@@ -54,7 +56,7 @@ export function BannerForm({ initial, onSuccess, onCancel }: TBannerFormProps) {
             title: value.title,
             subTitle: value.subTitle,
             order: value.order,
-            image: value.image,
+            image: filePatch(value.image),
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
           toast.success("Banner created");
@@ -90,7 +92,14 @@ export function BannerForm({ initial, onSuccess, onCancel }: TBannerFormProps) {
         </form.Field>
       ) : null}
       <form.Field name="image">
-        {(field) => <FileInput field={field} label="Image" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Image"
+            accept="image/*"
+            existingUrl={initial?.image}
+          />
+        )}
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-2">

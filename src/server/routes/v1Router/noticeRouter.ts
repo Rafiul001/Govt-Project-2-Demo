@@ -184,7 +184,8 @@ noticeRouter.patch(
   async (c) => {
     const { id } = c.req.valid("param");
     const admin = c.get("admin");
-    const { image, file, branchId, ...rest } = c.req.valid("form");
+    const { image, file, removeImage, removeFile, branchId, ...rest } =
+      c.req.valid("form");
 
     const [notice] = await db
       .select()
@@ -205,15 +206,25 @@ noticeRouter.patch(
       return notFound(c, "Branch not found");
     }
 
+    // A remove flag only applies when no replacement file was uploaded.
+    if (!image && removeImage) {
+      await deleteImage(notice.image ?? "");
+    }
+    if (!file && removeFile) {
+      await deletePdf(notice.fileUrl ?? "");
+    }
+
     const updates = {
       ...rest,
       ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(image && {
         image: (await replaceImage(notice.image ?? "", image)).url,
       }),
+      ...(!image && removeImage && { image: null }),
       ...(file && {
         fileUrl: (await replacePdf(notice.fileUrl ?? "", file)).url,
       }),
+      ...(!file && removeFile && { fileUrl: null }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

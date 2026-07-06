@@ -123,7 +123,8 @@ branchRouter.patch(
   zValidator("form", updateBranchSchema),
   async (c) => {
     const { id } = c.req.valid("param");
-    const { logo, banner, ...rest } = c.req.valid("form");
+    const { logo, banner, removeLogo, removeBanner, ...rest } =
+      c.req.valid("form");
 
     const [branch] = await db
       .select()
@@ -153,12 +154,22 @@ branchRouter.patch(
       }
     }
 
+    // A remove flag only applies when no replacement file was uploaded.
+    if (!logo && removeLogo) {
+      await deleteImage(branch.logo ?? "");
+    }
+    if (!banner && removeBanner) {
+      await deleteImage(branch.banner ?? "");
+    }
+
     const updates = {
       ...rest,
       ...(logo && { logo: (await replaceImage(branch.logo ?? "", logo)).url }),
+      ...(!logo && removeLogo && { logo: null }),
       ...(banner && {
         banner: (await replaceImage(branch.banner ?? "", banner)).url,
       }),
+      ...(!banner && removeBanner && { banner: null }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

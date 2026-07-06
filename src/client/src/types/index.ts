@@ -132,6 +132,10 @@ export type TUpdateBranchInput = {
   email?: string;
   logo?: File;
   banner?: File;
+  /** Remove the saved logo (ignored when a new `logo` file is sent). */
+  removeLogo?: boolean;
+  /** Remove the saved banner (ignored when a new `banner` file is sent). */
+  removeBanner?: boolean;
   isPublished?: boolean;
 };
 
@@ -150,6 +154,8 @@ export type TUpdateAdminInput = {
   username?: string;
   password?: string;
   avatar?: File;
+  /** Remove the saved avatar (ignored when a new `avatar` file is sent). */
+  removeAvatar?: boolean;
   branchId?: number;
 };
 
@@ -157,6 +163,8 @@ export type TUpdateAdminInput = {
 export type TUpdateProfileInput = {
   password?: string;
   avatar?: File;
+  /** Remove the saved avatar (ignored when a new `avatar` file is sent). */
+  removeAvatar?: boolean;
 };
 
 // --- Board of directors ---
@@ -174,6 +182,8 @@ export type TUpdateBoardOfDirectorInput = {
   name?: string;
   designation?: string;
   avatar?: File;
+  /** Remove the saved avatar (ignored when a new `avatar` file is sent). */
+  removeAvatar?: boolean;
   order?: number;
 };
 
@@ -194,6 +204,10 @@ export type TUpdateNoticeInput = {
   description?: string;
   file?: File;
   image?: File;
+  /** Remove the saved PDF (ignored when a new `file` is sent). */
+  removeFile?: boolean;
+  /** Remove the saved image (ignored when a new `image` file is sent). */
+  removeImage?: boolean;
   isPublished?: boolean;
 };
 
@@ -212,6 +226,8 @@ export type TUpdateBannerInput = {
   title?: string;
   subTitle?: string;
   image?: File;
+  /** Remove the saved image (ignored when a new `image` file is sent). */
+  removeImage?: boolean;
   order?: number;
 };
 
@@ -288,6 +304,8 @@ export type TUpdatePageInput = {
   bannerTitleBn?: string;
   bannerTitleEn?: string;
   bannerImage?: File;
+  /** Remove the saved banner image (ignored when a new file is sent). */
+  removeBannerImage?: boolean;
   contentBn?: string;
   contentEn?: string;
   isPublished?: boolean;

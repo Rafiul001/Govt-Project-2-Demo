@@ -234,7 +234,7 @@ adminRouter.patch(
   zValidator("form", updateProfileSchema),
   async (c) => {
     const admin = c.get("admin");
-    const { avatar, password } = c.req.valid("form");
+    const { avatar, removeAvatar, password } = c.req.valid("form");
 
     const [current] = await db
       .select()
@@ -246,11 +246,18 @@ adminRouter.patch(
       return notFound(c, "Admin not found");
     }
 
+    // The remove flag only applies when no replacement file was uploaded.
+    // `avatar` is a NOT NULL column, so removal stores an empty string.
+    if (!avatar && removeAvatar) {
+      await deleteImage(current.avatar);
+    }
+
     const updates = {
       ...(password && { password: await hashPassword(password) }),
       ...(avatar && {
         avatar: (await replaceImage(current.avatar, avatar)).url,
       }),
+      ...(!avatar && removeAvatar && { avatar: "" }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");
@@ -278,7 +285,7 @@ adminRouter.patch(
   zValidator("form", updateAdminSchema),
   async (c) => {
     const { id } = c.req.valid("param");
-    const { avatar, password, username, branchId, ...rest } =
+    const { avatar, removeAvatar, password, username, branchId, ...rest } =
       c.req.valid("form");
 
     const [target] = await db
@@ -308,6 +315,12 @@ adminRouter.patch(
       return notFound(c, "Branch not found");
     }
 
+    // The remove flag only applies when no replacement file was uploaded.
+    // `avatar` is a NOT NULL column, so removal stores an empty string.
+    if (!avatar && removeAvatar) {
+      await deleteImage(target.avatar);
+    }
+
     const updates = {
       ...rest,
       ...(username && { username }),
@@ -316,6 +329,7 @@ adminRouter.patch(
       ...(avatar && {
         avatar: (await replaceImage(target.avatar, avatar)).url,
       }),
+      ...(!avatar && removeAvatar && { avatar: "" }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

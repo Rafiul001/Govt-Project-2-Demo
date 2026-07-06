@@ -12,6 +12,8 @@ export const updatePageSchema = z.strictObject({
   bannerTitleEn: z.string().trim().max(255).optional(),
   // Uploaded banner image; the route stores the resulting Cloudinary URL.
   bannerImage: fileSchema.optional(),
+  // Delete the stored banner image (ignored when a new file is uploaded).
+  removeBannerImage: z.stringbool().optional(),
   // Markdown body per language.
   contentBn: z.string().optional(),
   contentEn: z.string().optional(),

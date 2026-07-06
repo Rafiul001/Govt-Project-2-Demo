@@ -21,6 +21,7 @@ import {
 import { useSubmenu } from "../../hooks/useSubmenus";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { displayTitle } from "../../lib/displayTitle";
+import { filePatch, fileRemoved } from "../../lib/fileField";
 import type { TBranch, TMenu, TPage, TSubmenu } from "../../types";
 import { updatePageSchema, type TUpdatePageForm } from "../../validators";
 import {
@@ -208,7 +209,8 @@ function PageEditor({
           contentBn: value.contentBn,
           contentEn: value.contentEn,
           isPublished: value.isPublished,
-          bannerImage: value.bannerImage,
+          bannerImage: filePatch(value.bannerImage),
+          removeBannerImage: fileRemoved(value.bannerImage),
         });
         toast.success(value.isPublished ? "Page published" : "Page saved");
         navigate({
@@ -230,10 +232,13 @@ function PageEditor({
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
 
+      // `null` means the saved image is marked for removal, so preview none.
       const bannerImage =
         values.bannerImage instanceof File
           ? await readFileAsDataUrl(values.bannerImage)
-          : page.bannerImage;
+          : values.bannerImage === null
+            ? null
+            : page.bannerImage;
 
       win.postMessage(
         {
@@ -394,7 +399,12 @@ function PageEditor({
           </form.Field>
           <form.Field name="bannerImage">
             {(field) => (
-              <FileInput field={field} label="Banner image" accept="image/*" />
+              <FileInput
+                field={field}
+                label="Banner image"
+                accept="image/*"
+                existingUrl={page.bannerImage}
+              />
             )}
           </form.Field>
           <form.Field name="contentBn">

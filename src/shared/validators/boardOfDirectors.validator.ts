@@ -18,6 +18,8 @@ export const updateBoardOfDirectorSchema = z.strictObject({
   name: z.string().trim().min(1).max(255).optional(),
   designation: z.string().trim().min(1).max(255).optional(),
   avatar: fileSchema.optional(),
+  // Delete the stored avatar (ignored when a new file is uploaded).
+  removeAvatar: z.stringbool().optional(),
   order: z.coerce.number().int().min(0).optional(),
 });
 

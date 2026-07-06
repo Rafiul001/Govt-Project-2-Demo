@@ -171,7 +171,7 @@ boardOfDirectorsRouter.patch(
   async (c) => {
     const { id } = c.req.valid("param");
     const admin = c.get("admin");
-    const { avatar, branchId, ...rest } = c.req.valid("form");
+    const { avatar, removeAvatar, branchId, ...rest } = c.req.valid("form");
 
     const [member] = await db
       .select()
@@ -192,12 +192,19 @@ boardOfDirectorsRouter.patch(
       return notFound(c, "Branch not found");
     }
 
+    // The remove flag only applies when no replacement file was uploaded.
+    // `avatar` is a NOT NULL column, so removal stores an empty string.
+    if (!avatar && removeAvatar) {
+      await deleteImage(member.avatar);
+    }
+
     const updates = {
       ...rest,
       ...(newBranchId !== undefined && { branchId: newBranchId }),
       ...(avatar && {
         avatar: (await replaceImage(member.avatar, avatar)).url,
       }),
+      ...(!avatar && removeAvatar && { avatar: "" }),
     };
     if (Object.keys(updates).length === 0) {
       return badRequest(c, "No fields to update");

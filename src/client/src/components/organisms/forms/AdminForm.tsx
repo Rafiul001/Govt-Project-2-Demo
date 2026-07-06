@@ -2,6 +2,7 @@ import { Button, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useCreateAdmin, useUpdateAdmin } from "../../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import type { TAdmin } from "../../../types";
 import {
   createAdminSchema,
@@ -45,7 +46,8 @@ export function AdminForm({ initial, onSuccess, onCancel }: TAdminFormProps) {
             username: value.username,
             // Only send the password when the admin actually typed a new one.
             password: value.password ? value.password : undefined,
-            avatar: value.avatar,
+            avatar: filePatch(value.avatar),
+            removeAvatar: fileRemoved(value.avatar),
             branchId: value.branchId,
           });
           toast.success("Admin updated");
@@ -54,7 +56,7 @@ export function AdminForm({ initial, onSuccess, onCancel }: TAdminFormProps) {
             name: value.name,
             username: value.username,
             password: value.password,
-            avatar: value.avatar,
+            avatar: filePatch(value.avatar),
             branchId: value.branchId,
           });
           toast.success("Admin created");
@@ -104,7 +106,14 @@ export function AdminForm({ initial, onSuccess, onCancel }: TAdminFormProps) {
         {(field) => <BranchSelect field={field} isRequired />}
       </form.Field>
       <form.Field name="avatar">
-        {(field) => <FileInput field={field} label="Avatar" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Avatar"
+            accept="image/*"
+            existingUrl={initial?.avatar}
+          />
+        )}
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-2">

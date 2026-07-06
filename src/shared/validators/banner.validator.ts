@@ -18,6 +18,8 @@ export const updateBannerSchema = z.strictObject({
   title: z.string().trim().min(1).max(255).optional(),
   subTitle: z.string().trim().min(1).max(255).optional(),
   image: fileSchema.optional(),
+  // Delete the stored image (ignored when a new file is uploaded).
+  removeImage: z.stringbool().optional(),
   order: z.coerce.number().int().min(0).optional(),
 });
 

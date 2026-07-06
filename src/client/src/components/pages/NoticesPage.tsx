@@ -1,6 +1,7 @@
 import { Button, toast } from "@heroui/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
+import { useBranches } from "../../hooks/useBranches";
 import { useDeleteNotice, useNotices } from "../../hooks/useNotices";
 import { getApiErrorMessage } from "../../lib/apiError";
 import type { TNotice } from "../../types";
@@ -19,6 +20,22 @@ import {
   NoticeForm,
   TablePagination,
 } from "../organisms";
+
+/** Groups notices by branch, preserving the list's order within each group. */
+function groupNoticesByBranch(
+  notices: TNotice[],
+): { branchId: number; notices: TNotice[] }[] {
+  const groups = new Map<number, TNotice[]>();
+  for (const notice of notices) {
+    const group = groups.get(notice.branchId);
+    if (group) group.push(notice);
+    else groups.set(notice.branchId, [notice]);
+  }
+  return [...groups.entries()].map(([branchId, grouped]) => ({
+    branchId,
+    notices: grouped,
+  }));
+}
 
 type TListPageProps = {
   page: number;
@@ -44,6 +61,12 @@ export function NoticesPage({
 }: TListPageProps) {
   const query = useNotices({ page, pageSize, search, branchName });
   const deleteMutation = useDeleteNotice();
+  // Notices are listed across branches, so resolve branch names to group under.
+  // The branch list is public data and small (one row per branch).
+  const branchesQuery = useBranches({ page: 1, pageSize: 100 });
+  const branchNameById = new Map(
+    (branchesQuery.data?.items ?? []).map((b) => [b.id, b.name]),
+  );
 
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TNotice | null>(null);
@@ -117,13 +140,22 @@ export function NoticesPage({
         <div className="flex flex-col gap-5 lg:min-h-0 lg:flex-1 lg:flex-row">
           {/* List */}
           <div className="flex flex-col gap-3 lg:w-4/12 lg:overflow-y-auto lg:pr-1">
-            {items.map((notice) => (
-              <NoticeCard
-                key={notice.id}
-                notice={notice}
-                isSelected={notice.id === selectedId}
-                onSelect={() => setSelectedId(notice.id)}
-              />
+            {groupNoticesByBranch(items).map(({ branchId, notices }) => (
+              <section key={branchId} className="space-y-2">
+                <h2 className="px-1 text-sm font-semibold uppercase tracking-wide text-muted">
+                  {branchNameById.get(branchId) ?? `Branch #${branchId}`}
+                </h2>
+                <div className="flex flex-col gap-3">
+                  {notices.map((notice) => (
+                    <NoticeCard
+                      key={notice.id}
+                      notice={notice}
+                      isSelected={notice.id === selectedId}
+                      onSelect={() => setSelectedId(notice.id)}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
             <TablePagination
               page={page}

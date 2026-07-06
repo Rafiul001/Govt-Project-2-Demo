@@ -3,6 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useCurrentAdmin } from "../../../hooks/useCurrentAdmin";
 import { useCreateNotice, useUpdateNotice } from "../../../hooks/useNotices";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { filePatch, fileRemoved } from "../../../lib/fileField";
 import type { TNotice } from "../../../types";
 import {
   createNoticeSchema,
@@ -46,8 +47,10 @@ export function NoticeForm({ initial, onSuccess, onCancel }: TNoticeFormProps) {
             id: initial.id,
             title: value.title,
             description: value.description,
-            file: value.file,
-            image: value.image,
+            file: filePatch(value.file),
+            image: filePatch(value.image),
+            removeFile: fileRemoved(value.file),
+            removeImage: fileRemoved(value.image),
             isPublished: value.isPublished,
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
@@ -56,8 +59,8 @@ export function NoticeForm({ initial, onSuccess, onCancel }: TNoticeFormProps) {
           await createMutation.mutateAsync({
             title: value.title,
             description: value.description,
-            file: value.file,
-            image: value.image,
+            file: filePatch(value.file),
+            image: filePatch(value.image),
             isPublished: value.isPublished,
             branchId: isSuperAdmin ? value.branchId : undefined,
           });
@@ -91,7 +94,14 @@ export function NoticeForm({ initial, onSuccess, onCancel }: TNoticeFormProps) {
         </form.Field>
       ) : null}
       <form.Field name="image">
-        {(field) => <FileInput field={field} label="Image" accept="image/*" />}
+        {(field) => (
+          <FileInput
+            field={field}
+            label="Image"
+            accept="image/*"
+            existingUrl={initial?.image}
+          />
+        )}
       </form.Field>
       <form.Field name="file">
         {(field) => (
@@ -99,6 +109,7 @@ export function NoticeForm({ initial, onSuccess, onCancel }: TNoticeFormProps) {
             field={field}
             label="PDF document"
             accept="application/pdf"
+            existingUrl={initial?.fileUrl}
           />
         )}
       </form.Field>

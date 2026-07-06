@@ -30,6 +30,8 @@ export const updateAdminSchema = z.strictObject({
   username: z.string().trim().min(3).max(255).optional(),
   password: z.string().min(8).max(255).optional(),
   avatar: fileSchema.optional(),
+  // Delete the stored avatar (ignored when a new file is uploaded).
+  removeAvatar: z.stringbool().optional(),
   branchId: z.coerce.number().int().positive().optional(),
 });
 
@@ -37,6 +39,8 @@ export const updateAdminSchema = z.strictObject({
 export const updateProfileSchema = z.strictObject({
   password: z.string().min(8).max(255).optional(),
   avatar: fileSchema.optional(),
+  // Delete the stored avatar (ignored when a new file is uploaded).
+  removeAvatar: z.stringbool().optional(),
 });
 
 export type TAdminLoginInput = z.infer<typeof adminLoginSchema>;
