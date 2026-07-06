@@ -1,4 +1,4 @@
-import { Button, toast } from "@heroui/react";
+import { toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useUpdateProfile } from "../../../hooks/useAdmins";
 import { getApiErrorMessage } from "../../../lib/apiError";
