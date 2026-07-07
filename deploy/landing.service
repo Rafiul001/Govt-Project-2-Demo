@@ -1,19 +1,35 @@
-# systemd unit for the Next.js landing page
-# Install: sudo cp landing.service /etc/systemd/system/govt-landing.service
-#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-landing
+# systemd unit for the Next.js landing sites — production box.
+# Runs `next start` from the repo clone at /home/Govt-Project-2-Demo.
+# Runtime env (API_BASE_URL) and the build-time NEXT_PUBLIC_DASHBOARD_URL
+# live in src/landing-page/.env, which `next start` loads itself.
+#
+# Build first (from the repo root): npm run build:landing
+# `next` is resolved from the app's own node_modules, so only node is needed.
+# Check the node path (`which node`) and adjust ExecStart if it differs.
+#
+# Install:
+#   sudo cp deploy/landing.service /etc/systemd/system/govt-landing.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now govt-landing
+# Logs:   journalctl -u govt-landing -f
+# After a redeploy (git pull + npm run build:landing):
+#   sudo systemctl restart govt-landing
 
 [Unit]
-Description=Govt Project landing page (Next.js)
-After=network.target
+Description=Govt Project landing sites (Next.js)
+# The landing page fetches from the API server-side on every request.
+After=network-online.target govt-api.service
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=www-data
-WorkingDirectory=/var/www/govt-project/landing-page
-# Build first on the server: bun install && bun run build (inside src/landing-page)
-ExecStart=/usr/bin/env bunx next start -p 3001
-Restart=on-failure
+WorkingDirectory=/home/Govt-Project-2-Demo/src/landing-page
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3001
 Environment=NODE_ENV=production
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

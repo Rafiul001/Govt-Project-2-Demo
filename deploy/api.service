@@ -1,20 +1,35 @@
-# systemd unit for the Hono API server
-# Install: sudo cp api.service /etc/systemd/system/govt-api.service
-#          sudo systemctl daemon-reload && sudo systemctl enable --now govt-api
+# systemd unit for the Hono API server — production box.
+# Runs the bundled server (dist/index.js) from the repo clone at
+# /home/Govt-Project-2-Demo. Reads /home/Govt-Project-2-Demo/.env
+# (DATABASE_URL, PORT=3000, token secrets, Cloudinary keys, …).
+#
+# Build first (from the repo root): npm run build
+# Check the node path (`which node`) and adjust ExecStart if it differs.
+#
+# Install:
+#   sudo cp deploy/api.service /etc/systemd/system/govt-api.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now govt-api
+# Logs:   journalctl -u govt-api -f
+# After a redeploy (git pull + npm run build): sudo systemctl restart govt-api
 
 [Unit]
 Description=Govt Project API server (Hono)
-After=network.target postgresql.service
+# postgresql.service only matters when Postgres runs on this box; it is
+# ignored when the unit doesn't exist (e.g. a remote database).
+After=network-online.target postgresql.service
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=www-data
-WorkingDirectory=/var/www/govt-project/api
-# Build first: bun run build  → dist/index.js (targets node)
-# .env with DATABASE_URL, PORT=3000, Cloudinary keys, etc. lives in WorkingDirectory
+WorkingDirectory=/home/Govt-Project-2-Demo
 ExecStart=/usr/bin/node --env-file-if-exists=.env dist/index.js
-Restart=on-failure
 Environment=NODE_ENV=production
+Restart=always
+RestartSec=3
+# The app logs JSON to stdout; journald captures it.
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

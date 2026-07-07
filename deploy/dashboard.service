@@ -1,0 +1,48 @@
+# systemd unit for the admin dashboard (Vite) — production box, OPTIONAL.
+#
+# The dashboard is a static build (src/client/dist); the nginx site config
+# already serves it directly on app.rida-project.com with no process needed —
+# that is the recommended setup, and with it this unit is unnecessary.
+# Use this only if you prefer every app to run as a managed process: it
+# serves the same dist/ via `vite preview` on 127.0.0.1:5173, and nginx must
+# then proxy to it instead of serving files. In the app.rida-project.com
+# server block of the nginx config, replace the root/index lines and the
+# `location /assets/` + `location /` blocks with:
+#
+#     location / {
+#         proxy_pass http://127.0.0.1:5173;
+#         proxy_http_version 1.1;
+#         proxy_set_header Connection "";
+#         proxy_set_header Host $host;
+#     }
+#
+# (keep the `location /api/` block — the API proxy stays in nginx).
+#
+# Build first (from the repo root): npm run build:client
+# Check the node path (`which node`) and adjust ExecStart if it differs.
+#
+# Install:
+#   sudo cp deploy/dashboard.service /etc/systemd/system/govt-dashboard.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now govt-dashboard
+# Logs:   journalctl -u govt-dashboard -f
+# After a redeploy (git pull + npm run build:client):
+#   sudo systemctl restart govt-dashboard
+
+[Unit]
+Description=Govt Project admin dashboard (Vite preview)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/Govt-Project-2-Demo/src/client
+ExecStart=/usr/bin/node node_modules/vite/bin/vite.js preview --port 5173 --strictPort
+Environment=NODE_ENV=production
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
