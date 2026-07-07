@@ -2,7 +2,7 @@
  * Bootstrap script: creates the first super admin.
  *
  * Usage:
- *   bun src/scripts/createSuperAdmin.ts <username> <password> [name]
+ *   npm run create-super-admin -- <username> <password> [name]
  */
 import db from "@/server/db/client";
 import { adminsTable } from "@/server/db/schemas";
@@ -15,7 +15,7 @@ const [username, password, name] = process.argv.slice(2);
 
 if (!username || !password) {
   logger.error(
-    "Usage: bun src/scripts/createSuperAdmin.ts <username> <password> [name]",
+    "Usage: npm run create-super-admin -- <username> <password> [name]",
   );
   process.exit(1);
 }

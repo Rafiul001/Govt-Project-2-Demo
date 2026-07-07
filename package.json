@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "create-super-admin": "node --env-file-if-exists=.env --import tsx src/scripts/createSuperAdmin.ts",
     "install:prod": "npm install && cd src/client && npm install && cd ../landing-page && npm install",
     "build": "NODE_ENV=production esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outdir=dist",
     "build:client": "cd src/client && npm run build",
