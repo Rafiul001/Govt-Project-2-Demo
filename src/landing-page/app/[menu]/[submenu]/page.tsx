@@ -3,9 +3,9 @@ import { NavBar } from "@/components/organisms/NavBar";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getBranch, getDynamicPage, getNavTree } from "@/lib/api";
+import { getBranch, getBranchName, getDynamicPage, getNavTree } from "@/lib/api";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 type TPageParams = { menu: string; submenu: string };
 
@@ -36,10 +36,15 @@ export default async function DynamicPage({
   params: Promise<TPageParams>;
 }) {
   const { menu, submenu } = await params;
+
+  // Branch pages exist only on branch subdomains; the apex shows the directory.
+  const branchName = await getBranchName();
+  if (!branchName) redirect("/");
+
   const [branch, menus, page] = await Promise.all([
-    getBranch(),
-    getNavTree(),
-    getDynamicPage(menu, submenu),
+    getBranch(branchName),
+    getNavTree(branchName),
+    getDynamicPage(menu, submenu, branchName),
   ]);
 
   if (!page) notFound();

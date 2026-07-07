@@ -20,6 +20,18 @@ export const LANGUAGES: { code: TLanguage; label: string }[] = [
 export const DEFAULT_LANGUAGE: TLanguage = "bn";
 
 /**
+ * Fills the `{branch}` placeholder in a catalogue string with the current
+ * branch's name (stored in one language upstream, rendered as-is). Strings
+ * without the placeholder pass through unchanged.
+ */
+export function withBranch(
+  text: string,
+  branchName: string | null | undefined,
+): string {
+  return text.replaceAll("{branch}", branchName ?? "");
+}
+
+/**
  * Picks a bilingual value for the active language, falling back to the other
  * language when the preferred one is empty. Used for API-sourced content
  * (menus, sub-menus, pages) stored per language. Returns "" when neither is set.
@@ -123,6 +135,12 @@ type TDictionary = {
     quickAccess: string;
     rightsReserved: string;
   };
+  directory: {
+    title: string;
+    subtitle: string;
+    visit: string;
+    empty: string;
+  };
 };
 
 export const dictionaries: Record<TLanguage, TDictionary> = {
@@ -153,7 +171,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       badge: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকার",
       slides: [
         {
-          title: "ঢাকা শাখায় আপনাকে স্বাগতম",
+          title: "{branch} শাখায় আপনাকে স্বাগতম",
           subtitle:
             "স্বচ্ছতা, জবাবদিহিতা ও জনগণের দোরগোড়ায় সেবা পৌঁছে দেওয়াই আমাদের অঙ্গীকার।",
         },
@@ -179,7 +197,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       subtitle:
         "জাতীয় উন্নয়ন কর্তৃপক্ষ জনগণের কল্যাণে নিবেদিত একটি সরকারি প্রতিষ্ঠান।",
       intro:
-        "জাতীয় উন্নয়ন কর্তৃপক্ষ-এর ঢাকা শাখা নাগরিক সেবা সহজীকরণ, উন্নয়ন কার্যক্রম বাস্তবায়ন এবং সরকারি নীতিমালা বাস্তবায়নে গুরুত্বপূর্ণ ভূমিকা পালন করে আসছে। আমরা স্বচ্ছতা ও জবাবদিহিতার সাথে জনগণকে মানসম্মত সেবা প্রদানে অঙ্গীকারবদ্ধ।",
+        "জাতীয় উন্নয়ন কর্তৃপক্ষ-এর {branch} শাখা নাগরিক সেবা সহজীকরণ, উন্নয়ন কার্যক্রম বাস্তবায়ন এবং সরকারি নীতিমালা বাস্তবায়নে গুরুত্বপূর্ণ ভূমিকা পালন করে আসছে। আমরা স্বচ্ছতা ও জবাবদিহিতার সাথে জনগণকে মানসম্মত সেবা প্রদানে অঙ্গীকারবদ্ধ।",
       highlights: [
         {
           title: "স্বচ্ছ ও জবাবদিহিমূলক সেবা",
@@ -205,7 +223,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
     },
     noticesPage: {
       heading: "সকল নোটিশ",
-      subtitle: "ঢাকা শাখার প্রকাশিত সকল নোটিশ ও বিজ্ঞপ্তি।",
+      subtitle: "{branch} শাখার প্রকাশিত সকল নোটিশ ও বিজ্ঞপ্তি।",
       backHome: "← প্রচ্ছদে ফিরুন",
       count: "টি নোটিশ",
       empty: "এই মুহূর্তে প্রকাশিত কোনো নোটিশ নেই।",
@@ -226,7 +244,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
     boardPage: {
       heading: "পরিচালনা পর্ষদ",
       subtitle:
-        "ঢাকা শাখার নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
+        "{branch} শাখার নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
       backHome: "← প্রচ্ছদে ফিরুন",
       count: "জন সদস্য",
       empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
@@ -249,6 +267,13 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       importantLinks: "গুরুত্বপূর্ণ লিংক",
       quickAccess: "দ্রুত প্রবেশ",
       rightsReserved: "সর্বস্বত্ব সংরক্ষিত।",
+    },
+    directory: {
+      title: "শাখা নির্বাচন করুন",
+      subtitle:
+        "জাতীয় উন্নয়ন কর্তৃপক্ষ-এর শাখাসমূহ — আপনার কাঙ্ক্ষিত শাখার ওয়েবসাইটে প্রবেশ করুন।",
+      visit: "ওয়েবসাইটে যান →",
+      empty: "এই মুহূর্তে কোনো শাখা প্রকাশিত নেই।",
     },
   },
   en: {
@@ -278,7 +303,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       badge: "Government of the People's Republic of Bangladesh",
       slides: [
         {
-          title: "Welcome to the Dhaka Branch",
+          title: "Welcome to the {branch} Branch",
           subtitle:
             "Transparency, accountability, and delivering services to people's doorsteps are our commitment.",
         },
@@ -304,7 +329,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       subtitle:
         "The National Development Authority is a government institution dedicated to public welfare.",
       intro:
-        "The Dhaka Branch of the National Development Authority has long played a vital role in simplifying citizen services, implementing development programmes, and carrying out government policies. We are committed to providing quality service to the public with transparency and accountability.",
+        "The {branch} Branch of the National Development Authority has long played a vital role in simplifying citizen services, implementing development programmes, and carrying out government policies. We are committed to providing quality service to the public with transparency and accountability.",
       highlights: [
         {
           title: "Transparent & Accountable Service",
@@ -330,7 +355,8 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
     },
     noticesPage: {
       heading: "All Notices",
-      subtitle: "All published notices and announcements of the Dhaka Branch.",
+      subtitle:
+        "All published notices and announcements of the {branch} Branch.",
       backHome: "← Back to Home",
       count: "notices",
       empty: "There are no published notices at this time.",
@@ -351,7 +377,7 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
     boardPage: {
       heading: "Board of Directors",
       subtitle:
-        "The honourable officials entrusted with the policy-making and management of the Dhaka Branch.",
+        "The honourable officials entrusted with the policy-making and management of the {branch} Branch.",
       backHome: "← Back to Home",
       count: "members",
       empty: "Information on the board of directors will be published soon.",
@@ -374,6 +400,13 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       importantLinks: "Important Links",
       quickAccess: "Quick Access",
       rightsReserved: "All rights reserved.",
+    },
+    directory: {
+      title: "Select a Branch",
+      subtitle:
+        "Branches of the National Development Authority — visit the website of your desired branch.",
+      visit: "Visit website →",
+      empty: "No branches are published at this time.",
     },
   },
 };

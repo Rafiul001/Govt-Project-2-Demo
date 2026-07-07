@@ -68,8 +68,12 @@ export default function PreviewPage() {
       <SiteHeader branch={branch} />
       <NavBar />
       <main className="flex-1">
-        <HeroSlider banners={[]} bannerUrl={branch.banner} />
-        <AboutSection />
+        <HeroSlider
+          banners={[]}
+          bannerUrl={branch.banner}
+          branchName={branch.name}
+        />
+        <AboutSection branchName={branch.name} />
         <NoticeBoard notices={[]} branches={[branch]} />
         <BoardOfDirectors members={[]} />
         <ContactSection branch={branch} />

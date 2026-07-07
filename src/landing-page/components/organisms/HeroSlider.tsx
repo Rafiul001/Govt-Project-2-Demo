@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { toLocaleDigits } from "@/lib/format";
+import { withBranch } from "@/lib/i18n";
 import type { TBanner } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -19,9 +20,11 @@ type TSlide = { title: string; subtitle: string; image: string | null };
 export function HeroSlider({
   banners,
   bannerUrl,
+  branchName,
 }: {
   banners: TBanner[];
   bannerUrl: string | null;
+  branchName?: string | null;
 }) {
   const { lang, t } = useLanguage();
 
@@ -32,7 +35,11 @@ export function HeroSlider({
           subtitle: b.subTitle,
           image: b.image ?? bannerUrl,
         }))
-      : t.hero.slides.map((s) => ({ ...s, image: bannerUrl }));
+      : t.hero.slides.map((s) => ({
+          ...s,
+          title: withBranch(s.title, branchName),
+          image: bannerUrl,
+        }));
 
   const [index, setIndex] = useState(0);
 

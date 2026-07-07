@@ -226,7 +226,7 @@ Bengali.
 
    The dev server already allows these origins via `allowedDevOrigins` in
    [`src/landing-page/next.config.ts`](src/landing-page/next.config.ts). A bare
-   `localhost:3001` (no subdomain) falls back to the `BRANCH_NAME` env var.
+   `localhost:3001` (no subdomain) renders the branch directory.
 
 ## Scripts
 
@@ -551,8 +551,8 @@ per-branch build.
 - **Subdomain → branch** — each request's branch is derived from its host
   subdomain in [`src/landing-page/lib/api.ts`](src/landing-page/lib/api.ts)
   (`dhaka.example.com` → `Dhaka`), reading the request `Host` header via Next's
-  `headers()`. A bare host (or `localhost`) falls back to the `BRANCH_NAME` env
-  var. In dev, the branch subdomains are allow-listed via `allowedDevOrigins` in
+  `headers()`. A bare host (apex, `www`, raw IP, or `localhost`) renders the branch
+  directory instead of a branch site. In dev, the branch subdomains are allow-listed via `allowedDevOrigins` in
   [`next.config.ts`](src/landing-page/next.config.ts).
 - **Server-side data** — Server Components fetch the API's **public** GET routes
   directly (server → server, no auth), scoped by `?branchName=`. A transient
@@ -571,7 +571,6 @@ per-branch build.
 | Variable                    | Required | Description                                                        | Default                 |
 | --------------------------- | -------- | ------------------------------------------------------------------ | ----------------------- |
 | `API_BASE_URL`              | no       | Base URL of the Hono API the site fetches (server-side)            | `http://localhost:3000` |
-| `BRANCH_NAME`               | no       | Fallback branch when the host has no subdomain                     | `Dhaka`                 |
 | `NEXT_PUBLIC_DASHBOARD_URL` | no       | Origin of the admin panel, allowed to drive the `/preview/*` pages (build-time) | `http://localhost:5173` |
 
 ## Production Deployment
@@ -635,7 +634,7 @@ Production environment summary:
 | ------------- | ----------------- | -------------------------------------------------------------------------------------- |
 | API           | Node (systemd)    | `.env` next to `dist/index.js` — see [Getting Started](#getting-started)               |
 | Admin panel   | static via nginx  | `VITE_LANDING_URL` — **build-time** (landing origin for previews & page links)         |
-| Landing sites | Node (systemd)    | `API_BASE_URL`, `BRANCH_NAME` (runtime); `NEXT_PUBLIC_DASHBOARD_URL` (**build-time**)  |
+| Landing sites | Node (systemd)    | `API_BASE_URL` (runtime); `NEXT_PUBLIC_DASHBOARD_URL` (**build-time**)  |
 
 The nginx config also sets the production security headers — including a
 `frame-ancestors` policy on the landing sites that allows **only** the admin

@@ -2,13 +2,14 @@
 
 import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { withBranch } from "@/lib/i18n";
 import { Building2, ShieldCheck, Users } from "lucide-react";
 
 // Icons line up positionally with `t.about.highlights`.
 const HIGHLIGHT_ICONS = [ShieldCheck, Users, Building2];
 
 /** About / introduction block for the branch. */
-export function AboutSection() {
+export function AboutSection({ branchName }: { branchName?: string | null }) {
   const { t } = useLanguage();
 
   return (
@@ -18,7 +19,9 @@ export function AboutSection() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-1">
-            <p className="leading-relaxed text-slate-600">{t.about.intro}</p>
+            <p className="leading-relaxed text-slate-600">
+              {withBranch(t.about.intro, branchName)}
+            </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3 lg:col-span-2">

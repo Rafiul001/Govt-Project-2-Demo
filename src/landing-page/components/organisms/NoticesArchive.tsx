@@ -4,6 +4,7 @@ import { NoticePreview } from "@/components/molecules/NoticePreview";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { formatLocaleDate, toLocaleDigits } from "@/lib/format";
+import { withBranch } from "@/lib/i18n";
 import type { TNotice } from "@/lib/types";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export function NoticesArchive({
   totalPages,
   search,
   initialNoticeId = null,
+  branchName,
 }: {
   notices: TNotice[];
   total: number;
@@ -61,6 +63,7 @@ export function NoticesArchive({
   totalPages: number;
   search: string;
   initialNoticeId?: number | null;
+  branchName?: string | null;
 }) {
   const { lang, t } = useLanguage();
   const router = useRouter();
@@ -93,7 +96,7 @@ export function NoticesArchive({
         <div className="mt-4">
           <SectionHeading
             title={t.noticesPage.heading}
-            subtitle={t.noticesPage.subtitle}
+            subtitle={withBranch(t.noticesPage.subtitle, branchName)}
           />
         </div>
 

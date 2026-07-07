@@ -19,9 +19,8 @@ WorkingDirectory=/var/www/demo-govt-project/src/landing-page
 ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3001
 Restart=on-failure
 Environment=NODE_ENV=production
-# API is on the same box; bare hosts fall back to this branch:
+# API is on the same box (bare hosts render the branch directory):
 Environment=API_BASE_URL=http://127.0.0.1:3000
-Environment=BRANCH_NAME=Dhaka
 
 [Install]
 WantedBy=multi-user.target

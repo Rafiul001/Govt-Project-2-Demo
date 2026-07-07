@@ -3,14 +3,17 @@ import { NoticesArchive } from "@/components/organisms/NoticesArchive";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getBranch, getNavTree, getNoticesPage } from "@/lib/api";
+import { getBranch, getBranchName, getNavTree, getNoticesPage } from "@/lib/api";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "সকল নোটিশ — জাতীয় উন্নয়ন কর্তৃপক্ষ, ঢাকা শাখা",
-  description:
-    "জাতীয় উন্নয়ন কর্তৃপক্ষ, ঢাকা শাখার প্রকাশিত সকল নোটিশ ও বিজ্ঞপ্তি।",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branchName = await getBranchName();
+  return {
+    title: `সকল নোটিশ — জাতীয় উন্নয়ন কর্তৃপক্ষ, ${branchName ?? ""} শাখা`,
+    description: `জাতীয় উন্নয়ন কর্তৃপক্ষ, ${branchName ?? ""} শাখার প্রকাশিত সকল নোটিশ ও বিজ্ঞপ্তি।`,
+  };
+}
 
 /** Notices shown per archive page. */
 const PAGE_SIZE = 10;
@@ -29,15 +32,24 @@ export default async function NoticesPage({
 }) {
   const { id, search, page } = await searchParams;
 
+  // Branch pages exist only on branch subdomains; the apex shows the directory.
+  const branchName = await getBranchName();
+  if (!branchName) redirect("/");
+
   const parsedPage = page ? Number(page) : 1;
   const currentPage =
     Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const searchTerm = search?.trim() || undefined;
 
   const [branch, noticesPage, menus] = await Promise.all([
-    getBranch(),
-    getNoticesPage({ search: searchTerm, page: currentPage, pageSize: PAGE_SIZE }),
-    getNavTree(),
+    getBranch(branchName),
+    getNoticesPage({
+      search: searchTerm,
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+      name: branchName,
+    }),
+    getNavTree(branchName),
   ]);
 
   const parsedId = id ? Number(id) : NaN;
@@ -56,6 +68,7 @@ export default async function NoticesPage({
           totalPages={noticesPage.totalPages}
           search={searchTerm ?? ""}
           initialNoticeId={initialNoticeId}
+          branchName={branch?.name ?? branchName}
         />
       </main>
       <SiteFooter branch={branch} />

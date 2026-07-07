@@ -26,35 +26,38 @@ import type {
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:3000";
 
 /**
- * Fallback branch, used when the request carries no branch subdomain (bare
- * host, `www`, or local `localhost:3001` development). Override with the
- * `BRANCH_NAME` env var.
- */
-export const BRANCH_NAME = process.env.BRANCH_NAME ?? "Dhaka";
-
-/**
  * Resolves which branch the current request is for from its subdomain:
  * `dhaka.example.com` → `Dhaka`, `rajshahi.example.com` → `Rajshahi`.
  *
  * The subdomain is title-cased because the public read routes match on the
  * exact branch `name` as stored in the DB ("Dhaka") while the host is
- * lowercase. Falls back to `BRANCH_NAME` when there is no branch subdomain.
+ * lowercase.
+ *
+ * Returns `null` when the request carries no branch subdomain — the apex
+ * domain, `www`, a raw IP, or bare `localhost` — in which case the caller
+ * renders the branch directory instead of a branch site. Branch subdomains
+ * are required to view a branch (`dhaka.example.com`, `barishal.localhost`).
  *
  * Reading the request host opts the page into dynamic rendering, which is what
  * we want — the same code renders a different branch per host.
  */
-export async function getBranchName(): Promise<string> {
+export async function getBranchName(): Promise<string | null> {
   const host = (await headers()).get("host") ?? "";
   const hostname = host.replace(/:\d+$/, ""); // strip port
-  const subdomain = hostname.split(".")[0]?.toLowerCase() ?? "";
 
   // An IP address host (e.g. 103.132.96.122) has no subdomain — its first
   // octet must not be mistaken for a branch name.
-  const isIpHost = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return null;
 
-  if (!subdomain || subdomain === "www" || subdomain === "localhost" || isIpHost) {
-    return BRANCH_NAME;
-  }
+  // A branch host has a label *before* the site's own name: 3+ labels on a
+  // real domain (dhaka.example.com) or 2+ in dev (barishal.localhost). The
+  // apex (example.com), bare localhost, and www carry no branch.
+  const labels = hostname.split(".").filter(Boolean);
+  const minLabels = labels[labels.length - 1] === "localhost" ? 2 : 3;
+  if (labels.length < minLabels) return null;
+
+  const subdomain = labels[0]!.toLowerCase();
+  if (!subdomain || subdomain === "www") return null;
 
   return subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
 }
@@ -93,6 +96,7 @@ export async function getBranches(): Promise<TBranch[]> {
 /** Branch profile (name, logo, banner, address, contact), resolved by name. */
 export async function getBranch(name?: string): Promise<TBranch | null> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return null;
   const branches = await getBranches();
   return branches.find((b) => b.name === branchName) ?? null;
 }
@@ -103,6 +107,7 @@ export async function getNotices(
   pageSize = 6,
 ): Promise<TNotice[]> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
   const data = await apiGet<TPaginated<TNotice>>(
     `/api/v1/notice?branchName=${encodeURIComponent(branchName)}&pageSize=${pageSize}`,
   );
@@ -131,6 +136,7 @@ export async function getNoticesPage(opts: {
   name?: string;
 }): Promise<TNoticesPage> {
   const branchName = opts.name ?? (await getBranchName());
+  if (!branchName) return EMPTY_NOTICES_PAGE;
   const params = new URLSearchParams({
     branchName,
     page: String(opts.page ?? 1),
@@ -148,6 +154,7 @@ export async function getBanners(
   pageSize = 10,
 ): Promise<TBanner[]> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
   const data = await apiGet<TPaginated<TBanner>>(
     `/api/v1/banner?branchName=${encodeURIComponent(branchName)}&pageSize=${pageSize}`,
   );
@@ -160,6 +167,7 @@ export async function getBoardOfDirectors(
   pageSize = 12,
 ): Promise<TBoardOfDirector[]> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
   const data = await apiGet<TPaginated<TBoardOfDirector>>(
     `/api/v1/board-of-directors?branchName=${encodeURIComponent(branchName)}&pageSize=${pageSize}`,
   );
@@ -180,6 +188,7 @@ export async function getAllBoardOfDirectors(
  */
 export async function getNavTree(name?: string): Promise<TNavMenu[]> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
   const data = await apiGet<TNavMenu[]>(
     `/api/v1/nav?branchName=${encodeURIComponent(branchName)}`,
   );
@@ -196,6 +205,7 @@ export async function getDynamicPage(
   name?: string,
 ): Promise<TDynamicPage | null> {
   const branchName = name ?? (await getBranchName());
+  if (!branchName) return null;
   return apiGet<TDynamicPage>(
     `/api/v1/nav/page?branchName=${encodeURIComponent(branchName)}` +
       `&menu=${encodeURIComponent(menuSlug)}` +

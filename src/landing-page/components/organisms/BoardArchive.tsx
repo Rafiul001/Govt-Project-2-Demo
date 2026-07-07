@@ -4,11 +4,18 @@ import { DirectorCard } from "@/components/molecules/DirectorCard";
 import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { toLocaleDigits } from "@/lib/format";
+import { withBranch } from "@/lib/i18n";
 import type { TBoardOfDirector } from "@/lib/types";
 import Link from "next/link";
 
 /** Full board of directors (the `/board` route), ordered by display `order`. */
-export function BoardArchive({ members }: { members: TBoardOfDirector[] }) {
+export function BoardArchive({
+  members,
+  branchName,
+}: {
+  members: TBoardOfDirector[];
+  branchName?: string | null;
+}) {
   const { lang, t } = useLanguage();
   const ordered = [...members].sort((a, b) => a.order - b.order);
 
@@ -25,7 +32,7 @@ export function BoardArchive({ members }: { members: TBoardOfDirector[] }) {
         <div className="mt-4">
           <SectionHeading
             title={t.boardPage.heading}
-            subtitle={t.boardPage.subtitle}
+            subtitle={withBranch(t.boardPage.subtitle, branchName)}
           />
         </div>
 
