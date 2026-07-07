@@ -137,7 +137,9 @@ Bengali.
 
 ## Prerequisites
 
-- [Bun](https://bun.com) `>= 1.3`
+- [Bun](https://bun.com) `>= 1.3` (development)
+- [Node.js](https://nodejs.org) `>= 22` + npm (production — the server runs
+  entirely on Node, no Bun needed there)
 - A running PostgreSQL instance
 
 ## Getting Started
@@ -184,20 +186,21 @@ Bengali.
 3. **Set up the database**
 
    ```bash
-   bunx drizzle-kit generate   # generate SQL migrations from the schema
-   bunx drizzle-kit migrate    # apply migrations
+   bun run db:generate   # generate SQL migrations from the schema
+   bun run db:migrate    # apply migrations
    # or, for rapid local iteration:
-   bunx drizzle-kit push       # push the schema directly without migration files
-   bunx drizzle-kit studio     # browse data in Drizzle Studio
+   bun run db:push       # push the schema directly without migration files
+   bun run db:studio     # browse data in Drizzle Studio
    ```
 
 4. **Create the first super admin**
 
    Admin creation requires an authenticated super admin, so bootstrap one with
-   the seed script:
+   the seed script (runs on Node via `tsx`, so it works identically on the
+   production server):
 
    ```bash
-   bun src/scripts/createSuperAdmin.ts <username> <password> [name]
+   npm run create-super-admin -- <username> <password> [name]
    ```
 
 5. **Run the app**
@@ -225,30 +228,41 @@ Bengali.
    ```
 
    The dev server already allows these origins via `allowedDevOrigins` in
-   [`src/landing-page/next.config.ts`](src/landing-page/next.config.ts). A bare
-   `localhost:3001` (no subdomain) renders the branch directory.
+   [`src/landing-page/next.config.ts`](src/landing-page/next.config.ts). Branch
+   sites exist **only** on branch subdomains — a bare `localhost:3001` (no
+   subdomain) returns a 404.
 
 ## Scripts
 
 Root scripts:
 
-Development runs on **Bun**; production builds run on **Node**.
+Development runs on **Bun**; production install/build/start run on **npm +
+Node** (the server bundle is built with esbuild, so Bun is not needed on the
+production box).
 
-| Script                  | Description                                                    |
-| ----------------------- | -------------------------------------------------------------- |
-| `bun run install:all`   | Install dependencies for backend + admin panel + landing site  |
-| `bun run dev`           | Run backend + admin panel + landing site concurrently          |
-| `bun run dev:server`    | Start only the backend in watch mode (`src/index.ts`)          |
-| `bun run dev:client`    | Start only the admin panel Vite dev server                     |
-| `bun run dev:landing`   | Start only the landing site (Next.js, port 3001)               |
-| `bun run build`         | Bundle the backend to `dist/` (`--target node`)                |
-| `bun run build:client`  | Build the admin panel to `src/client/dist/`                    |
-| `bun run build:landing` | Build the landing site (`next build`)                          |
-| `bun run build:all`     | Build all three                                                |
-| `bun run start`         | Run the built backend with **Node** (`dist/index.js`)          |
-| `bun run start:client`  | Serve the built admin panel locally (`vite preview`, Node)     |
-| `bun run start:landing` | Serve the built landing site (`next start`, Node, port 3001)   |
-| `bun run start:all`     | Run all three production builds concurrently (Node)            |
+| Script                        | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `bun run install:all`         | Install dependencies for backend + admin panel + landing site (dev) |
+| `npm run install:prod`        | Same, with npm — for the production server                         |
+| `bun run dev`                 | Run backend + admin panel + landing site concurrently              |
+| `bun run dev:server`          | Start only the backend in watch mode (`src/index.ts`)              |
+| `bun run dev:client`          | Start only the admin panel Vite dev server                         |
+| `bun run dev:landing`         | Start only the landing site (Next.js, port 3001)                   |
+| `db:generate` / `db:migrate`  | Generate / apply drizzle migrations                                |
+| `db:push` / `db:studio`       | Push schema directly (dev) / browse data in Drizzle Studio         |
+| `create-super-admin`          | Seed the first super admin (`npm run create-super-admin -- <user> <pass> [name]`) |
+| `npm run build`               | Bundle the backend to `dist/` with esbuild (Node target)           |
+| `npm run build:client`        | Build the admin panel to `src/client/dist/`                        |
+| `npm run build:landing`       | Build the landing site (`next build`)                              |
+| `npm run build:all`           | Build all three                                                    |
+| `npm run start`               | Run the built backend with Node (`dist/index.js`)                  |
+| `npm run start:client`        | Serve the built admin panel locally (`vite preview`)               |
+| `npm run start:landing`       | Serve the built landing site (`next start`, port 3001)             |
+| `npm run start:all`           | Run all three production builds concurrently                       |
+| `npm run start:prod`          | Backend + landing only (nginx serves the panel statically)         |
+
+> On production, prefer the **systemd units** in [`deploy/`](deploy/) over
+> `start:*` — see [Production Deployment](#production-deployment).
 
 Admin panel scripts (run from `src/client/`):
 
@@ -293,7 +307,7 @@ src/
 │           └── pages/       # One component per screen
 ├── landing-page/             # Public per-branch site (Next.js — see its README)
 │   ├── next.config.ts        # Next config (image hosts, allowedDevOrigins)
-│   ├── app/                  # App Router pages (home, /notices, /board)
+│   ├── app/                  # App Router pages (home, /notices, /board, /[menu], /[menu]/[submenu])
 │   ├── components/           # Atoms/molecules/organisms for the public site
 │   └── lib/                  # api.ts (subdomain → branch + data fetching), i18n
 ├── index.ts                  # Entry point: boots Hono server, graceful shutdown
@@ -315,7 +329,11 @@ src/
 │   │       ├── branchRouter.ts             # /api/v1/branch routes
 │   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
 │   │       ├── noticeRouter.ts             # /api/v1/notice routes
-│   │       └── bannerRouter.ts             # /api/v1/banner routes
+│   │       ├── bannerRouter.ts             # /api/v1/banner routes
+│   │       ├── menuRouter.ts               # /api/v1/menu routes
+│   │       ├── submenuRouter.ts            # /api/v1/submenu routes
+│   │       ├── pageRouter.ts               # /api/v1/page routes
+│   │       └── navRouter.ts                # /api/v1/nav (public navigation reads)
 │   ├── service/
 │   │   └── cloudinary/
 │   │       ├── client.ts       # Configured Cloudinary client + URL helpers
@@ -336,7 +354,10 @@ src/
 │           ├── branchSchema.ts
 │           ├── boardOfDirectorsSchema.ts
 │           ├── noticeSchema.ts
-│           └── bannerSchema.ts
+│           ├── bannerSchema.ts
+│           ├── menuSchema.ts
+│           ├── submenuSchema.ts
+│           └── pageSchema.ts
 └── shared/
     ├── types/
     │   └── index.ts          # Shared enums/types (adminType, tokenType, …)
@@ -438,16 +459,27 @@ Their `data` is a paginated envelope rather than a bare array:
 | `DELETE` | `/api/v1/menu/:id`               | Any admin        | —                     | Delete a menu (cascades sub-menus + pages)     |
 | `GET`    | `/api/v1/submenu`                | Public           | —                     | List sub-menus (paginated)                     |
 | `GET`    | `/api/v1/submenu/:id`            | Public           | —                     | Get one sub-menu                               |
-| `POST`   | `/api/v1/submenu`                | Any admin        | `json`                | Create a sub-menu (+ its blank draft page)     |
+| `POST`   | `/api/v1/submenu`                | Any admin        | `json`                | Create a sub-menu (+ its blank draft page)¹    |
 | `PATCH`  | `/api/v1/submenu/:id`            | Any admin        | `json`                | Update a sub-menu                              |
 | `DELETE` | `/api/v1/submenu/:id`            | Any admin        | —                     | Delete a sub-menu (+ its page and page media)  |
+| `POST`   | `/api/v1/page`                   | Any admin        | `json`                | Create a page attached **directly to a menu**² |
 | `GET`    | `/api/v1/page/by-submenu/:id`    | Public           | —                     | Get the page belonging to a sub-menu           |
+| `GET`    | `/api/v1/page/by-menu/:id`       | Public           | —                     | Get the page attached directly to a menu       |
 | `GET`    | `/api/v1/page/:id`               | Public           | —                     | Get one page                                   |
 | `PATCH`  | `/api/v1/page/:id`               | Any admin        | `form` (banner)       | Update a page (banner, content, publish state) |
+| `DELETE` | `/api/v1/page/:id`               | Any admin        | —                     | Delete a **menu-attached** page (+ its media)  |
 | `POST`   | `/api/v1/page/:id/image`         | Any admin        | `form` (image)        | Upload a content image; returns its URL        |
 | `POST`   | `/api/v1/page/:id/image/import`  | Any admin        | `json` (url)          | Import a pasted image (URL/data URI) to Cloudinary |
 | `GET`    | `/api/v1/nav`                    | Public           | —                     | Published menu tree for a branch (`?branchName=`) |
-| `GET`    | `/api/v1/nav/page`               | Public           | —                     | One published page by `?branchName=&menu=&submenu=` |
+| `GET`    | `/api/v1/nav/page`               | Public           | —                     | One published page by `?branchName=&menu=` (+ optional `&submenu=`) |
+
+> ¹ A menu links either straight to **one page** or to **sub-menus** — never
+> both. Creating the first sub-menu under a menu that has a direct page
+> automatically moves that page under an auto-created sub-menu (its URL changes
+> from `/:menuSlug` to `/:menuSlug/:pageSlug`).
+>
+> ² Only valid while the menu has no sub-menus (and no page yet); the page's
+> banner title defaults to the menu title. Its public URL is `/:menuSlug`.
 
 > **Public reads.** The `GET` routes above are public — they power the landing
 > sites, which fetch each branch's profile, notices, and board members with no
@@ -471,7 +503,7 @@ Their `data` is a paginated envelope rather than a bare array:
 | `banners`          | `DB.BANNER`             | Hero-slider banners of a branch                  |
 | `menus`            | `DB.MENU`               | Top-level nav menus of a branch's public site    |
 | `submenus`         | `DB.SUBMENU`            | Sub-menu entries under a menu                    |
-| `pages`            | `DB.PAGE`               | The page behind a sub-menu (banner + markdown)   |
+| `pages`            | `DB.PAGE`               | The page behind a sub-menu **or** a menu (banner + markdown) |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
 `TBoardOfDirector`, `TNotice`, `TBanner`).
@@ -490,7 +522,9 @@ A **branch** is the parent entity:
 - One branch **has many** banners (`banners.branchId → branches.id`)
 - One branch **has many** menus (`menus.branchId → branches.id`); a menu
   **has many** sub-menus (`submenus.menuId → menus.id`), and each sub-menu
-  **has one** page (`pages.submenuId → submenus.id`)
+  **has one** page (`pages.submenuId → submenus.id`). Alternatively a menu with
+  **no** sub-menus can hold one page directly (`pages.menuId → menus.id`); a
+  CHECK constraint enforces that a page has exactly one of the two attachments
 
 All child foreign keys are `ON DELETE CASCADE`. Query-time relations are defined
 with Drizzle's `defineRelations` in
@@ -525,7 +559,10 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   Admins) redirect branch admins away. Tokens live in a persisted Zustand store;
   the `ky` client attaches the `Bearer` token and clears it on a `401`.
 - **Screens** — Dashboard, Branches, Board of Directors, Banners, Notices,
-  Admins, and Settings, each composed from `molecules` → `organisms` → `pages`.
+  Menus & Pages (with a live-preview split-screen page editor), Admins, and
+  Settings, each composed from `molecules` → `organisms` → `pages`. A menu with
+  nothing in it offers both **Add page** (attach a page directly, no sub-menu)
+  and **Add sub-menu**.
 - **Forms** — TanStack Form with the Zod schemas in
   [`src/client/src/validators`](src/client/src/validators/) (`onChange`
   validation). When a super admin must pick a branch, the field is a dropdown
@@ -551,8 +588,10 @@ per-branch build.
 - **Subdomain → branch** — each request's branch is derived from its host
   subdomain in [`src/landing-page/lib/api.ts`](src/landing-page/lib/api.ts)
   (`dhaka.example.com` → `Dhaka`), reading the request `Host` header via Next's
-  `headers()`. A bare host (apex, `www`, raw IP, or `localhost`) renders the branch
-  directory instead of a branch site. In dev, the branch subdomains are allow-listed via `allowedDevOrigins` in
+  `headers()`. Branch sites exist **only** on branch subdomains: a bare host
+  (apex, `www`, raw IP, or `localhost`) is a 404 — in production nginx already
+  answers those hosts with its own 404 before Next.js is reached. In dev, the
+  branch subdomains are allow-listed via `allowedDevOrigins` in
   [`next.config.ts`](src/landing-page/next.config.ts).
 - **Server-side data** — Server Components fetch the API's **public** GET routes
   directly (server → server, no auth), scoped by `?branchName=`. A transient
@@ -566,7 +605,13 @@ per-branch build.
   slides when none are set), and **Important Links** lists every branch — each
   linking to its own site via its `previewUrl` (falling back to the national
   e-government links when no branch URL is set). The org identity is static
-  config.
+  config, with the branch name templated into the chrome strings (hero slide,
+  About intro, archive subtitles) via `withBranch()` in
+  [`lib/i18n.ts`](src/landing-page/lib/i18n.ts).
+- **Dynamic pages** — admin-authored Markdown pages from the Menus & Pages
+  editor: `/:menuSlug/:submenuSlug` for sub-menu pages and `/:menuSlug` for
+  pages attached directly to a menu. The nav renders direct-page menus as plain
+  links and sub-menu menus as dropdowns, showing only **published** pages.
 
 | Variable                    | Required | Description                                                        | Default                 |
 | --------------------------- | -------- | ------------------------------------------------------------------ | ----------------------- |
@@ -575,66 +620,82 @@ per-branch build.
 
 ## Production Deployment
 
-Development runs on **Bun**; production runs on **Node** behind **nginx**. The
-ready-made configs live in [`deploy/`](deploy/):
+Development runs on **Bun**; production runs on **npm + Node** behind
+**nginx**, straight from a repo clone on the server (currently
+`/home/Govt-Project-2-Demo`). The ready-made configs live in
+[`deploy/`](deploy/):
 
-| File                                                 | Purpose                                                         |
-| ---------------------------------------------------- | ---------------------------------------------------------------- |
-| [`deploy/nginx.conf`](deploy/nginx.conf)             | nginx vhosts — **production** (HTTPS, wildcard cert, HSTS)       |
-| [`deploy/nginx-demo.conf`](deploy/nginx-demo.conf)   | nginx vhosts — public demo on a real domain, **HTTP only**       |
-| [`deploy/nginx-test.conf`](deploy/nginx-test.conf)   | nginx vhosts — KVM/LAN testing via `/etc/hosts`, **HTTP only**   |
-| [`deploy/api.service`](deploy/api.service)           | systemd unit — Hono API (`node dist/index.js`, port 3000)        |
-| [`deploy/landing.service`](deploy/landing.service)   | systemd unit — landing site (`next start`, port 3001)            |
+| File                                                     | Purpose                                                          |
+| -------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`deploy/nginx.conf`](deploy/nginx.conf)                 | nginx vhosts — **HTTPS** (wildcard cert, HSTS)                    |
+| [`deploy/nginx-ip.conf`](deploy/nginx-ip.conf)           | nginx vhosts — **current production**: real domain, HTTP only     |
+| [`deploy/nginx-demo.conf`](deploy/nginx-demo.conf)       | nginx vhosts — public demo on a real domain, HTTP only            |
+| [`deploy/nginx-test.conf`](deploy/nginx-test.conf)       | nginx vhosts — KVM/LAN testing via `/etc/hosts`, HTTP only        |
+| [`deploy/api.service`](deploy/api.service)               | systemd unit `govt-api` — Hono API (`node dist/index.js`, :3000)  |
+| [`deploy/landing.service`](deploy/landing.service)       | systemd unit `govt-landing` — landing sites (`next start`, :3001) |
+| [`deploy/dashboard.service`](deploy/dashboard.service)   | systemd unit `govt-dashboard` — optional `vite preview` (:5173); unnecessary while nginx serves the panel statically |
 
-Enable exactly **one** of the three nginx configs — they define the same
+Enable exactly **one** of the nginx site configs — they define the same
 upstreams. The HTTP-only variants require the front-ends to be built with
 `http://` origins (`VITE_LANDING_URL`, `NEXT_PUBLIC_DASHBOARD_URL`); see the
 comments in each file.
 
 ### Host layout
 
-One domain serves everything (replace `example.com` throughout):
+One domain serves everything (the live deployment uses `rida-project.com`):
 
-- **`example.com` / `*.example.com`** — the landing sites. The branch is
-  resolved from the subdomain at request time, so creating a branch in the
-  dashboard needs **no nginx change** — but it does require a **wildcard TLS
-  certificate** (`certbot certonly --preferred-challenges dns -d example.com -d '*.example.com'`)
-  and a wildcard DNS `A` record.
-- **`app.example.com`** — the admin panel, served as static files. The panel
-  calls the API at a **relative `/api/v1`** (proxied by Vite in dev), so nginx
-  proxies `location /api/` to the Hono process — same-origin, no CORS.
+- **`*.example.com`** — the landing sites, one per branch, resolved from the
+  subdomain at request time — creating a branch in the dashboard needs **no
+  nginx change**. Requires a wildcard DNS `A` record, and (for HTTPS) a
+  **wildcard TLS certificate**
+  (`certbot certonly --preferred-challenges dns -d example.com -d '*.example.com'`).
+- **`example.com` / `www` / raw IP** — serve **nothing**: nginx answers with
+  its default 404 (branch sites exist only on their subdomains), and the
+  Next.js app 404s such hosts too if reached directly.
+- **`app.example.com`** — the admin panel, served as static files from
+  `src/client/dist`. The panel calls the API at a **relative `/api/v1`**
+  (proxied by Vite in dev), so nginx proxies `location /api/` to the Hono
+  process — same-origin, no CORS.
 - **`api.example.com`** — optional direct API host for external consumers.
 
-### Build & deploy
+### Deploy (on the server)
 
 ```bash
-# 1. Build everything (backend targets Node, no Bun on the server needed
-#    for the API). Set the panel's landing origin at build time:
-VITE_LANDING_URL=https://example.com bun run build:all
-# For the landing site, the dashboard origin is baked in at build time too:
-#   NEXT_PUBLIC_DASHBOARD_URL=https://app.example.com (set when running build:landing)
+cd /home/Govt-Project-2-Demo && git pull
 
-# 2. Copy artifacts to the server:
-#    dist/                → /var/www/govt-project/api        (+ .env)
-#    src/client/dist/     → /var/www/govt-project/client
-#    src/landing-page/    → /var/www/govt-project/landing-page (built, with node_modules)
+# 1. First time only: install deps and env files
+npm run install:prod
+cp .env.template .env                                  # fill in (see Getting Started)
+cp src/client/.env.template src/client/.env            # VITE_LANDING_URL=http://example.com
+cp src/landing-page/.env.template src/landing-page/.env # API_BASE_URL, NEXT_PUBLIC_DASHBOARD_URL
 
-# 3. Install the systemd units and nginx config:
+# 2. Migrate + build (front-end origins are baked in at build time from the .env files)
+npm run db:migrate
+npm run build:all
+
+# 3. First time only: install the systemd units and nginx config
+#    (systemd needs node at /usr/bin/node — for an nvm install:
+#     sudo ln -sf "$(command -v node)" /usr/bin/node)
 sudo cp deploy/api.service /etc/systemd/system/govt-api.service
 sudo cp deploy/landing.service /etc/systemd/system/govt-landing.service
 sudo systemctl daemon-reload && sudo systemctl enable --now govt-api govt-landing
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/govt-project.conf
-sudo ln -s /etc/nginx/sites-available/govt-project.conf /etc/nginx/sites-enabled/
+sudo cp deploy/nginx-ip.conf /etc/nginx/sites-available/govt-project-ip.conf
+sudo ln -sf /etc/nginx/sites-available/govt-project-ip.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
+
+# 4. Every redeploy after that:
+sudo systemctl restart govt-api govt-landing
+# logs: journalctl -u govt-api -f / journalctl -u govt-landing -f
 ```
 
 Production environment summary:
 
 | App           | Runtime           | Env (where it's read)                                                                 |
 | ------------- | ----------------- | -------------------------------------------------------------------------------------- |
-| API           | Node (systemd)    | `.env` next to `dist/index.js` — see [Getting Started](#getting-started)               |
-| Admin panel   | static via nginx  | `VITE_LANDING_URL` — **build-time** (landing origin for previews & page links)         |
-| Landing sites | Node (systemd)    | `API_BASE_URL` (runtime); `NEXT_PUBLIC_DASHBOARD_URL` (**build-time**)  |
+| API           | Node (systemd)    | `.env` in the repo root — see [Getting Started](#getting-started)                       |
+| Admin panel   | static via nginx  | `src/client/.env`: `VITE_LANDING_URL` — **build-time** (landing origin for previews)   |
+| Landing sites | Node (systemd)    | `src/landing-page/.env`: `API_BASE_URL` (runtime); `NEXT_PUBLIC_DASHBOARD_URL` (**build-time**) |
 
 The nginx config also sets the production security headers — including a
 `frame-ancestors` policy on the landing sites that allows **only** the admin
