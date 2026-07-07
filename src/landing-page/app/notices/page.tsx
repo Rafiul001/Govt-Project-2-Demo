@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
 import { getBranch, getBranchName, getNavTree, getNoticesPage } from "@/lib/api";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata(): Promise<Metadata> {
   const branchName = await getBranchName();
@@ -32,9 +32,9 @@ export default async function NoticesPage({
 }) {
   const { id, search, page } = await searchParams;
 
-  // Branch pages exist only on branch subdomains; the apex shows the directory.
+  // Branch pages exist only on branch subdomains; the bare domain serves nothing.
   const branchName = await getBranchName();
-  if (!branchName) redirect("/");
+  if (!branchName) notFound();
 
   const parsedPage = page ? Number(page) : 1;
   const currentPage =

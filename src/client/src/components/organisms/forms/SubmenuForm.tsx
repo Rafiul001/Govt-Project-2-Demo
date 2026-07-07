@@ -52,14 +52,16 @@ export function SubmenuForm({
           });
           toast.success("Sub-menu updated");
         } else {
-          await createMutation.mutateAsync({
+          const res = await createMutation.mutateAsync({
             branchId: menu.branchId,
             menuId: menu.id,
             titleBn: value.titleBn,
             titleEn: value.titleEn,
             order: value.order,
           });
-          toast.success("Sub-menu created");
+          // The server notes when the menu's direct page was moved under an
+          // auto-created sub-menu as part of this create.
+          toast.success(res.message || "Sub-menu created");
         }
         onSuccess();
       } catch (error) {

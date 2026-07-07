@@ -264,10 +264,17 @@ export type TPage = {
   contentBn: string | null;
   contentEn: string | null;
   isPublished: boolean;
-  submenuId: number;
+  /** Exactly one of `submenuId`/`menuId` is set (menu-attached pages have no sub-menu). */
+  submenuId: number | null;
+  menuId: number | null;
   branchId: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type TCreatePageInput = {
+  menuId: number;
+  branchId?: number;
 };
 
 export type TCreateMenuInput = {

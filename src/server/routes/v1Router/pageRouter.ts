@@ -1,5 +1,5 @@
 import db from "@/server/db/client";
-import { pagesTable } from "@/server/db/schemas";
+import { menusTable, pagesTable, submenusTable } from "@/server/db/schemas";
 import {
   authMiddleware,
   optionalAuthMiddleware,
@@ -17,24 +17,124 @@ import {
   replaceImage,
   uploadImage,
 } from "@/server/service/cloudinary/imageUpload";
+import { deletePageImages } from "@/server/service/pageImageCleanup";
 import type { TAppEnv } from "@/server/types";
-import { canAccessBranch } from "@/server/utils/scope";
+import { canAccessBranch, resolveBranchId } from "@/server/utils/scope";
 import { emptyToNull } from "@/server/utils/text";
 import type { TTokenPayload } from "@/shared/types";
 import {
+  createPageSchema,
   importPageImageSchema,
   updatePageSchema,
   uploadPageImageSchema,
 } from "@/shared/validators/page.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const pageRouter = new Hono<TAppEnv>();
 
-// A page's lifecycle is tied to its sub-menu (created and deleted with it), so
-// this router only reads and updates pages — there is no create/delete here.
+// A sub-menu page's lifecycle is tied to its sub-menu (created and deleted
+// with it). A menu-attached page (a menu with no sub-menus linking straight to
+// a page) is created and deleted here instead.
+
+/**
+ * POST /api/v1/page — create a page attached directly to a menu. Only valid
+ * while the menu has no sub-menus (and no page yet); the banner title
+ * defaults to the menu title so the editor always has something to show.
+ */
+pageRouter.post(
+  "/",
+  authMiddleware(),
+  zValidator("json", createPageSchema),
+  async (c) => {
+    const admin = c.get("admin");
+    const data = c.req.valid("json");
+
+    const branchId = resolveBranchId(admin, data.branchId);
+    if (branchId === null) {
+      return badRequest(c, "branchId is required");
+    }
+
+    const [menu] = await db
+      .select({
+        id: menusTable.id,
+        branchId: menusTable.branchId,
+        titleBn: menusTable.titleBn,
+        titleEn: menusTable.titleEn,
+      })
+      .from(menusTable)
+      .where(eq(menusTable.id, data.menuId))
+      .limit(1);
+
+    if (!menu) {
+      return notFound(c, "Menu not found");
+    }
+    if (menu.branchId !== branchId) {
+      return badRequest(c, "Menu does not belong to the target branch");
+    }
+
+    // A menu links either straight to one page or to sub-menus — never both.
+    const [submenuCount] = await db
+      .select({ value: count() })
+      .from(submenusTable)
+      .where(eq(submenusTable.menuId, menu.id));
+    if ((submenuCount?.value ?? 0) > 0) {
+      return badRequest(
+        c,
+        "This menu has sub-menus — add the page under one of them instead",
+      );
+    }
+
+    const [existing] = await db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(eq(pagesTable.menuId, menu.id))
+      .limit(1);
+    if (existing) {
+      return badRequest(c, "This menu already has a page");
+    }
+
+    await db.insert(pagesTable).values({
+      bannerTitleBn: menu.titleBn,
+      bannerTitleEn: menu.titleEn,
+      menuId: menu.id,
+      branchId,
+    });
+
+    return created(c, "Page created successfully");
+  },
+);
+
+/**
+ * GET /api/v1/page/by-menu/:id — the page attached directly to menu `:id`.
+ * Powers the dashboard page editor for menus without sub-menus.
+ */
+pageRouter.get(
+  "/by-menu/:id",
+  optionalAuthMiddleware(),
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const admin = c.get("admin") as TTokenPayload | undefined;
+
+    const [page] = await db
+      .select()
+      .from(pagesTable)
+      .where(eq(pagesTable.menuId, id))
+      .limit(1);
+
+    if (!page) {
+      return notFound(c, "Page not found");
+    }
+    if (admin && !canAccessBranch(admin, page.branchId)) {
+      return forbidden(c);
+    }
+
+    return ok(c, "Page fetched successfully", page);
+  },
+);
 
 /**
  * GET /api/v1/page/by-submenu/:id — the page belonging to sub-menu `:id`.
@@ -233,6 +333,44 @@ pageRouter.post(
       // not an image, …) — a client problem with the pasted content, not ours.
       return badRequest(c, "Could not fetch the referenced image");
     }
+  },
+);
+
+/**
+ * DELETE /api/v1/page/:id — delete a menu-attached page, then its Cloudinary
+ * images. Sub-menu pages live and die with their sub-menu, so they must be
+ * removed by deleting the sub-menu instead.
+ */
+pageRouter.delete(
+  "/:id",
+  authMiddleware(),
+  zValidator("param", idParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+
+    const [page] = await db
+      .select()
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1);
+
+    if (!page) {
+      return notFound(c, "Page not found");
+    }
+    if (!canAccessBranch(c.get("admin"), page.branchId)) {
+      return forbidden(c);
+    }
+    if (page.menuId === null) {
+      return badRequest(
+        c,
+        "This page belongs to a sub-menu — delete the sub-menu to remove it",
+      );
+    }
+
+    await db.delete(pagesTable).where(eq(pagesTable.id, id));
+    await deletePageImages([page]);
+
+    return ok(c, "Page deleted successfully");
   },
 );
 

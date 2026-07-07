@@ -7,35 +7,34 @@ import { getBranch, getBranchName, getDynamicPage, getNavTree } from "@/lib/api"
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-type TPageParams = { menu: string; submenu: string };
+type TPageParams = { menu: string };
 
 /**
- * A dynamic, admin-authored page reached at `/:menuSlug/:submenuSlug`. The
- * branch is resolved from the request subdomain; the page is fetched by its
- * menu + sub-menu slugs and 404s unless it exists and is published. Mirrors the
- * site chrome (top bar, masthead, nav, footer) around the banner + Markdown.
+ * A dynamic, admin-authored page attached directly to a menu, reached at
+ * `/:menuSlug` (menus without sub-menus link straight to their page). The
+ * branch is resolved from the request subdomain; 404s unless the page exists
+ * and is published. Static routes (`/notices`, `/board`, `/preview`) take
+ * precedence over this segment.
  */
 export async function generateMetadata({
   params,
 }: {
   params: Promise<TPageParams>;
 }): Promise<Metadata> {
-  const { menu, submenu } = await params;
-  const page = await getDynamicPage(menu, submenu);
+  const { menu } = await params;
+  const page = await getDynamicPage(menu);
   if (!page) return { title: "পৃষ্ঠা পাওয়া যায়নি" };
   // Metadata is static per request (no client language) → prefer Bangla, the
   // default site language, falling back to English.
-  const submenuTitle = page.submenuTitleBn ?? page.submenuTitleEn ?? "";
-  const menuTitle = page.menuTitleBn ?? page.menuTitleEn ?? "";
-  return { title: `${submenuTitle} — ${menuTitle}` };
+  return { title: page.menuTitleBn ?? page.menuTitleEn ?? "" };
 }
 
-export default async function DynamicPage({
+export default async function DirectMenuPage({
   params,
 }: {
   params: Promise<TPageParams>;
 }) {
-  const { menu, submenu } = await params;
+  const { menu } = await params;
 
   // Branch pages exist only on branch subdomains; the bare domain serves nothing.
   const branchName = await getBranchName();
@@ -44,7 +43,7 @@ export default async function DynamicPage({
   const [branch, menus, page] = await Promise.all([
     getBranch(branchName),
     getNavTree(branchName),
-    getDynamicPage(menu, submenu, branchName),
+    getDynamicPage(menu, null, branchName),
   ]);
 
   if (!page) notFound();
@@ -63,8 +62,6 @@ export default async function DynamicPage({
           contentEn={page.contentEn}
           menuTitleBn={page.menuTitleBn}
           menuTitleEn={page.menuTitleEn}
-          submenuTitleBn={page.submenuTitleBn}
-          submenuTitleEn={page.submenuTitleEn}
         />
       </main>
       <SiteFooter branch={branch} />

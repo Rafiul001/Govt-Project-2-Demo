@@ -22,6 +22,7 @@ import { Route as AppMenusIndexRouteImport } from './routes/_app/menus.index'
 import { Route as AppMenusMenuIdRouteImport } from './routes/_app/menus.$menuId'
 import { Route as AppPagesSubmenuIdEditRouteImport } from './routes/_app/pages.$submenuId.edit'
 import { Route as AppBranchIdEditRouteImport } from './routes/_app/branch.$id.edit'
+import { Route as AppPagesByMenuMenuIdEditRouteImport } from './routes/_app/pages.by-menu.$menuId.edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -87,6 +88,12 @@ const AppBranchIdEditRoute = AppBranchIdEditRouteImport.update({
   path: '/branch/$id/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPagesByMenuMenuIdEditRoute =
+  AppPagesByMenuMenuIdEditRouteImport.update({
+    id: '/pages/by-menu/$menuId/edit',
+    path: '/pages/by-menu/$menuId/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/menus/': typeof AppMenusIndexRoute
   '/branch/$id/edit': typeof AppBranchIdEditRoute
   '/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
+  '/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -115,6 +123,7 @@ export interface FileRoutesByTo {
   '/menus': typeof AppMenusIndexRoute
   '/branch/$id/edit': typeof AppBranchIdEditRoute
   '/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
+  '/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +140,7 @@ export interface FileRoutesById {
   '/_app/menus/': typeof AppMenusIndexRoute
   '/_app/branch/$id/edit': typeof AppBranchIdEditRoute
   '/_app/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
+  '/_app/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/menus/'
     | '/branch/$id/edit'
     | '/pages/$submenuId/edit'
+    | '/pages/by-menu/$menuId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/menus'
     | '/branch/$id/edit'
     | '/pages/$submenuId/edit'
+    | '/pages/by-menu/$menuId/edit'
   id:
     | '__root__'
     | '/_app'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_app/menus/'
     | '/_app/branch/$id/edit'
     | '/_app/pages/$submenuId/edit'
+    | '/_app/pages/by-menu/$menuId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBranchIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pages/by-menu/$menuId/edit': {
+      id: '/_app/pages/by-menu/$menuId/edit'
+      path: '/pages/by-menu/$menuId/edit'
+      fullPath: '/pages/by-menu/$menuId/edit'
+      preLoaderRoute: typeof AppPagesByMenuMenuIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -291,6 +311,7 @@ interface AppRouteChildren {
   AppMenusIndexRoute: typeof AppMenusIndexRoute
   AppBranchIdEditRoute: typeof AppBranchIdEditRoute
   AppPagesSubmenuIdEditRoute: typeof AppPagesSubmenuIdEditRoute
+  AppPagesByMenuMenuIdEditRoute: typeof AppPagesByMenuMenuIdEditRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -305,6 +326,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMenusIndexRoute: AppMenusIndexRoute,
   AppBranchIdEditRoute: AppBranchIdEditRoute,
   AppPagesSubmenuIdEditRoute: AppPagesSubmenuIdEditRoute,
+  AppPagesByMenuMenuIdEditRoute: AppPagesByMenuMenuIdEditRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

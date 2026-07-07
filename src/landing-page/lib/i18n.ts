@@ -135,12 +135,6 @@ type TDictionary = {
     quickAccess: string;
     rightsReserved: string;
   };
-  directory: {
-    title: string;
-    subtitle: string;
-    visit: string;
-    empty: string;
-  };
 };
 
 export const dictionaries: Record<TLanguage, TDictionary> = {
@@ -268,13 +262,6 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       quickAccess: "দ্রুত প্রবেশ",
       rightsReserved: "সর্বস্বত্ব সংরক্ষিত।",
     },
-    directory: {
-      title: "শাখা নির্বাচন করুন",
-      subtitle:
-        "জাতীয় উন্নয়ন কর্তৃপক্ষ-এর শাখাসমূহ — আপনার কাঙ্ক্ষিত শাখার ওয়েবসাইটে প্রবেশ করুন।",
-      visit: "ওয়েবসাইটে যান →",
-      empty: "এই মুহূর্তে কোনো শাখা প্রকাশিত নেই।",
-    },
   },
   en: {
     topBar: {
@@ -400,13 +387,6 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       importantLinks: "Important Links",
       quickAccess: "Quick Access",
       rightsReserved: "All rights reserved.",
-    },
-    directory: {
-      title: "Select a Branch",
-      subtitle:
-        "Branches of the National Development Authority — visit the website of your desired branch.",
-      visit: "Visit website →",
-      empty: "No branches are published at this time.",
     },
   },
 };

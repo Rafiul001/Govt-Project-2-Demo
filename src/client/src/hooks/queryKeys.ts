@@ -41,5 +41,6 @@ export const queryKeys = {
     all: ["pages"] as const,
     bySubmenu: (submenuId: number | string) =>
       ["pages", "by-submenu", submenuId] as const,
+    byMenu: (menuId: number | string) => ["pages", "by-menu", menuId] as const,
   },
 } as const;

@@ -10,7 +10,7 @@ import {
   getNavTree,
 } from "@/lib/api";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata(): Promise<Metadata> {
   const branchName = await getBranchName();
@@ -26,9 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * members" or the "Board of Directors" nav item.
  */
 export default async function BoardPage() {
-  // Branch pages exist only on branch subdomains; the apex shows the directory.
+  // Branch pages exist only on branch subdomains; the bare domain serves nothing.
   const branchName = await getBranchName();
-  if (!branchName) redirect("/");
+  if (!branchName) notFound();
 
   const [branch, board, menus] = await Promise.all([
     getBranch(branchName),

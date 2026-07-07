@@ -1,6 +1,5 @@
 import { AboutSection } from "@/components/organisms/AboutSection";
 import { BoardOfDirectors } from "@/components/organisms/BoardOfDirectors";
-import { BranchDirectory } from "@/components/organisms/BranchDirectory";
 import { ContactSection } from "@/components/organisms/ContactSection";
 import { HeroSlider } from "@/components/organisms/HeroSlider";
 import { NavBar } from "@/components/organisms/NavBar";
@@ -17,35 +16,14 @@ import {
   getNavTree,
   getNotices,
 } from "@/lib/api";
-import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 
 export default async function Home() {
+  // Branch sites exist only on branch subdomains; the apex, www, and raw-IP
+  // hosts serve nothing (nginx already 404s them at the edge — this covers
+  // direct access to the Next.js port and dev).
   const branchName = await getBranchName();
-
-  // No branch subdomain (apex, www, raw IP) → branch sites are only served on
-  // their subdomains, so list the branches instead of rendering one.
-  if (!branchName) {
-    const [branches, headerList] = await Promise.all([
-      getBranches(),
-      headers(),
-    ]);
-    // `www.` must not leak into the generated subdomain links.
-    const host = (headerList.get("host") ?? "").replace(/^www\./, "");
-
-    return (
-      <>
-        <TopBar />
-        <SiteHeader branch={null} />
-        <main className="flex-1">
-          <BranchDirectory
-            branches={branches.filter((b) => b.isPublished)}
-            host={host}
-          />
-        </main>
-        <SiteFooter branch={null} />
-      </>
-    );
-  }
+  if (!branchName) notFound();
 
   const [branch, branches, banners, notices, board, menus] = await Promise.all([
     getBranch(branchName),

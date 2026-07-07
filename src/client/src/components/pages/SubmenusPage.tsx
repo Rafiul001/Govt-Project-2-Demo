@@ -1,5 +1,5 @@
 import { Button, toast } from "@heroui/react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
   FileTextIcon,
@@ -9,6 +9,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useMenu } from "../../hooks/useMenus";
+import {
+  useCreatePage,
+  useDeletePage,
+  usePageByMenu,
+} from "../../hooks/usePages";
 import { useDeleteSubmenu, useSubmenus } from "../../hooks/useSubmenus";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { displayTitle } from "../../lib/displayTitle";
@@ -53,6 +58,13 @@ export function SubmenusPage({
   );
 }
 
+/**
+ * A menu links either straight to ONE page or to sub-menus (each with its own
+ * page) — never both. With neither yet, the admin picks: "Add page" attaches
+ * a page directly to the menu (`/:menuSlug`), "Add sub-menu" starts a
+ * dropdown. Adding the first sub-menu to a menu that has a direct page moves
+ * that page under an auto-created sub-menu (the server handles the move).
+ */
 function SubmenusManager({
   menu,
   page,
@@ -64,12 +76,17 @@ function SubmenusManager({
   pageSize: number;
   onPageChange: (page: number) => void;
 }) {
+  const navigate = useNavigate();
   const query = useSubmenus({ page, pageSize, menuId: menu.id });
+  const directPageQuery = usePageByMenu(menu.id);
   const deleteMutation = useDeleteSubmenu();
+  const createPageMutation = useCreatePage();
+  const deletePageMutation = useDeletePage();
 
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<TSubmenu | null>(null);
   const [deleting, setDeleting] = useState<TSubmenu | null>(null);
+  const [deletingPage, setDeletingPage] = useState(false);
 
   const handleDelete = () => {
     if (!deleting) return;
@@ -82,9 +99,40 @@ function SubmenusManager({
     });
   };
 
+  // Create the menu's direct page, then jump straight into its editor.
+  const handleAddPage = () => {
+    createPageMutation.mutate(
+      { menuId: menu.id, branchId: menu.branchId },
+      {
+        onSuccess: () => {
+          toast.success("Page created");
+          navigate({
+            to: "/pages/by-menu/$menuId/edit",
+            params: { menuId: String(menu.id) },
+          });
+        },
+        onError: (error) => toast.danger(getApiErrorMessage(error)),
+      },
+    );
+  };
+
+  const handleDeletePage = () => {
+    const directPage = directPageQuery.data;
+    if (!directPage) return;
+    deletePageMutation.mutate(directPage.id, {
+      onSuccess: () => {
+        toast.success("Page deleted");
+        setDeletingPage(false);
+      },
+      onError: (error) => toast.danger(getApiErrorMessage(error)),
+    });
+  };
+
   const items = query.data?.items ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = query.data?.totalPages ?? 1;
+  const directPage = directPageQuery.data ?? null;
+  const isLoading = query.isLoading || directPageQuery.isLoading;
 
   return (
     <div className="space-y-6">
@@ -99,7 +147,11 @@ function SubmenusManager({
         </Link>
         <PageHeader
           title={`Sub-menus — ${displayTitle(menu.titleBn, menu.titleEn)}`}
-          description="Each sub-menu has one page (banner + Markdown content) shown on the public site."
+          description={
+            directPage
+              ? "This menu links straight to one page. Adding a sub-menu moves that page under its own sub-menu."
+              : "Each sub-menu has one page (banner + Markdown content) shown on the public site."
+          }
           actions={
             <Button variant="primary" onPress={() => setIsCreating(true)}>
               <PlusIcon className="size-4" />
@@ -109,19 +161,61 @@ function SubmenusManager({
         />
       </div>
 
-      {query.isLoading ? (
+      {isLoading ? (
         <LoadingState />
       ) : query.isError ? (
         <ErrorState message={getApiErrorMessage(query.error)} />
+      ) : directPage ? (
+        // The menu's page is attached directly — no sub-menus (yet).
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-secondary">
+          <li className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-tertiary">
+            <FileTextIcon className="size-4 shrink-0 text-muted" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-foreground">
+                {displayTitle(directPage.bannerTitleBn, directPage.bannerTitleEn)}
+                {directPage.isPublished ? "" : " (draft)"}
+              </p>
+              <p className="truncate text-xs text-muted">/{menu.slug}</p>
+            </div>
+            <Link
+              to="/pages/by-menu/$menuId/edit"
+              params={{ menuId: String(menu.id) }}
+              className="flex items-center gap-1 rounded-lg bg-accent/10 px-2.5 py-1.5 text-sm font-medium text-accent hover:bg-accent/20"
+            >
+              <PencilIcon className="size-4" />
+              Edit page
+            </Link>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              aria-label="Delete page"
+              className="text-red-500 hover:bg-red-500/15"
+              onPress={() => setDeletingPage(true)}
+            >
+              <TrashIcon className="size-4" />
+            </Button>
+          </li>
+        </ul>
       ) : total === 0 ? (
         <EmptyState
-          title="No sub-menus yet"
-          description="Add the first sub-menu; its page is created automatically."
+          title="Nothing here yet"
+          description="Attach a page directly to this menu, or add sub-menus (each gets its own page)."
           action={
-            <Button variant="primary" onPress={() => setIsCreating(true)}>
-              <PlusIcon className="size-4" />
-              Add sub-menu
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                isDisabled={createPageMutation.isPending}
+                onPress={handleAddPage}
+              >
+                <FileTextIcon className="size-4" />
+                {createPageMutation.isPending ? "Creating…" : "Add page"}
+              </Button>
+              <Button variant="ghost" onPress={() => setIsCreating(true)}>
+                <PlusIcon className="size-4" />
+                Add sub-menu
+              </Button>
+            </div>
           }
         />
       ) : (
@@ -215,6 +309,15 @@ function SubmenusManager({
         description={`Delete "${deleting ? displayTitle(deleting.titleBn, deleting.titleEn) : "this sub-menu"}"? Its page will also be deleted. This cannot be undone.`}
         isLoading={deleteMutation.isPending}
         onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        isOpen={deletingPage}
+        onOpenChange={setDeletingPage}
+        title="Delete page"
+        description={`Delete the page of "${displayTitle(menu.titleBn, menu.titleEn)}"? Its content and images will be removed. This cannot be undone.`}
+        isLoading={deletePageMutation.isPending}
+        onConfirm={handleDeletePage}
       />
     </div>
   );

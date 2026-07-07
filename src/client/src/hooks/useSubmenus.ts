@@ -60,6 +60,9 @@ export function useCreateSubmenu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.submenus.all });
+      // If the menu had a page attached directly, the backend moved it under
+      // an auto-created sub-menu — the page's attachment changed.
+      queryClient.invalidateQueries({ queryKey: queryKeys.pages.all });
     },
   });
 }

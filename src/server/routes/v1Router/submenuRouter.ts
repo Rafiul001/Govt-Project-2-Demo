@@ -157,6 +157,12 @@ submenuRouter.get(
  * POST /api/v1/submenu — creates the sub-menu and its (blank, unpublished)
  * page. The page's banner title defaults to the sub-menu title so the editor
  * always has a page to load and publish.
+ *
+ * A menu links either straight to one page or to sub-menus — never both. If
+ * the menu has a page attached directly, that page is first moved under a
+ * sub-menu auto-created from its banner title (its URL changes from
+ * `/:menuSlug` to `/:menuSlug/:pageSlug`), and then the requested sub-menu is
+ * created alongside it.
  */
 submenuRouter.post(
   "/",
@@ -178,6 +184,39 @@ submenuRouter.post(
     // The sub-menu must live in the same branch as its parent menu.
     if (menu.branchId !== branchId) {
       return badRequest(c, "Menu does not belong to the target branch");
+    }
+
+    // Wrap the menu's direct page (if any) in its own sub-menu first.
+    const [directPage] = await db
+      .select({
+        id: pagesTable.id,
+        bannerTitleBn: pagesTable.bannerTitleBn,
+        bannerTitleEn: pagesTable.bannerTitleEn,
+      })
+      .from(pagesTable)
+      .where(eq(pagesTable.menuId, data.menuId))
+      .limit(1);
+
+    if (directPage) {
+      const wrapSlug = await uniqueSlug(
+        slugSource(directPage.bannerTitleEn, directPage.bannerTitleBn),
+        (s) => submenuSlugTaken(data.menuId, s),
+      );
+      const [wrapped] = await db
+        .insert(submenusTable)
+        .values({
+          titleBn: directPage.bannerTitleBn,
+          titleEn: directPage.bannerTitleEn,
+          slug: wrapSlug,
+          order: 0,
+          menuId: data.menuId,
+          branchId,
+        })
+        .returning({ id: submenusTable.id });
+      await db
+        .update(pagesTable)
+        .set({ menuId: null, submenuId: wrapped!.id })
+        .where(eq(pagesTable.id, directPage.id));
     }
 
     const titleBn = emptyToNull(data.titleBn);
@@ -206,7 +245,12 @@ submenuRouter.post(
       branchId,
     });
 
-    return created(c, "Sub-menu created successfully");
+    return created(
+      c,
+      directPage
+        ? "Sub-menu created — the menu's page was moved under its own sub-menu"
+        : "Sub-menu created successfully",
+    );
   },
 );
 

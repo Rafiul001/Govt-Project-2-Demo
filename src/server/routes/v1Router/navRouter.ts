@@ -6,7 +6,7 @@ import { branchIdByName } from "@/server/utils/scope";
 import { pageBySlugQuerySchema } from "@/shared/validators/nav.validator";
 import { branchListQuerySchema } from "@/shared/validators/pagination.validator";
 import { zValidator } from "@hono/zod-validator";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 const navRouter = new Hono<TAppEnv>();
@@ -19,7 +19,9 @@ const navRouter = new Hono<TAppEnv>();
  * GET /api/v1/nav?branchName= — the published menu tree for a branch.
  *
  * Returns menus (ordered) each with the sub-menus (ordered) whose page is
- * published. Menus with no published sub-menu are omitted, so the public
+ * published, plus `hasPage` for menus whose page is attached directly (such a
+ * menu is a plain link to `/:menuSlug`, not a dropdown). Menus with neither a
+ * published direct page nor a published sub-menu are omitted, so the public
  * NavBar never shows an empty dropdown.
  */
 navRouter.get("/", zValidator("query", branchListQuerySchema), async (c) => {
@@ -62,20 +64,36 @@ navRouter.get("/", zValidator("query", branchListQuerySchema), async (c) => {
     )
     .orderBy(submenusTable.order, submenusTable.id);
 
+  // Menus whose published page is attached directly (no sub-menu).
+  const directPages = await db
+    .select({ menuId: pagesTable.menuId })
+    .from(pagesTable)
+    .where(
+      and(
+        eq(pagesTable.branchId, branchId),
+        eq(pagesTable.isPublished, true),
+        isNotNull(pagesTable.menuId),
+      ),
+    );
+  const directMenuIds = new Set(directPages.map((p) => p.menuId));
+
   const tree = menus
     .map((menu) => ({
       ...menu,
+      hasPage: directMenuIds.has(menu.id),
       submenus: submenus.filter((s) => s.menuId === menu.id),
     }))
-    .filter((menu) => menu.submenus.length > 0);
+    .filter((menu) => menu.hasPage || menu.submenus.length > 0);
 
   return ok(c, "Navigation fetched successfully", tree);
 });
 
 /**
  * GET /api/v1/nav/page?branchName=&menu=&submenu= — a single published page,
- * resolved by the menu and sub-menu slugs. 404 when the branch, menu,
- * sub-menu, or a *published* page is missing.
+ * resolved by the menu and (optional) sub-menu slugs. Without `submenu` it
+ * resolves the page attached directly to the menu (`/:menuSlug`); the
+ * sub-menu fields come back `null`. 404 when the branch, menu, sub-menu, or a
+ * *published* page is missing.
  */
 navRouter.get(
   "/page",
@@ -92,34 +110,56 @@ navRouter.get(
       return notFound(c, "Page not found");
     }
 
-    const [row] = await db
-      .select({
-        pageId: pagesTable.id,
-        bannerTitleBn: pagesTable.bannerTitleBn,
-        bannerTitleEn: pagesTable.bannerTitleEn,
-        bannerImage: pagesTable.bannerImage,
-        contentBn: pagesTable.contentBn,
-        contentEn: pagesTable.contentEn,
-        isPublished: pagesTable.isPublished,
-        menuTitleBn: menusTable.titleBn,
-        menuTitleEn: menusTable.titleEn,
-        menuSlug: menusTable.slug,
-        submenuTitleBn: submenusTable.titleBn,
-        submenuTitleEn: submenusTable.titleEn,
-        submenuSlug: submenusTable.slug,
-      })
-      .from(pagesTable)
-      .innerJoin(submenusTable, eq(pagesTable.submenuId, submenusTable.id))
-      .innerJoin(menusTable, eq(submenusTable.menuId, menusTable.id))
-      .where(
-        and(
-          eq(pagesTable.branchId, branchId),
-          eq(menusTable.slug, menuSlug),
-          eq(submenusTable.slug, submenuSlug),
-          eq(pagesTable.isPublished, true),
-        ),
-      )
-      .limit(1);
+    const pageColumns = {
+      pageId: pagesTable.id,
+      bannerTitleBn: pagesTable.bannerTitleBn,
+      bannerTitleEn: pagesTable.bannerTitleEn,
+      bannerImage: pagesTable.bannerImage,
+      contentBn: pagesTable.contentBn,
+      contentEn: pagesTable.contentEn,
+      isPublished: pagesTable.isPublished,
+      menuTitleBn: menusTable.titleBn,
+      menuTitleEn: menusTable.titleEn,
+      menuSlug: menusTable.slug,
+    };
+
+    const [row] = submenuSlug
+      ? await db
+          .select({
+            ...pageColumns,
+            submenuTitleBn: submenusTable.titleBn,
+            submenuTitleEn: submenusTable.titleEn,
+            submenuSlug: submenusTable.slug,
+          })
+          .from(pagesTable)
+          .innerJoin(submenusTable, eq(pagesTable.submenuId, submenusTable.id))
+          .innerJoin(menusTable, eq(submenusTable.menuId, menusTable.id))
+          .where(
+            and(
+              eq(pagesTable.branchId, branchId),
+              eq(menusTable.slug, menuSlug),
+              eq(submenusTable.slug, submenuSlug),
+              eq(pagesTable.isPublished, true),
+            ),
+          )
+          .limit(1)
+      : await db
+          .select({
+            ...pageColumns,
+            submenuTitleBn: sql<string | null>`NULL`,
+            submenuTitleEn: sql<string | null>`NULL`,
+            submenuSlug: sql<string | null>`NULL`,
+          })
+          .from(pagesTable)
+          .innerJoin(menusTable, eq(pagesTable.menuId, menusTable.id))
+          .where(
+            and(
+              eq(pagesTable.branchId, branchId),
+              eq(menusTable.slug, menuSlug),
+              eq(pagesTable.isPublished, true),
+            ),
+          )
+          .limit(1);
 
     if (!row) {
       return notFound(c, "Page not found");

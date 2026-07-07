@@ -196,12 +196,14 @@ export async function getNavTree(name?: string): Promise<TNavMenu[]> {
 }
 
 /**
- * A single published page resolved by its menu + sub-menu slugs, for the
- * branch. Returns `null` when the page is missing or unpublished (→ 404 page).
+ * A single published page resolved by its menu (+ optional sub-menu) slugs,
+ * for the branch. Without `submenuSlug` it resolves the page attached
+ * directly to the menu (`/:menuSlug`). Returns `null` when the page is
+ * missing or unpublished (→ 404 page).
  */
 export async function getDynamicPage(
   menuSlug: string,
-  submenuSlug: string,
+  submenuSlug?: string | null,
   name?: string,
 ): Promise<TDynamicPage | null> {
   const branchName = name ?? (await getBranchName());
@@ -209,6 +211,6 @@ export async function getDynamicPage(
   return apiGet<TDynamicPage>(
     `/api/v1/nav/page?branchName=${encodeURIComponent(branchName)}` +
       `&menu=${encodeURIComponent(menuSlug)}` +
-      `&submenu=${encodeURIComponent(submenuSlug)}`,
+      (submenuSlug ? `&submenu=${encodeURIComponent(submenuSlug)}` : ""),
   );
 }

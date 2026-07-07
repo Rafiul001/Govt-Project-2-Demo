@@ -14,6 +14,7 @@ import { useBranch } from "../../hooks/useBranches";
 import { useMenu } from "../../hooks/useMenus";
 import {
   useImportPageImage,
+  usePageByMenu,
   usePageBySubmenu,
   useUpdatePage,
   useUploadPageImage,
@@ -58,25 +59,40 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-/** Loads the page and its sub-menu/menu/branch, then renders the editor. */
-export function PageEditPage({ submenuId }: { submenuId: number }) {
-  const pageQuery = usePageBySubmenu(submenuId);
+/**
+ * Loads the page and its sub-menu/menu/branch, then renders the editor.
+ * Pass `submenuId` for a sub-menu's page, or `menuId` for a page attached
+ * directly to a menu (menus without sub-menus).
+ */
+export function PageEditPage({
+  submenuId = NaN,
+  menuId = NaN,
+}: {
+  submenuId?: number;
+  menuId?: number;
+}) {
+  const isDirect = Number.isFinite(menuId);
+  const pageBySubmenuQuery = usePageBySubmenu(submenuId);
+  const pageByMenuQuery = usePageByMenu(menuId);
+  const pageQuery = isDirect ? pageByMenuQuery : pageBySubmenuQuery;
   const submenuQuery = useSubmenu(submenuId);
-  const menuQuery = useMenu(submenuQuery.data?.menuId ?? NaN);
+  const menuQuery = useMenu(
+    isDirect ? menuId : (submenuQuery.data?.menuId ?? NaN),
+  );
   const branchQuery = useBranch(pageQuery.data?.branchId ?? NaN);
 
   const isLoading =
     pageQuery.isLoading ||
-    submenuQuery.isLoading ||
+    (!isDirect && submenuQuery.isLoading) ||
     menuQuery.isLoading ||
     branchQuery.isLoading;
   if (isLoading) return <LoadingState />;
 
   const page = pageQuery.data;
-  const submenu = submenuQuery.data;
+  const submenu = isDirect ? null : submenuQuery.data;
   const menu = menuQuery.data;
   const branch = branchQuery.data;
-  if (!page || !submenu || !menu || !branch) {
+  if (!page || (!isDirect && !submenu) || !menu || !branch) {
     return (
       <ErrorState
         message={getApiErrorMessage(
@@ -90,7 +106,12 @@ export function PageEditPage({ submenuId }: { submenuId: number }) {
   }
 
   return (
-    <PageEditor page={page} submenu={submenu} menu={menu} branch={branch} />
+    <PageEditor
+      page={page}
+      submenu={submenu ?? null}
+      menu={menu}
+      branch={branch}
+    />
   );
 }
 
@@ -106,7 +127,8 @@ function PageEditor({
   branch,
 }: {
   page: TPage;
-  submenu: TSubmenu;
+  /** `null` for a page attached directly to the menu (no sub-menu). */
+  submenu: TSubmenu | null;
   menu: TMenu;
   branch: TBranch;
 }) {
@@ -119,7 +141,9 @@ function PageEditor({
   // The preview iframe lives on the branch's own landing origin, so its nav
   // is the branch's real navigation and links browse the real site.
   const landingOrigin = branchLandingOrigin(branch.name);
-  const pageUrl = `${landingOrigin}/${menu.slug}/${submenu.slug}`;
+  const pageUrl = submenu
+    ? `${landingOrigin}/${menu.slug}/${submenu.slug}`
+    : `${landingOrigin}/${menu.slug}`;
 
   // Upload a content image picked in the markdown editor; the editor embeds
   // the returned Cloudinary URL into the markdown.
@@ -246,8 +270,8 @@ function PageEditor({
           branch,
           menuTitleBn: menu.titleBn,
           menuTitleEn: menu.titleEn,
-          submenuTitleBn: submenu.titleBn,
-          submenuTitleEn: submenu.titleEn,
+          submenuTitleBn: submenu?.titleBn ?? null,
+          submenuTitleEn: submenu?.titleEn ?? null,
           page: {
             bannerTitleBn: values.bannerTitleBn ?? "",
             bannerTitleEn: values.bannerTitleEn ?? "",
@@ -264,8 +288,8 @@ function PageEditor({
       landingOrigin,
       menu.titleBn,
       menu.titleEn,
-      submenu.titleBn,
-      submenu.titleEn,
+      submenu?.titleBn,
+      submenu?.titleEn,
       page.bannerImage,
     ],
   );
@@ -312,8 +336,8 @@ function PageEditor({
         </Button>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold text-foreground">
-            Edit page — {displayTitle(menu.titleBn, menu.titleEn)} /{" "}
-            {displayTitle(submenu.titleBn, submenu.titleEn)}
+            Edit page — {displayTitle(menu.titleBn, menu.titleEn)}
+            {submenu ? ` / ${displayTitle(submenu.titleBn, submenu.titleEn)}` : ""}
           </h1>
           <p className="flex items-center gap-2 text-sm text-muted">
             {page.isPublished ? "Published" : "Draft — not public yet"}

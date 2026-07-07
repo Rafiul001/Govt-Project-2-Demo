@@ -80,6 +80,8 @@ export type TNavMenu = {
   titleEn: string | null;
   slug: string;
   order: number;
+  /** The menu's page is attached directly (`/:menuSlug`) — no dropdown. */
+  hasPage: boolean;
   submenus: TNavSubmenu[];
 };
 
@@ -97,7 +99,8 @@ export type TDynamicPage = {
   menuSlug: string;
   submenuTitleBn: string | null;
   submenuTitleEn: string | null;
-  submenuSlug: string;
+  /** `null` when the page is attached directly to the menu (`/:menuSlug`). */
+  submenuSlug: string | null;
 };
 
 /**
