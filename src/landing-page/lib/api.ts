@@ -48,7 +48,11 @@ export async function getBranchName(): Promise<string> {
   const hostname = host.replace(/:\d+$/, ""); // strip port
   const subdomain = hostname.split(".")[0]?.toLowerCase() ?? "";
 
-  if (!subdomain || subdomain === "www" || subdomain === "localhost") {
+  // An IP address host (e.g. 103.132.96.122) has no subdomain — its first
+  // octet must not be mistaken for a branch name.
+  const isIpHost = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+
+  if (!subdomain || subdomain === "www" || subdomain === "localhost" || isIpHost) {
     return BRANCH_NAME;
   }
 

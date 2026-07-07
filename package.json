@@ -16,7 +16,8 @@
     "start": "node --env-file-if-exists=.env dist/index.js",
     "start:client": "cd src/client && npx vite preview --port 5173",
     "start:landing": "cd src/landing-page && npx next start --port 3001",
-    "start:all": "concurrently -n server,client,landing -c blue,green,magenta \"npm run start\" \"npm run start:client\" \"npm run start:landing\""
+    "start:all": "concurrently -n server,client,landing -c blue,green,magenta \"npm run start\" \"npm run start:client\" \"npm run start:landing\"",
+    "start:prod": "concurrently -n server,landing -c blue,magenta \"npm run start\" \"npm run start:landing\""
   },
   "private": true,
   "devDependencies": {
