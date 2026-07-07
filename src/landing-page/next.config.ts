@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // This is a standalone app nested inside a bigger repo that has its own
+  // lockfile; without an explicit root Next would guess the repo root.
+  outputFileTracingRoot: import.meta.dirname,
   // Each branch is served on its own subdomain (dhaka.example.com,
   // rajshahi.example.com, …). In dev, Next blocks cross-origin requests to
   // dev-only assets/HMR for any host other than localhost, so the per-branch
