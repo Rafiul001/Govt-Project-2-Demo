@@ -8,9 +8,9 @@ import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
 import {
+  findBranch,
   getBanners,
   getBoardOfDirectors,
-  getBranch,
   getBranchName,
   getBranches,
   getNavTree,
@@ -25,13 +25,20 @@ export default async function Home() {
   const branchName = await getBranchName();
   if (!branchName) notFound();
 
-  const [branch, branches, banners, notices, board, menus] = await Promise.all([
-    getBranch(branchName),
-    getBranches(),
-    getBanners(branchName),
-    getNotices(branchName),
-    getBoardOfDirectors(branchName),
-    getNavTree(branchName),
+  // Resolve the branch before fetching anything scoped to it: a subdomain
+  // that doesn't match a real branch (cumillah.example.com with no "Cumillah"
+  // branch) must 404, not render an empty shell of the site. The scoped
+  // queries below use the branch's canonical DB name, which may be cased
+  // differently from the host.
+  const branches = await getBranches();
+  const branch = findBranch(branches, branchName);
+  if (!branch) notFound();
+
+  const [banners, notices, board, menus] = await Promise.all([
+    getBanners(branch.name),
+    getNotices(branch.name),
+    getBoardOfDirectors(branch.name),
+    getNavTree(branch.name),
   ]);
 
   return (

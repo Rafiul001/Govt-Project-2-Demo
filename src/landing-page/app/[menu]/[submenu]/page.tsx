@@ -41,10 +41,14 @@ export default async function DynamicPage({
   const branchName = await getBranchName();
   if (!branchName) notFound();
 
-  const [branch, menus, page] = await Promise.all([
-    getBranch(branchName),
-    getNavTree(branchName),
-    getDynamicPage(menu, submenu, branchName),
+  // A subdomain that doesn't match a real branch must 404. The scoped
+  // queries use the branch's canonical DB name.
+  const branch = await getBranch(branchName);
+  if (!branch) notFound();
+
+  const [menus, page] = await Promise.all([
+    getNavTree(branch.name),
+    getDynamicPage(menu, submenu, branch.name),
   ]);
 
   if (!page) notFound();

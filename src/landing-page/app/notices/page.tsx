@@ -36,20 +36,24 @@ export default async function NoticesPage({
   const branchName = await getBranchName();
   if (!branchName) notFound();
 
+  // A subdomain that doesn't match a real branch must 404, not render an
+  // empty archive. The scoped queries use the branch's canonical DB name.
+  const branch = await getBranch(branchName);
+  if (!branch) notFound();
+
   const parsedPage = page ? Number(page) : 1;
   const currentPage =
     Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const searchTerm = search?.trim() || undefined;
 
-  const [branch, noticesPage, menus] = await Promise.all([
-    getBranch(branchName),
+  const [noticesPage, menus] = await Promise.all([
     getNoticesPage({
       search: searchTerm,
       page: currentPage,
       pageSize: PAGE_SIZE,
-      name: branchName,
+      name: branch.name,
     }),
-    getNavTree(branchName),
+    getNavTree(branch.name),
   ]);
 
   const parsedId = id ? Number(id) : NaN;

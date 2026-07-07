@@ -93,12 +93,26 @@ export async function getBranches(): Promise<TBranch[]> {
   return data?.items ?? [];
 }
 
+/**
+ * Finds a branch in the public list by name, case-insensitively — the host is
+ * lowercase while the DB name may be cased however the admin typed it
+ * ("mymensingh", "Dhaka"). Callers should use the returned branch's canonical
+ * `name` for the `?branchName=`-scoped queries, which match exactly.
+ */
+export function findBranch(
+  branches: TBranch[],
+  name: string,
+): TBranch | null {
+  const target = name.toLowerCase();
+  return branches.find((b) => b.name.toLowerCase() === target) ?? null;
+}
+
 /** Branch profile (name, logo, banner, address, contact), resolved by name. */
 export async function getBranch(name?: string): Promise<TBranch | null> {
   const branchName = name ?? (await getBranchName());
   if (!branchName) return null;
   const branches = await getBranches();
-  return branches.find((b) => b.name === branchName) ?? null;
+  return findBranch(branches, branchName);
 }
 
 /** Published notices for the branch, newest first. */

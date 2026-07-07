@@ -30,10 +30,14 @@ export default async function BoardPage() {
   const branchName = await getBranchName();
   if (!branchName) notFound();
 
-  const [branch, board, menus] = await Promise.all([
-    getBranch(branchName),
-    getAllBoardOfDirectors(branchName),
-    getNavTree(branchName),
+  // A subdomain that doesn't match a real branch must 404, not render an
+  // empty board. The scoped queries use the branch's canonical DB name.
+  const branch = await getBranch(branchName);
+  if (!branch) notFound();
+
+  const [board, menus] = await Promise.all([
+    getAllBoardOfDirectors(branch.name),
+    getNavTree(branch.name),
   ]);
 
   return (
