@@ -1,4 +1,5 @@
 import { Button, toast } from "@heroui/react";
+import { useNavigate } from "@tanstack/react-router";
 import { CalendarDaysIcon, ListIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useDeleteEvent, useEvents } from "../../hooks/useEvents";
@@ -13,13 +14,7 @@ import {
   LoadingState,
   PageHeader,
 } from "../molecules";
-import {
-  CalendarGrid,
-  EventForm,
-  FormModal,
-  ListFilters,
-  TablePagination,
-} from "../organisms";
+import { CalendarGrid, ListFilters, TablePagination } from "../organisms";
 
 type TEventView = "list" | "calendar";
 
@@ -88,9 +83,13 @@ export function EventsPage({
       : { page, pageSize, search, branchName },
   );
   const deleteMutation = useDeleteEvent();
+  const navigate = useNavigate();
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [editing, setEditing] = useState<TEvent | null>(null);
+  // Create/edit are full pages — the bilingual event form outgrew a modal.
+  const openCreate = () => navigate({ to: "/event/new" });
+  const openEdit = (event: TEvent) =>
+    navigate({ to: "/event/$id/edit", params: { id: String(event.id) } });
+
   const [deleting, setDeleting] = useState<TEvent | null>(null);
 
   const handleDelete = () => {
@@ -115,7 +114,7 @@ export function EventsPage({
         title="Events"
         description="Tournaments, camps and programs shown on the public sites."
         actions={
-          <Button variant="primary" onPress={() => setIsCreating(true)}>
+          <Button variant="primary" onPress={openCreate}>
             <PlusIcon className="size-4" />
             Add event
           </Button>
@@ -176,7 +175,7 @@ export function EventsPage({
           events={items}
           onPrevMonth={() => onMonthChange(shiftMonth(activeMonth, -1))}
           onNextMonth={() => onMonthChange(shiftMonth(activeMonth, 1))}
-          onEventClick={(event) => setEditing(event)}
+          onEventClick={openEdit}
         />
       ) : total === 0 ? (
         isFiltered ? (
@@ -189,7 +188,7 @@ export function EventsPage({
             title="No events yet"
             description="Add the first event to get started."
             action={
-              <Button variant="primary" onPress={() => setIsCreating(true)}>
+              <Button variant="primary" onPress={openCreate}>
                 <PlusIcon className="size-4" />
                 Add event
               </Button>
@@ -203,7 +202,7 @@ export function EventsPage({
               <EventCard
                 key={event.id}
                 event={event}
-                onEdit={() => setEditing(event)}
+                onEdit={() => openEdit(event)}
                 onDelete={() => setDeleting(event)}
               />
             ))}
@@ -216,29 +215,6 @@ export function EventsPage({
           />
         </div>
       )}
-
-      <FormModal
-        isOpen={isCreating || editing !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreating(false);
-            setEditing(null);
-          }
-        }}
-        title={editing ? "Edit event" : "Add event"}
-      >
-        <EventForm
-          initial={editing ?? undefined}
-          onSuccess={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
-          onCancel={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
-        />
-      </FormModal>
 
       <ConfirmDialog
         isOpen={deleting !== null}

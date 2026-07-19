@@ -24,7 +24,11 @@ import { Route as AppBannersRouteImport } from './routes/_app/banners'
 import { Route as AppAdminsRouteImport } from './routes/_app/admins'
 import { Route as AppMenusIndexRouteImport } from './routes/_app/menus.index'
 import { Route as AppMenusMenuIdRouteImport } from './routes/_app/menus.$menuId'
+import { Route as AppMemberNewRouteImport } from './routes/_app/member.new'
+import { Route as AppEventNewRouteImport } from './routes/_app/event.new'
 import { Route as AppPagesSubmenuIdEditRouteImport } from './routes/_app/pages.$submenuId.edit'
+import { Route as AppMemberIdEditRouteImport } from './routes/_app/member.$id.edit'
+import { Route as AppEventIdEditRouteImport } from './routes/_app/event.$id.edit'
 import { Route as AppBranchIdEditRouteImport } from './routes/_app/branch.$id.edit'
 import { Route as AppPagesByMenuMenuIdEditRouteImport } from './routes/_app/pages.by-menu.$menuId.edit'
 
@@ -102,9 +106,29 @@ const AppMenusMenuIdRoute = AppMenusMenuIdRouteImport.update({
   path: '/menus/$menuId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMemberNewRoute = AppMemberNewRouteImport.update({
+  id: '/member/new',
+  path: '/member/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventNewRoute = AppEventNewRouteImport.update({
+  id: '/event/new',
+  path: '/event/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPagesSubmenuIdEditRoute = AppPagesSubmenuIdEditRouteImport.update({
   id: '/pages/$submenuId/edit',
   path: '/pages/$submenuId/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMemberIdEditRoute = AppMemberIdEditRouteImport.update({
+  id: '/member/$id/edit',
+  path: '/member/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventIdEditRoute = AppEventIdEditRouteImport.update({
+  id: '/event/$id/edit',
+  path: '/event/$id/edit',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBranchIdEditRoute = AppBranchIdEditRouteImport.update({
@@ -132,9 +156,13 @@ export interface FileRoutesByFullPath {
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
   '/print/members': typeof PrintMembersRoute
+  '/event/new': typeof AppEventNewRoute
+  '/member/new': typeof AppMemberNewRoute
   '/menus/$menuId': typeof AppMenusMenuIdRoute
   '/menus/': typeof AppMenusIndexRoute
   '/branch/$id/edit': typeof AppBranchIdEditRoute
+  '/event/$id/edit': typeof AppEventIdEditRoute
+  '/member/$id/edit': typeof AppMemberIdEditRoute
   '/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
   '/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
@@ -151,9 +179,13 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/print/members': typeof PrintMembersRoute
   '/': typeof AppIndexRoute
+  '/event/new': typeof AppEventNewRoute
+  '/member/new': typeof AppMemberNewRoute
   '/menus/$menuId': typeof AppMenusMenuIdRoute
   '/menus': typeof AppMenusIndexRoute
   '/branch/$id/edit': typeof AppBranchIdEditRoute
+  '/event/$id/edit': typeof AppEventIdEditRoute
+  '/member/$id/edit': typeof AppMemberIdEditRoute
   '/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
   '/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
@@ -172,9 +204,13 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/print/members': typeof PrintMembersRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/event/new': typeof AppEventNewRoute
+  '/_app/member/new': typeof AppMemberNewRoute
   '/_app/menus/$menuId': typeof AppMenusMenuIdRoute
   '/_app/menus/': typeof AppMenusIndexRoute
   '/_app/branch/$id/edit': typeof AppBranchIdEditRoute
+  '/_app/event/$id/edit': typeof AppEventIdEditRoute
+  '/_app/member/$id/edit': typeof AppMemberIdEditRoute
   '/_app/pages/$submenuId/edit': typeof AppPagesSubmenuIdEditRoute
   '/_app/pages/by-menu/$menuId/edit': typeof AppPagesByMenuMenuIdEditRoute
 }
@@ -193,9 +229,13 @@ export interface FileRouteTypes {
     | '/notices'
     | '/settings'
     | '/print/members'
+    | '/event/new'
+    | '/member/new'
     | '/menus/$menuId'
     | '/menus/'
     | '/branch/$id/edit'
+    | '/event/$id/edit'
+    | '/member/$id/edit'
     | '/pages/$submenuId/edit'
     | '/pages/by-menu/$menuId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -212,9 +252,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/print/members'
     | '/'
+    | '/event/new'
+    | '/member/new'
     | '/menus/$menuId'
     | '/menus'
     | '/branch/$id/edit'
+    | '/event/$id/edit'
+    | '/member/$id/edit'
     | '/pages/$submenuId/edit'
     | '/pages/by-menu/$menuId/edit'
   id:
@@ -232,9 +276,13 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/print/members'
     | '/_app/'
+    | '/_app/event/new'
+    | '/_app/member/new'
     | '/_app/menus/$menuId'
     | '/_app/menus/'
     | '/_app/branch/$id/edit'
+    | '/_app/event/$id/edit'
+    | '/_app/member/$id/edit'
     | '/_app/pages/$submenuId/edit'
     | '/_app/pages/by-menu/$menuId/edit'
   fileRoutesById: FileRoutesById
@@ -352,11 +400,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMenusMenuIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/member/new': {
+      id: '/_app/member/new'
+      path: '/member/new'
+      fullPath: '/member/new'
+      preLoaderRoute: typeof AppMemberNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/event/new': {
+      id: '/_app/event/new'
+      path: '/event/new'
+      fullPath: '/event/new'
+      preLoaderRoute: typeof AppEventNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pages/$submenuId/edit': {
       id: '/_app/pages/$submenuId/edit'
       path: '/pages/$submenuId/edit'
       fullPath: '/pages/$submenuId/edit'
       preLoaderRoute: typeof AppPagesSubmenuIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/member/$id/edit': {
+      id: '/_app/member/$id/edit'
+      path: '/member/$id/edit'
+      fullPath: '/member/$id/edit'
+      preLoaderRoute: typeof AppMemberIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/event/$id/edit': {
+      id: '/_app/event/$id/edit'
+      path: '/event/$id/edit'
+      fullPath: '/event/$id/edit'
+      preLoaderRoute: typeof AppEventIdEditRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/branch/$id/edit': {
@@ -387,9 +463,13 @@ interface AppRouteChildren {
   AppNoticesRoute: typeof AppNoticesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppEventNewRoute: typeof AppEventNewRoute
+  AppMemberNewRoute: typeof AppMemberNewRoute
   AppMenusMenuIdRoute: typeof AppMenusMenuIdRoute
   AppMenusIndexRoute: typeof AppMenusIndexRoute
   AppBranchIdEditRoute: typeof AppBranchIdEditRoute
+  AppEventIdEditRoute: typeof AppEventIdEditRoute
+  AppMemberIdEditRoute: typeof AppMemberIdEditRoute
   AppPagesSubmenuIdEditRoute: typeof AppPagesSubmenuIdEditRoute
   AppPagesByMenuMenuIdEditRoute: typeof AppPagesByMenuMenuIdEditRoute
 }
@@ -405,9 +485,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppNoticesRoute: AppNoticesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppEventNewRoute: AppEventNewRoute,
+  AppMemberNewRoute: AppMemberNewRoute,
   AppMenusMenuIdRoute: AppMenusMenuIdRoute,
   AppMenusIndexRoute: AppMenusIndexRoute,
   AppBranchIdEditRoute: AppBranchIdEditRoute,
+  AppEventIdEditRoute: AppEventIdEditRoute,
+  AppMemberIdEditRoute: AppMemberIdEditRoute,
   AppPagesSubmenuIdEditRoute: AppPagesSubmenuIdEditRoute,
   AppPagesByMenuMenuIdEditRoute: AppPagesByMenuMenuIdEditRoute,
 }

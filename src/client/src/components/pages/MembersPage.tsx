@@ -1,4 +1,5 @@
 import { Button, toast } from "@heroui/react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   DownloadIcon,
   LayoutGridIcon,
@@ -34,7 +35,6 @@ import {
   DataTable,
   FormModal,
   ListFilters,
-  MemberForm,
   TablePagination,
   type TDataTableColumn,
 } from "../organisms";
@@ -77,6 +77,16 @@ export function MembersPage({
   const query = useMembers(params);
   const deleteMutation = useDeleteMember();
   const exportMutation = useExportMembersCsv();
+  const navigate = useNavigate();
+
+  // Create/edit are full pages — the GEMS profile is too long for a modal.
+  const openCreate = () =>
+    navigate({
+      to: "/member/new",
+      search: categoryId ? { categoryId } : {},
+    });
+  const openEdit = (member: TMember) =>
+    navigate({ to: "/member/$id/edit", params: { id: String(member.id) } });
 
   const admin = useCurrentAdmin();
   const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";
@@ -100,8 +110,6 @@ export function MembersPage({
     ]),
   );
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [editing, setEditing] = useState<TMember | null>(null);
   const [viewing, setViewing] = useState<TMember | null>(null);
   const [deleting, setDeleting] = useState<TMember | null>(null);
 
@@ -192,7 +200,7 @@ export function MembersPage({
             size="sm"
             variant="ghost"
             aria-label="Edit"
-            onPress={() => setEditing(member)}
+            onPress={() => openEdit(member)}
           >
             <PencilIcon className="size-4" />
           </Button>
@@ -230,7 +238,7 @@ export function MembersPage({
               <PrinterIcon className="size-4" />
               PDF / Print
             </Button>
-            <Button variant="primary" onPress={() => setIsCreating(true)}>
+            <Button variant="primary" onPress={openCreate}>
               <PlusIcon className="size-4" />
               Add member
             </Button>
@@ -288,7 +296,7 @@ export function MembersPage({
             title="No members yet"
             description="Add the first member to get started."
             action={
-              <Button variant="primary" onPress={() => setIsCreating(true)}>
+              <Button variant="primary" onPress={openCreate}>
                 <PlusIcon className="size-4" />
                 Add member
               </Button>
@@ -305,7 +313,7 @@ export function MembersPage({
                   member={member}
                   categoryLabel={categoryLabel.get(member.categoryId) ?? "—"}
                   onView={() => setViewing(member)}
-                  onEdit={() => setEditing(member)}
+                  onEdit={() => openEdit(member)}
                   onDelete={() => setDeleting(member)}
                 />
               ))}
@@ -321,30 +329,6 @@ export function MembersPage({
           />
         </div>
       )}
-
-      <FormModal
-        isOpen={isCreating || editing !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreating(false);
-            setEditing(null);
-          }
-        }}
-        title={editing ? "Edit member" : "Add member"}
-      >
-        <MemberForm
-          initial={editing ?? undefined}
-          defaultCategoryId={categoryId}
-          onSuccess={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
-          onCancel={() => {
-            setIsCreating(false);
-            setEditing(null);
-          }}
-        />
-      </FormModal>
 
       <FormModal
         isOpen={viewing !== null}

@@ -147,92 +147,114 @@ export function MemberForm({
       }}
     >
       <SectionHeading>Basic information</SectionHeading>
-      <form.Field name="categoryId">
-        {(field) => <CategorySelect field={field} isRequired />}
-      </form.Field>
-      {isSuperAdmin ? (
-        <form.Field name="branchId">
-          {(field) => <BranchSelect field={field} isRequired />}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <form.Field name="categoryId">
+          {(field) => <CategorySelect field={field} isRequired />}
         </form.Field>
-      ) : null}
-      <form.Field name="nameBn">
-        {(field) => <TextInput field={field} label="Name (Bangla)" />}
-      </form.Field>
-      <form.Field name="nameEn">
-        {(field) => <TextInput field={field} label="Name (English)" />}
-      </form.Field>
-      <form.Field name="designation">
-        {(field) => <TextInput field={field} label="Designation" />}
-      </form.Field>
-      <form.Field name="photo">
-        {(field) => (
-          <FileInput
-            field={field}
-            label="Photo"
-            accept="image/*"
-            existingUrl={initial?.photo ?? undefined}
-          />
-        )}
-      </form.Field>
-      <form.Field name="mobile">
-        {(field) => <TextInput field={field} label="Mobile" />}
-      </form.Field>
-      <form.Field name="email">
-        {(field) => <TextInput field={field} label="Email" type="email" />}
-      </form.Field>
-      <form.Field name="order">
-        {(field) => <NumberInput field={field} label="Display order" min={0} />}
-      </form.Field>
+        {isSuperAdmin ? (
+          <form.Field name="branchId">
+            {(field) => <BranchSelect field={field} isRequired />}
+          </form.Field>
+        ) : null}
+        <form.Field name="nameBn">
+          {(field) => <TextInput field={field} label="Name (Bangla)" />}
+        </form.Field>
+        <form.Field name="nameEn">
+          {(field) => <TextInput field={field} label="Name (English)" />}
+        </form.Field>
+        <form.Field name="designation">
+          {(field) => <TextInput field={field} label="Designation" />}
+        </form.Field>
+        <form.Field name="order">
+          {(field) => (
+            <NumberInput field={field} label="Display order" min={0} />
+          )}
+        </form.Field>
+        <form.Field name="mobile">
+          {(field) => <TextInput field={field} label="Mobile" />}
+        </form.Field>
+        <form.Field name="email">
+          {(field) => <TextInput field={field} label="Email" type="email" />}
+        </form.Field>
+        <div className="sm:col-span-2">
+          <form.Field name="photo">
+            {(field) => (
+              <FileInput
+                field={field}
+                label="Photo"
+                accept="image/*"
+                existingUrl={initial?.photo ?? undefined}
+              />
+            )}
+          </form.Field>
+        </div>
+      </div>
 
       <SectionHeading>Personal information</SectionHeading>
-      <form.Field name="dateOfBirth">
-        {(field) => <DateInput field={field} label="Date of birth" />}
-      </form.Field>
-      <form.Field name="bloodGroup">
-        {(field) => (
-          <SelectInput
-            field={field}
-            label="Blood group"
-            options={bloodGroupOptions}
-          />
-        )}
-      </form.Field>
-      <form.Field name="gender">
-        {(field) => (
-          <SelectInput field={field} label="Gender" options={genderOptions} />
-        )}
-      </form.Field>
-      <form.Field name="nid">
-        {(field) => <TextInput field={field} label="NID" />}
-      </form.Field>
-      <form.Field name="address">
-        {(field) => <TextAreaInput field={field} label="Address" rows={2} />}
-      </form.Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <form.Field name="dateOfBirth">
+          {(field) => <DateInput field={field} label="Date of birth" />}
+        </form.Field>
+        <form.Field name="bloodGroup">
+          {(field) => (
+            <SelectInput
+              field={field}
+              label="Blood group"
+              options={bloodGroupOptions}
+            />
+          )}
+        </form.Field>
+        <form.Field name="gender">
+          {(field) => (
+            <SelectInput field={field} label="Gender" options={genderOptions} />
+          )}
+        </form.Field>
+        <form.Field name="nid">
+          {(field) => <TextInput field={field} label="NID" />}
+        </form.Field>
+        <div className="sm:col-span-2">
+          <form.Field name="address">
+            {(field) => (
+              <TextAreaInput field={field} label="Address" rows={2} />
+            )}
+          </form.Field>
+        </div>
+      </div>
 
       <SectionHeading>Sports information</SectionHeading>
-      <form.Field name="discipline">
-        {(field) => (
-          <TextInput
-            field={field}
-            label="Discipline"
-            placeholder="e.g. Football"
-          />
-        )}
-      </form.Field>
-      <form.Field name="jerseyNumber">
-        {(field) => <NumberInput field={field} label="Jersey number" min={0} />}
-      </form.Field>
-      <form.Field name="joiningDate">
-        {(field) => <DateInput field={field} label="Joining date" />}
-      </form.Field>
-      <form.Field name="achievements">
-        {(field) => (
-          <TextAreaInput field={field} label="Achievements" rows={3} />
-        )}
-      </form.Field>
-      <form.Field name="bio">
-        {(field) => <TextAreaInput field={field} label="Bio" rows={3} />}
-      </form.Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <form.Field name="discipline">
+          {(field) => (
+            <TextInput
+              field={field}
+              label="Discipline"
+              placeholder="e.g. Football"
+            />
+          )}
+        </form.Field>
+        <form.Field name="jerseyNumber">
+          {(field) => (
+            <NumberInput field={field} label="Jersey number" min={0} />
+          )}
+        </form.Field>
+        <div className="sm:col-span-2">
+          <form.Field name="joiningDate">
+            {(field) => <DateInput field={field} label="Joining date" />}
+          </form.Field>
+        </div>
+        <div className="sm:col-span-2">
+          <form.Field name="achievements">
+            {(field) => (
+              <TextAreaInput field={field} label="Achievements" rows={3} />
+            )}
+          </form.Field>
+        </div>
+        <div className="sm:col-span-2">
+          <form.Field name="bio">
+            {(field) => <TextAreaInput field={field} label="Bio" rows={3} />}
+          </form.Field>
+        </div>
+      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onPress={onCancel}>

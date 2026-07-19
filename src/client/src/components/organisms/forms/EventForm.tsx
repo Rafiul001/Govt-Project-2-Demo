@@ -103,58 +103,72 @@ export function EventForm({ initial, onSuccess, onCancel }: TEventFormProps) {
         void form.handleSubmit();
       }}
     >
-      <form.Field name="titleBn">
-        {(field) => <TextInput field={field} label="Title (Bangla)" />}
-      </form.Field>
-      <form.Field name="titleEn">
-        {(field) => <TextInput field={field} label="Title (English)" />}
-      </form.Field>
-      <form.Field name="descriptionBn">
-        {(field) => (
-          <TextAreaInput field={field} label="Description (Bangla)" rows={3} />
-        )}
-      </form.Field>
-      <form.Field name="descriptionEn">
-        {(field) => (
-          <TextAreaInput field={field} label="Description (English)" rows={3} />
-        )}
-      </form.Field>
-      <form.Field name="venue">
-        {(field) => <TextInput field={field} label="Venue" />}
-      </form.Field>
-      <form.Field name="startAt">
-        {(field) => (
-          <DateInput
-            field={field}
-            label="Starts at"
-            type="datetime-local"
-            isRequired
-          />
-        )}
-      </form.Field>
-      <form.Field name="endAt">
-        {(field) => (
-          <DateInput field={field} label="Ends at" type="datetime-local" />
-        )}
-      </form.Field>
-      {isSuperAdmin ? (
-        <form.Field name="branchId">
-          {(field) => <BranchSelect field={field} isRequired />}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <form.Field name="titleBn">
+          {(field) => <TextInput field={field} label="Title (Bangla)" />}
         </form.Field>
-      ) : null}
-      <form.Field name="image">
-        {(field) => (
-          <FileInput
-            field={field}
-            label="Image"
-            accept="image/*"
-            existingUrl={initial?.image ?? undefined}
-          />
-        )}
-      </form.Field>
-      <form.Field name="isPublished">
-        {(field) => <SwitchInput field={field} label="Published" />}
-      </form.Field>
+        <form.Field name="titleEn">
+          {(field) => <TextInput field={field} label="Title (English)" />}
+        </form.Field>
+        <form.Field name="descriptionBn">
+          {(field) => (
+            <TextAreaInput
+              field={field}
+              label="Description (Bangla)"
+              rows={3}
+            />
+          )}
+        </form.Field>
+        <form.Field name="descriptionEn">
+          {(field) => (
+            <TextAreaInput
+              field={field}
+              label="Description (English)"
+              rows={3}
+            />
+          )}
+        </form.Field>
+        <form.Field name="startAt">
+          {(field) => (
+            <DateInput
+              field={field}
+              label="Starts at"
+              type="datetime-local"
+              isRequired
+            />
+          )}
+        </form.Field>
+        <form.Field name="endAt">
+          {(field) => (
+            <DateInput field={field} label="Ends at" type="datetime-local" />
+          )}
+        </form.Field>
+        <form.Field name="venue">
+          {(field) => <TextInput field={field} label="Venue" />}
+        </form.Field>
+        {isSuperAdmin ? (
+          <form.Field name="branchId">
+            {(field) => <BranchSelect field={field} isRequired />}
+          </form.Field>
+        ) : null}
+        <div className="sm:col-span-2">
+          <form.Field name="image">
+            {(field) => (
+              <FileInput
+                field={field}
+                label="Image"
+                accept="image/*"
+                existingUrl={initial?.image ?? undefined}
+              />
+            )}
+          </form.Field>
+        </div>
+        <div className="sm:col-span-2">
+          <form.Field name="isPublished">
+            {(field) => <SwitchInput field={field} label="Published" />}
+          </form.Field>
+        </div>
+      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onPress={onCancel}>

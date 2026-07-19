@@ -11,6 +11,8 @@ export { NoticesPage } from "./NoticesPage";
 export { AdminsPage } from "./AdminsPage";
 export { SettingsPage } from "./SettingsPage";
 export { MembersPage } from "./MembersPage";
+export { MemberFormPage } from "./MemberFormPage";
 export { MemberCategoriesPage } from "./MemberCategoriesPage";
 export { EventsPage } from "./EventsPage";
+export { EventFormPage } from "./EventFormPage";
 export { PrintMembersPage } from "./PrintMembersPage";

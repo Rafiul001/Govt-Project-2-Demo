@@ -35,14 +35,24 @@ const NAV_ITEMS: TNavItem[] = [
     activePrefixes: ["/branch"],
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
-  { to: "/members", label: "Members", icon: ContactIcon },
+  {
+    to: "/members",
+    label: "Members",
+    icon: ContactIcon,
+    activePrefixes: ["/member"],
+  },
   {
     to: "/member-categories",
     label: "Member Categories",
     icon: TagsIcon,
     superAdminOnly: true,
   },
-  { to: "/events", label: "Events", icon: CalendarDaysIcon },
+  {
+    to: "/events",
+    label: "Events",
+    icon: CalendarDaysIcon,
+    activePrefixes: ["/event"],
+  },
   { to: "/banners", label: "Banners", icon: GalleryHorizontalIcon },
   {
     to: "/menus",
