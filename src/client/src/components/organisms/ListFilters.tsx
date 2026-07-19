@@ -10,8 +10,11 @@ import { ChevronDownIcon, SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useBranches } from "../../hooks/useBranches";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
+import { useMemberCategories } from "../../hooks/useMemberCategories";
+import { displayTitle } from "../../lib/displayTitle";
 
 const ALL_BRANCHES = "all";
+const ALL_CATEGORIES = "all";
 
 /**
  * Debounced search field. Owns its input text so keystrokes stay smooth and
@@ -69,19 +72,25 @@ type ListFiltersProps = {
    */
   branchName?: string;
   onBranchChange?: (value: string) => void;
+  /** When provided, a member-category filter is shown (members page). */
+  categoryId?: number;
+  onCategoryChange?: (value: number | undefined) => void;
 };
 
-/** Search box + optional branch filter toolbar shared by the list pages. */
+/** Search box + optional branch/category filter toolbar for the list pages. */
 export function ListFilters({
   search,
   onSearchChange,
   searchPlaceholder = "Search…",
   branchName,
   onBranchChange,
+  categoryId,
+  onCategoryChange,
 }: ListFiltersProps) {
   const admin = useCurrentAdmin();
   const isSuperAdmin = admin?.adminType === "SUPER_ADMIN";
   const showBranchFilter = Boolean(onBranchChange) && isSuperAdmin;
+  const showCategoryFilter = Boolean(onCategoryChange);
 
   const branchesQuery = useBranches(
     { page: 1, pageSize: 100 },
@@ -89,10 +98,18 @@ export function ListFilters({
   );
   const branches = branchesQuery.data?.items ?? [];
 
-  const hasActiveFilters = Boolean(search) || Boolean(branchName);
+  const categoriesQuery = useMemberCategories(
+    { page: 1, pageSize: 100 },
+    { enabled: showCategoryFilter },
+  );
+  const categories = categoriesQuery.data?.items ?? [];
+
+  const hasActiveFilters =
+    Boolean(search) || Boolean(branchName) || categoryId !== undefined;
   const clearFilters = () => {
     onSearchChange("");
     onBranchChange?.("");
+    onCategoryChange?.(undefined);
   };
 
   return (
@@ -124,6 +141,38 @@ export function ListFilters({
               {branches.map((branch) => (
                 <ListBoxItem key={branch.id} id={branch.name}>
                   {branch.name}
+                </ListBoxItem>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+      ) : null}
+
+      {showCategoryFilter ? (
+        <Select
+          className="flex flex-col gap-1.5 sm:w-56"
+          aria-label="Filter by category"
+          selectedKey={
+            categoryId !== undefined ? String(categoryId) : ALL_CATEGORIES
+          }
+          onSelectionChange={(key) =>
+            onCategoryChange?.(
+              key == null || key === ALL_CATEGORIES ? undefined : Number(key),
+            )
+          }
+        >
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator>
+              <ChevronDownIcon className="size-4" />
+            </Select.Indicator>
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              <ListBoxItem id={ALL_CATEGORIES}>All categories</ListBoxItem>
+              {categories.map((category) => (
+                <ListBoxItem key={category.id} id={String(category.id)}>
+                  {displayTitle(category.nameBn, category.nameEn)}
                 </ListBoxItem>
               ))}
             </ListBox>

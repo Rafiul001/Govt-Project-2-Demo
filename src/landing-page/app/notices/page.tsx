@@ -3,7 +3,13 @@ import { NoticesArchive } from "@/components/organisms/NoticesArchive";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getBranch, getBranchName, getNavTree, getNoticesPage } from "@/lib/api";
+import {
+  getBranch,
+  getBranchName,
+  getMemberCategories,
+  getNavTree,
+  getNoticesPage,
+} from "@/lib/api";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -46,7 +52,7 @@ export default async function NoticesPage({
     Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const searchTerm = search?.trim() || undefined;
 
-  const [noticesPage, menus] = await Promise.all([
+  const [noticesPage, menus, memberCategories] = await Promise.all([
     getNoticesPage({
       search: searchTerm,
       page: currentPage,
@@ -54,6 +60,7 @@ export default async function NoticesPage({
       name: branch.name,
     }),
     getNavTree(branch.name),
+    getMemberCategories(),
   ]);
 
   const parsedId = id ? Number(id) : NaN;
@@ -63,7 +70,7 @@ export default async function NoticesPage({
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar menus={menus} />
+      <NavBar menus={menus} memberCategories={memberCategories} />
       <main className="flex-1">
         <NoticesArchive
           notices={noticesPage.items}

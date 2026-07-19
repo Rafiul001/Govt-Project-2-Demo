@@ -1,12 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Building2Icon,
+  CalendarDaysIcon,
+  ContactIcon,
   GalleryHorizontalIcon,
   LayoutDashboardIcon,
   ListTreeIcon,
   MegaphoneIcon,
   SettingsIcon,
   ShieldUserIcon,
+  TagsIcon,
   UsersIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -32,6 +35,14 @@ const NAV_ITEMS: TNavItem[] = [
     activePrefixes: ["/branch"],
   },
   { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
+  { to: "/members", label: "Members", icon: ContactIcon },
+  {
+    to: "/member-categories",
+    label: "Member Categories",
+    icon: TagsIcon,
+    superAdminOnly: true,
+  },
+  { to: "/events", label: "Events", icon: CalendarDaysIcon },
   { to: "/banners", label: "Banners", icon: GalleryHorizontalIcon },
   {
     to: "/menus",

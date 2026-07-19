@@ -1,4 +1,10 @@
-import type { TListParams, TPageParams, TSubmenuListParams } from "../types";
+import type {
+  TEventListParams,
+  TListParams,
+  TMemberListParams,
+  TPageParams,
+  TSubmenuListParams,
+} from "../types";
 
 /** Centralized TanStack Query keys, so queries and invalidations stay in sync. */
 export const queryKeys = {
@@ -42,5 +48,21 @@ export const queryKeys = {
     bySubmenu: (submenuId: number | string) =>
       ["pages", "by-submenu", submenuId] as const,
     byMenu: (menuId: number | string) => ["pages", "by-menu", menuId] as const,
+  },
+  memberCategories: {
+    all: ["member-categories"] as const,
+    list: (params: TPageParams) =>
+      ["member-categories", "list", params] as const,
+    detail: (id: number | string) => ["member-categories", id] as const,
+  },
+  members: {
+    all: ["members"] as const,
+    list: (params: TMemberListParams) => ["members", "list", params] as const,
+    detail: (id: number | string) => ["members", id] as const,
+  },
+  events: {
+    all: ["events"] as const,
+    list: (params: TEventListParams) => ["events", "list", params] as const,
+    detail: (id: number | string) => ["events", id] as const,
   },
 } as const;

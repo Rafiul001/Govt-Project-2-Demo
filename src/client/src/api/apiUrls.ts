@@ -52,4 +52,20 @@ export const API_URLS = {
     IMAGE: (id: number | string) => `page/${id}/image`,
     IMAGE_IMPORT: (id: number | string) => `page/${id}/image/import`,
   },
+  MEMBER_CATEGORY: {
+    LIST: "member-category",
+    CREATE: "member-category",
+    BY_ID: (id: number | string) => `member-category/${id}`,
+  },
+  MEMBER: {
+    LIST: "member",
+    CREATE: "member",
+    EXPORT_CSV: "member/export/csv",
+    BY_ID: (id: number | string) => `member/${id}`,
+  },
+  EVENT: {
+    LIST: "event",
+    CREATE: "event",
+    BY_ID: (id: number | string) => `event/${id}`,
+  },
 } as const;

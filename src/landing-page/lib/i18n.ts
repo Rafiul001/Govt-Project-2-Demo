@@ -67,6 +67,8 @@ type TDictionary = {
     about: string;
     notices: string;
     board: string;
+    members: string;
+    events: string;
     contact: string;
   };
   hero: {
@@ -118,6 +120,30 @@ type TDictionary = {
     count: string;
     empty: string;
   };
+  membersPage: {
+    subtitle: string;
+    backHome: string;
+    count: string;
+    empty: string;
+  };
+  events: {
+    title: string;
+    subtitle: string;
+    empty: string;
+    viewAll: string;
+    venue: string;
+    upcoming: string;
+    past: string;
+  };
+  eventsPage: {
+    heading: string;
+    subtitle: string;
+    backHome: string;
+    empty: string;
+    prevMonth: string;
+    nextMonth: string;
+    listHeading: string;
+  };
   contact: {
     title: string;
     subtitle: string;
@@ -159,6 +185,8 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       about: "আমাদের সম্পর্কে",
       notices: "নোটিশ বোর্ড",
       board: "পরিচালনা পর্ষদ",
+      members: "সদস্যবৃন্দ",
+      events: "ইভেন্ট",
       contact: "যোগাযোগ",
     },
     hero: {
@@ -243,6 +271,30 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       count: "জন সদস্য",
       empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
     },
+    membersPage: {
+      subtitle: "{branch} শাখার নিবন্ধিত সদস্যদের তালিকা।",
+      backHome: "← প্রচ্ছদে ফিরুন",
+      count: "জন সদস্য",
+      empty: "এই শ্রেণিতে এখনো কোনো সদস্যের তথ্য প্রকাশ করা হয়নি।",
+    },
+    events: {
+      title: "ইভেন্ট",
+      subtitle: "{branch} শাখার আসন্ন টুর্নামেন্ট, প্রশিক্ষণ ও কার্যক্রম।",
+      empty: "এই মুহূর্তে কোনো ইভেন্ট নেই।",
+      viewAll: "সকল ইভেন্ট দেখুন →",
+      venue: "স্থান",
+      upcoming: "আসন্ন ইভেন্ট",
+      past: "সমাপ্ত ইভেন্ট",
+    },
+    eventsPage: {
+      heading: "ইভেন্ট ক্যালেন্ডার",
+      subtitle: "{branch} শাখার টুর্নামেন্ট, প্রশিক্ষণ ও কার্যক্রমের সময়সূচি।",
+      backHome: "← প্রচ্ছদে ফিরুন",
+      empty: "এই মাসে কোনো ইভেন্ট নেই।",
+      prevMonth: "পূর্ববর্তী মাস",
+      nextMonth: "পরবর্তী মাস",
+      listHeading: "এই মাসের ইভেন্ট",
+    },
     contact: {
       title: "যোগাযোগ",
       subtitle: "যেকোনো প্রয়োজনে নিচের ঠিকানায় আমাদের সাথে যোগাযোগ করুন।",
@@ -284,6 +336,8 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       about: "About Us",
       notices: "Notice Board",
       board: "Board of Directors",
+      members: "Members",
+      events: "Events",
       contact: "Contact",
     },
     hero: {
@@ -368,6 +422,32 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       backHome: "← Back to Home",
       count: "members",
       empty: "Information on the board of directors will be published soon.",
+    },
+    membersPage: {
+      subtitle: "Registered members of the {branch} Branch.",
+      backHome: "← Back to Home",
+      count: "members",
+      empty: "No member information has been published in this category yet.",
+    },
+    events: {
+      title: "Events",
+      subtitle:
+        "Upcoming tournaments, training and programmes of the {branch} Branch.",
+      empty: "There are no events at this time.",
+      viewAll: "View all events →",
+      venue: "Venue",
+      upcoming: "Upcoming Events",
+      past: "Past Events",
+    },
+    eventsPage: {
+      heading: "Event Calendar",
+      subtitle:
+        "Schedule of tournaments, training and programmes of the {branch} Branch.",
+      backHome: "← Back to Home",
+      empty: "There are no events this month.",
+      prevMonth: "Previous month",
+      nextMonth: "Next month",
+      listHeading: "Events this month",
     },
     contact: {
       title: "Contact",

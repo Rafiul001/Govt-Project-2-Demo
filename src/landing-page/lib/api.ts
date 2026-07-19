@@ -19,6 +19,9 @@ import type {
   TBoardOfDirector,
   TBranch,
   TDynamicPage,
+  TEvent,
+  TMember,
+  TMemberCategory,
   TNavMenu,
   TNotice,
 } from "./types";
@@ -227,4 +230,79 @@ export async function getDynamicPage(
       `&menu=${encodeURIComponent(menuSlug)}` +
       (submenuSlug ? `&submenu=${encodeURIComponent(submenuSlug)}` : ""),
   );
+}
+
+/**
+ * All member categories (global, shared by every branch), ordered by display
+ * order — they drive the "Members" nav dropdown and the `/members/:slug`
+ * pages.
+ */
+export async function getMemberCategories(): Promise<TMemberCategory[]> {
+  const data = await apiGet<TPaginated<TMemberCategory>>(
+    `/api/v1/member-category?pageSize=100`,
+  );
+  return data?.items ?? [];
+}
+
+/**
+ * The branch's members of one category, resolved by the category's URL slug.
+ * Private profile fields are stripped by the API for anonymous callers.
+ */
+export async function getMembersByCategory(
+  categorySlug: string,
+  name?: string,
+): Promise<TMember[]> {
+  const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
+  const data = await apiGet<TPaginated<TMember>>(
+    `/api/v1/member?branchName=${encodeURIComponent(branchName)}` +
+      `&categorySlug=${encodeURIComponent(categorySlug)}&pageSize=100`,
+  );
+  return data?.items ?? [];
+}
+
+/**
+ * Published events of the branch overlapping the inclusive `from`/`to`
+ * (`YYYY-MM-DD`) window — backs the `/events` month calendar; a multi-day
+ * event is returned for every month it touches.
+ */
+export async function getEventsForRange(
+  from: string,
+  to: string,
+  name?: string,
+): Promise<TEvent[]> {
+  const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
+  const data = await apiGet<TPaginated<TEvent>>(
+    `/api/v1/event?branchName=${encodeURIComponent(branchName)}` +
+      `&from=${from}&to=${to}&pageSize=100`,
+  );
+  return data?.items ?? [];
+}
+
+/**
+ * The branch's next published events (today onwards), soonest first — backs
+ * the home-page "upcoming events" section.
+ */
+export async function getUpcomingEvents(
+  name?: string,
+  limit = 3,
+): Promise<TEvent[]> {
+  const branchName = name ?? (await getBranchName());
+  if (!branchName) return [];
+  const today = new Date().toISOString().slice(0, 10);
+  // The API returns the window ordered by startAt DESC; look one year ahead
+  // and keep the soonest `limit` events.
+  const oneYearOn = new Date();
+  oneYearOn.setFullYear(oneYearOn.getFullYear() + 1);
+  const data = await apiGet<TPaginated<TEvent>>(
+    `/api/v1/event?branchName=${encodeURIComponent(branchName)}` +
+      `&from=${today}&to=${oneYearOn.toISOString().slice(0, 10)}&pageSize=100`,
+  );
+  const items = data?.items ?? [];
+  return items
+    .sort(
+      (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+    )
+    .slice(0, limit);
 }

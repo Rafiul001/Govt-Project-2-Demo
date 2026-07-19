@@ -17,6 +17,10 @@ export const relations = defineRelations(schema, (r) => ({
     submenus: r.many.submenusTable(),
     // One branch has many pages
     pages: r.many.pagesTable(),
+    // One branch has many members
+    members: r.many.membersTable(),
+    // One branch has many events
+    events: r.many.eventsTable(),
   },
   adminsTable: {
     // Super admins have no branch, so this relation is optional.
@@ -81,6 +85,29 @@ export const relations = defineRelations(schema, (r) => ({
     submenu: r.one.submenusTable({
       from: r.pagesTable.submenuId,
       to: r.submenusTable.id,
+      optional: false,
+    }),
+  },
+  memberCategoriesTable: {
+    // One category has many members (across all branches)
+    members: r.many.membersTable(),
+  },
+  membersTable: {
+    branch: r.one.branchesTable({
+      from: r.membersTable.branchId,
+      to: r.branchesTable.id,
+      optional: false,
+    }),
+    category: r.one.memberCategoriesTable({
+      from: r.membersTable.categoryId,
+      to: r.memberCategoriesTable.id,
+      optional: false,
+    }),
+  },
+  eventsTable: {
+    branch: r.one.branchesTable({
+      from: r.eventsTable.branchId,
+      to: r.branchesTable.id,
       optional: false,
     }),
   },

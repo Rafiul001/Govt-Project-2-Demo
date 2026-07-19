@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as PrintMembersRouteImport } from './routes/print.members'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppNoticesRouteImport } from './routes/_app/notices'
+import { Route as AppMembersRouteImport } from './routes/_app/members'
+import { Route as AppMemberCategoriesRouteImport } from './routes/_app/member-categories'
+import { Route as AppEventsRouteImport } from './routes/_app/events'
 import { Route as AppBranchesRouteImport } from './routes/_app/branches'
 import { Route as AppBoardOfDirectorsRouteImport } from './routes/_app/board-of-directors'
 import { Route as AppBannersRouteImport } from './routes/_app/banners'
@@ -38,6 +42,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const PrintMembersRoute = PrintMembersRouteImport.update({
+  id: '/print/members',
+  path: '/print/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -46,6 +55,21 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppNoticesRoute = AppNoticesRouteImport.update({
   id: '/notices',
   path: '/notices',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMembersRoute = AppMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMemberCategoriesRoute = AppMemberCategoriesRouteImport.update({
+  id: '/member-categories',
+  path: '/member-categories',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventsRoute = AppEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBranchesRoute = AppBranchesRouteImport.update({
@@ -102,8 +126,12 @@ export interface FileRoutesByFullPath {
   '/banners': typeof AppBannersRoute
   '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
+  '/events': typeof AppEventsRoute
+  '/member-categories': typeof AppMemberCategoriesRoute
+  '/members': typeof AppMembersRoute
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
+  '/print/members': typeof PrintMembersRoute
   '/menus/$menuId': typeof AppMenusMenuIdRoute
   '/menus/': typeof AppMenusIndexRoute
   '/branch/$id/edit': typeof AppBranchIdEditRoute
@@ -116,8 +144,12 @@ export interface FileRoutesByTo {
   '/banners': typeof AppBannersRoute
   '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
+  '/events': typeof AppEventsRoute
+  '/member-categories': typeof AppMemberCategoriesRoute
+  '/members': typeof AppMembersRoute
   '/notices': typeof AppNoticesRoute
   '/settings': typeof AppSettingsRoute
+  '/print/members': typeof PrintMembersRoute
   '/': typeof AppIndexRoute
   '/menus/$menuId': typeof AppMenusMenuIdRoute
   '/menus': typeof AppMenusIndexRoute
@@ -133,8 +165,12 @@ export interface FileRoutesById {
   '/_app/banners': typeof AppBannersRoute
   '/_app/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/_app/branches': typeof AppBranchesRoute
+  '/_app/events': typeof AppEventsRoute
+  '/_app/member-categories': typeof AppMemberCategoriesRoute
+  '/_app/members': typeof AppMembersRoute
   '/_app/notices': typeof AppNoticesRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/print/members': typeof PrintMembersRoute
   '/_app/': typeof AppIndexRoute
   '/_app/menus/$menuId': typeof AppMenusMenuIdRoute
   '/_app/menus/': typeof AppMenusIndexRoute
@@ -151,8 +187,12 @@ export interface FileRouteTypes {
     | '/banners'
     | '/board-of-directors'
     | '/branches'
+    | '/events'
+    | '/member-categories'
+    | '/members'
     | '/notices'
     | '/settings'
+    | '/print/members'
     | '/menus/$menuId'
     | '/menus/'
     | '/branch/$id/edit'
@@ -165,8 +205,12 @@ export interface FileRouteTypes {
     | '/banners'
     | '/board-of-directors'
     | '/branches'
+    | '/events'
+    | '/member-categories'
+    | '/members'
     | '/notices'
     | '/settings'
+    | '/print/members'
     | '/'
     | '/menus/$menuId'
     | '/menus'
@@ -181,8 +225,12 @@ export interface FileRouteTypes {
     | '/_app/banners'
     | '/_app/board-of-directors'
     | '/_app/branches'
+    | '/_app/events'
+    | '/_app/member-categories'
+    | '/_app/members'
     | '/_app/notices'
     | '/_app/settings'
+    | '/print/members'
     | '/_app/'
     | '/_app/menus/$menuId'
     | '/_app/menus/'
@@ -194,6 +242,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrintMembersRoute: typeof PrintMembersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -219,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/print/members': {
+      id: '/print/members'
+      path: '/print/members'
+      fullPath: '/print/members'
+      preLoaderRoute: typeof PrintMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -231,6 +287,27 @@ declare module '@tanstack/react-router' {
       path: '/notices'
       fullPath: '/notices'
       preLoaderRoute: typeof AppNoticesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/members': {
+      id: '/_app/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AppMembersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/member-categories': {
+      id: '/_app/member-categories'
+      path: '/member-categories'
+      fullPath: '/member-categories'
+      preLoaderRoute: typeof AppMemberCategoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/events': {
+      id: '/_app/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof AppEventsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/branches': {
@@ -304,6 +381,9 @@ interface AppRouteChildren {
   AppBannersRoute: typeof AppBannersRoute
   AppBoardOfDirectorsRoute: typeof AppBoardOfDirectorsRoute
   AppBranchesRoute: typeof AppBranchesRoute
+  AppEventsRoute: typeof AppEventsRoute
+  AppMemberCategoriesRoute: typeof AppMemberCategoriesRoute
+  AppMembersRoute: typeof AppMembersRoute
   AppNoticesRoute: typeof AppNoticesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -319,6 +399,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppBannersRoute: AppBannersRoute,
   AppBoardOfDirectorsRoute: AppBoardOfDirectorsRoute,
   AppBranchesRoute: AppBranchesRoute,
+  AppEventsRoute: AppEventsRoute,
+  AppMemberCategoriesRoute: AppMemberCategoriesRoute,
+  AppMembersRoute: AppMembersRoute,
   AppNoticesRoute: AppNoticesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
@@ -334,6 +417,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrintMembersRoute: PrintMembersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

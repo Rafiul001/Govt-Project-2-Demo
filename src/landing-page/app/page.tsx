@@ -7,14 +7,17 @@ import { NoticeBoard } from "@/components/organisms/NoticeBoard";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
+import { UpcomingEvents } from "@/components/organisms/UpcomingEvents";
 import {
   findBranch,
   getBanners,
   getBoardOfDirectors,
   getBranchName,
   getBranches,
+  getMemberCategories,
   getNavTree,
   getNotices,
+  getUpcomingEvents,
 } from "@/lib/api";
 import { notFound } from "next/navigation";
 
@@ -34,18 +37,21 @@ export default async function Home() {
   const branch = findBranch(branches, branchName);
   if (!branch) notFound();
 
-  const [banners, notices, board, menus] = await Promise.all([
-    getBanners(branch.name),
-    getNotices(branch.name),
-    getBoardOfDirectors(branch.name),
-    getNavTree(branch.name),
-  ]);
+  const [banners, notices, board, menus, memberCategories, upcomingEvents] =
+    await Promise.all([
+      getBanners(branch.name),
+      getNotices(branch.name),
+      getBoardOfDirectors(branch.name),
+      getNavTree(branch.name),
+      getMemberCategories(),
+      getUpcomingEvents(branch.name),
+    ]);
 
   return (
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar menus={menus} />
+      <NavBar menus={menus} memberCategories={memberCategories} />
       <main className="flex-1">
         {banners.length > 0 ? (
           <HeroSlider
@@ -56,6 +62,10 @@ export default async function Home() {
         ) : null}
         <AboutSection branchName={branch?.name ?? branchName} />
         <NoticeBoard notices={notices} branches={branches} />
+        <UpcomingEvents
+          events={upcomingEvents}
+          branchName={branch?.name ?? branchName}
+        />
         <BoardOfDirectors members={board} />
         <ContactSection branch={branch} />
       </main>

@@ -288,3 +288,124 @@ export const updatePageSchema = z
     message: "Provide a banner title in Bangla or English",
   });
 export type TUpdatePageForm = z.infer<typeof updatePageSchema>;
+
+// --- Member category (bilingual name + URL slug) ---
+
+const NAME_REQUIRED = "Provide a name in Bangla or English";
+const hasAnyName = (v: { nameBn?: string; nameEn?: string }) =>
+  Boolean(v.nameBn?.trim() || v.nameEn?.trim());
+
+export const createMemberCategorySchema = z
+  .strictObject({
+    nameBn: z.string().trim().max(255).optional(),
+    nameEn: z.string().trim().max(255).optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(1, "Slug is required")
+      .max(255)
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
+        message: "Lowercase letters/numbers separated by hyphens (e.g. players)",
+      }),
+    order: z.number().int().min(0).optional(),
+  })
+  .refine(hasAnyName, { path: ["nameBn"], message: NAME_REQUIRED });
+export type TCreateMemberCategoryForm = z.infer<
+  typeof createMemberCategorySchema
+>;
+
+export const updateMemberCategorySchema = createMemberCategorySchema;
+export type TUpdateMemberCategoryForm = z.infer<
+  typeof updateMemberCategorySchema
+>;
+
+// --- Member (GEMS-style profile) ---
+
+export const bloodGroupValues = [
+  "A+",
+  "A-",
+  "B+",
+  "B-",
+  "AB+",
+  "AB-",
+  "O+",
+  "O-",
+] as const;
+
+export const genderValues = ["male", "female", "other"] as const;
+
+// Optional select/date/text values that also accept the empty string the form
+// controls produce when cleared; edit forms strip "" before submitting.
+const optionalBloodGroup = z
+  .union([z.literal(""), z.enum(bloodGroupValues)])
+  .optional();
+const optionalGender = z
+  .union([z.literal(""), z.enum(genderValues)])
+  .optional();
+const optionalDate = z
+  .union([z.literal(""), z.iso.date("Enter a valid date")])
+  .optional();
+
+const memberProfileFields = {
+  nameBn: z.string().trim().max(255).optional(),
+  nameEn: z.string().trim().max(255).optional(),
+  designation: z.string().trim().max(255).optional(),
+  photo: optionalFile,
+  mobile: z.string().trim().max(32).optional(),
+  email: optionalEmail,
+  order: z.number().int().min(0).optional(),
+  dateOfBirth: optionalDate,
+  bloodGroup: optionalBloodGroup,
+  gender: optionalGender,
+  nid: z.string().trim().max(32).optional(),
+  address: z.string().trim().optional(),
+  discipline: z.string().trim().max(255).optional(),
+  jerseyNumber: z.number().int().min(0).optional(),
+  joiningDate: optionalDate,
+  achievements: z.string().trim().optional(),
+  bio: z.string().trim().optional(),
+};
+
+export const createMemberSchema = z
+  .strictObject({
+    branchId: branchId.optional(),
+    categoryId: z.number("Category is required").int().positive(),
+    ...memberProfileFields,
+  })
+  .refine(hasAnyName, { path: ["nameBn"], message: NAME_REQUIRED });
+export type TCreateMemberForm = z.infer<typeof createMemberSchema>;
+
+export const updateMemberSchema = createMemberSchema;
+export type TUpdateMemberForm = z.infer<typeof updateMemberSchema>;
+
+// --- Event ---
+
+// `datetime-local` values (`YYYY-MM-DDTHH:mm`).
+const dateTimeLocal = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+export const createEventSchema = z
+  .strictObject({
+    branchId: branchId.optional(),
+    titleBn: bnTitle,
+    titleEn: enTitle,
+    descriptionBn: z.string().trim().optional(),
+    descriptionEn: z.string().trim().optional(),
+    venue: z.string().trim().max(255).optional(),
+    startAt: z
+      .string()
+      .regex(dateTimeLocal, "Start date and time are required"),
+    endAt: z
+      .union([z.literal(""), z.string().regex(dateTimeLocal, "Enter a valid date and time")])
+      .optional(),
+    image: optionalFile,
+    isPublished: z.boolean(),
+  })
+  .refine(hasAnyTitle, { path: ["titleBn"], message: TITLE_REQUIRED })
+  .refine((v) => !v.endAt || v.endAt >= v.startAt, {
+    path: ["endAt"],
+    message: "End time must not be before start time",
+  });
+export type TCreateEventForm = z.infer<typeof createEventSchema>;
+
+export const updateEventSchema = createEventSchema;
+export type TUpdateEventForm = z.infer<typeof updateEventSchema>;

@@ -3,7 +3,13 @@ import { NavBar } from "@/components/organisms/NavBar";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TopBar } from "@/components/organisms/TopBar";
-import { getBranch, getBranchName, getDynamicPage, getNavTree } from "@/lib/api";
+import {
+  getBranch,
+  getBranchName,
+  getDynamicPage,
+  getMemberCategories,
+  getNavTree,
+} from "@/lib/api";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -45,9 +51,10 @@ export default async function DirectMenuPage({
   const branch = await getBranch(branchName);
   if (!branch) notFound();
 
-  const [menus, page] = await Promise.all([
+  const [menus, page, memberCategories] = await Promise.all([
     getNavTree(branch.name),
     getDynamicPage(menu, null, branch.name),
+    getMemberCategories(),
   ]);
 
   if (!page) notFound();
@@ -56,7 +63,7 @@ export default async function DirectMenuPage({
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar menus={menus} />
+      <NavBar menus={menus} memberCategories={memberCategories} />
       <main className="flex-1">
         <DynamicPageContent
           bannerTitleBn={page.bannerTitleBn}

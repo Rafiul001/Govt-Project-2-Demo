@@ -6,3 +6,5 @@ export { BranchSelect } from "./BranchSelect";
 export { SwitchInput } from "./SwitchInput";
 export { FileInput } from "./FileInput";
 export { MarkdownInput } from "./MarkdownInput";
+export { DateInput } from "./DateInput";
+export { CategorySelect } from "./CategorySelect";

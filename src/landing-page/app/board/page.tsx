@@ -7,6 +7,7 @@ import {
   getAllBoardOfDirectors,
   getBranch,
   getBranchName,
+  getMemberCategories,
   getNavTree,
 } from "@/lib/api";
 import type { Metadata } from "next";
@@ -35,16 +36,17 @@ export default async function BoardPage() {
   const branch = await getBranch(branchName);
   if (!branch) notFound();
 
-  const [board, menus] = await Promise.all([
+  const [board, menus, memberCategories] = await Promise.all([
     getAllBoardOfDirectors(branch.name),
     getNavTree(branch.name),
+    getMemberCategories(),
   ]);
 
   return (
     <>
       <TopBar />
       <SiteHeader branch={branch} />
-      <NavBar menus={menus} />
+      <NavBar menus={menus} memberCategories={memberCategories} />
       <main className="flex-1">
         <BoardArchive members={board} branchName={branch?.name ?? branchName} />
       </main>

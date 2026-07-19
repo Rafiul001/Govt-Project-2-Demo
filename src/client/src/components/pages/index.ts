@@ -10,3 +10,7 @@ export { PageEditPage } from "./PageEditPage";
 export { NoticesPage } from "./NoticesPage";
 export { AdminsPage } from "./AdminsPage";
 export { SettingsPage } from "./SettingsPage";
+export { MembersPage } from "./MembersPage";
+export { MemberCategoriesPage } from "./MemberCategoriesPage";
+export { EventsPage } from "./EventsPage";
+export { PrintMembersPage } from "./PrintMembersPage";

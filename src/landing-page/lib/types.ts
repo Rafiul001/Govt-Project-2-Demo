@@ -57,6 +57,63 @@ export type TBanner = {
   updatedAt: string;
 };
 
+// --- Members (dynamic categories of people) ---
+
+/** A dynamic member category (players, coaches, …), shared by every branch. */
+export type TMemberCategory = {
+  id: number;
+  nameBn: string | null;
+  nameEn: string | null;
+  /** URL key of the category's page: `/members/:slug`. */
+  slug: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * A member profile as the PUBLIC API returns it — the private fields (NID,
+ * mobile, email, address, date of birth) are stripped server-side for
+ * anonymous callers and never reach this site.
+ */
+export type TMember = {
+  id: number;
+  nameBn: string | null;
+  nameEn: string | null;
+  designation: string | null;
+  photo: string | null;
+  order: number;
+  bloodGroup: string | null;
+  gender: string | null;
+  discipline: string | null;
+  jerseyNumber: number | null;
+  joiningDate: string | null;
+  achievements: string | null;
+  bio: string | null;
+  categoryId: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// --- Events ---
+
+export type TEvent = {
+  id: number;
+  titleBn: string | null;
+  titleEn: string | null;
+  descriptionBn: string | null;
+  descriptionEn: string | null;
+  venue: string | null;
+  startAt: string;
+  endAt: string | null;
+  image: string | null;
+  isPublished: boolean;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // --- Dynamic menus / pages ---
 
 // All titles/content are bilingual (`*Bn`/`*En`): each language is optional but

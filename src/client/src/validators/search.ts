@@ -36,3 +36,29 @@ export const noticesSearchSchema = filterSearchSchema.extend({
 });
 
 export type TNoticesSearch = z.infer<typeof noticesSearchSchema>;
+
+/**
+ * Members list: base filters plus a category filter and the card-grid/table
+ * view toggle — all in the URL like every other list screen.
+ */
+export const membersSearchSchema = filterSearchSchema.extend({
+  categoryId: z.coerce.number().int().positive().optional().catch(undefined),
+  view: z.enum(["grid", "table"]).catch("grid").default("grid"),
+});
+
+export type TMembersSearch = z.infer<typeof membersSearchSchema>;
+
+/**
+ * Events list: base filters plus the list/calendar view toggle and the
+ * calendar's `YYYY-MM` month (defaults to the current month when absent).
+ */
+export const eventsSearchSchema = filterSearchSchema.extend({
+  view: z.enum(["list", "calendar"]).catch("list").default("list"),
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+    .optional()
+    .catch(undefined),
+});
+
+export type TEventsSearch = z.infer<typeof eventsSearchSchema>;

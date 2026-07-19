@@ -40,3 +40,36 @@ export const submenuListQuerySchema = z.strictObject({
 });
 
 export type TSubmenuListQuery = z.infer<typeof submenuListQuerySchema>;
+
+/**
+ * Branch list params plus optional category filters — used by the member list
+ * route. The dashboard filters by `categoryId`; the public landing sites (which
+ * only know the URL slug) filter by `categorySlug`.
+ */
+export const memberListQuerySchema = z.strictObject({
+  page: z.coerce.number().int().positive().catch(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).catch(10).default(10),
+  branchName: z.string().trim().min(1).optional(),
+  search: z.string().trim().min(1).optional(),
+  categoryId: z.coerce.number().int().positive().optional(),
+  categorySlug: z.string().trim().min(1).optional(),
+});
+
+export type TMemberListQuery = z.infer<typeof memberListQuerySchema>;
+
+/**
+ * Branch list params plus an optional `from`/`to` date window (inclusive,
+ * `YYYY-MM-DD`) — used by the event list route to back the month calendar.
+ * Events are matched by overlap, so a multi-day event shows in every month it
+ * touches.
+ */
+export const eventListQuerySchema = z.strictObject({
+  page: z.coerce.number().int().positive().catch(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).catch(10).default(10),
+  branchName: z.string().trim().min(1).optional(),
+  search: z.string().trim().min(1).optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+});
+
+export type TEventListQuery = z.infer<typeof eventListQuerySchema>;

@@ -7,4 +7,7 @@ export const DB = {
   MENU: "menus",
   SUBMENU: "submenus",
   PAGE: "pages",
+  MEMBER_CATEGORY: "membercategories",
+  MEMBER: "members",
+  EVENT: "events",
 } as const;

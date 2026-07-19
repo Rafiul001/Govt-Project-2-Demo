@@ -36,6 +36,18 @@ export type TSubmenuListParams = TListParams & {
   menuId?: number;
 };
 
+/** List params for members: list params plus an optional category filter. */
+export type TMemberListParams = TListParams & {
+  categoryId?: number;
+};
+
+/** List params for events: list params plus an optional date window. */
+export type TEventListParams = TListParams & {
+  /** Inclusive `YYYY-MM-DD` window; events are matched by overlap. */
+  from?: string;
+  to?: string;
+};
+
 export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
 
 // --- Entities ---
@@ -316,4 +328,123 @@ export type TUpdatePageInput = {
   contentBn?: string;
   contentEn?: string;
   isPublished?: boolean;
+};
+
+// --- Member category (dynamic, global, super-admin managed) ---
+
+export type TMemberCategory = {
+  id: number;
+  nameBn: string | null;
+  nameEn: string | null;
+  slug: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TCreateMemberCategoryInput = {
+  nameBn?: string;
+  nameEn?: string;
+  slug: string;
+  order?: number;
+};
+
+export type TUpdateMemberCategoryInput = {
+  nameBn?: string;
+  nameEn?: string;
+  slug?: string;
+  order?: number;
+};
+
+// --- Member (GEMS-style profile) ---
+
+export type TMember = {
+  id: number;
+  nameBn: string | null;
+  nameEn: string | null;
+  designation: string | null;
+  photo: string | null;
+  mobile: string | null;
+  email: string | null;
+  order: number;
+  dateOfBirth: string | null;
+  bloodGroup: string | null;
+  gender: string | null;
+  nid: string | null;
+  address: string | null;
+  discipline: string | null;
+  jerseyNumber: number | null;
+  joiningDate: string | null;
+  achievements: string | null;
+  bio: string | null;
+  categoryId: number;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TCreateMemberInput = {
+  branchId?: number;
+  categoryId: number;
+  nameBn?: string;
+  nameEn?: string;
+  designation?: string;
+  photo?: File;
+  mobile?: string;
+  email?: string;
+  order?: number;
+  dateOfBirth?: string;
+  bloodGroup?: string;
+  gender?: string;
+  nid?: string;
+  address?: string;
+  discipline?: string;
+  jerseyNumber?: number;
+  joiningDate?: string;
+  achievements?: string;
+  bio?: string;
+};
+
+export type TUpdateMemberInput = Omit<TCreateMemberInput, "categoryId"> & {
+  categoryId?: number;
+  /** Remove the saved photo (ignored when a new `photo` file is sent). */
+  removePhoto?: boolean;
+};
+
+// --- Event ---
+
+export type TEvent = {
+  id: number;
+  titleBn: string | null;
+  titleEn: string | null;
+  descriptionBn: string | null;
+  descriptionEn: string | null;
+  venue: string | null;
+  startAt: string;
+  endAt: string | null;
+  image: string | null;
+  isPublished: boolean;
+  branchId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TCreateEventInput = {
+  branchId?: number;
+  titleBn?: string;
+  titleEn?: string;
+  descriptionBn?: string;
+  descriptionEn?: string;
+  venue?: string;
+  /** `datetime-local` value (`YYYY-MM-DDTHH:mm`); the API coerces it. */
+  startAt: string;
+  endAt?: string;
+  image?: File;
+  isPublished?: boolean;
+};
+
+export type TUpdateEventInput = Omit<TCreateEventInput, "startAt"> & {
+  startAt?: string;
+  /** Remove the saved image (ignored when a new `image` file is sent). */
+  removeImage?: boolean;
 };

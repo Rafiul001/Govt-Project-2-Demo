@@ -6,3 +6,6 @@ export * from "./bannerSchema";
 export * from "./menuSchema";
 export * from "./submenuSchema";
 export * from "./pageSchema";
+export * from "./memberCategorySchema";
+export * from "./memberSchema";
+export * from "./eventSchema";

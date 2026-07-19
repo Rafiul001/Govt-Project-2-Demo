@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { pickLang } from "@/lib/i18n";
-import type { TNavMenu } from "@/lib/types";
+import type { TMemberCategory, TNavMenu } from "@/lib/types";
 import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -17,10 +17,17 @@ function pagePath(menuSlug: string, submenuSlug?: string): string {
 
 /**
  * Primary green navigation bar. Renders the fixed site sections plus any
- * dynamic menus (each a dropdown of its published sub-menu pages) passed in
- * from the server. Collapses to a toggle menu on small screens.
+ * dynamic menus (each a dropdown of its published sub-menu pages) and the
+ * member-category dropdown passed in from the server. Collapses to a toggle
+ * menu on small screens.
  */
-export function NavBar({ menus = [] }: { menus?: TNavMenu[] }) {
+export function NavBar({
+  menus = [],
+  memberCategories = [],
+}: {
+  menus?: TNavMenu[];
+  memberCategories?: TMemberCategory[];
+}) {
   const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -31,6 +38,7 @@ export function NavBar({ menus = [] }: { menus?: TNavMenu[] }) {
     { label: t.nav.about, href: "/#about" },
     { label: t.nav.notices, href: "/notices" },
     { label: t.nav.board, href: "/board" },
+    { label: t.nav.events, href: "/events" },
     { label: t.nav.contact, href: "/#contact" },
   ];
 
@@ -48,6 +56,31 @@ export function NavBar({ menus = [] }: { menus?: TNavMenu[] }) {
               </Link>
             </li>
           ))}
+
+          {/* Dynamic member categories → "Members" dropdown */}
+          {memberCategories.length > 0 ? (
+            <li className="group relative">
+              <button
+                type="button"
+                className="flex items-center gap-1 px-4 py-3 text-sm font-medium transition-colors hover:bg-govt-green-dark"
+              >
+                {t.nav.members}
+                <ChevronDown className="size-3.5" />
+              </button>
+              <ul className="invisible absolute left-0 top-full z-10 min-w-52 border-t-2 border-govt-red bg-white text-slate-800 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
+                {memberCategories.map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      href={`/members/${encodeURIComponent(category.slug)}`}
+                      className="block px-4 py-2.5 text-sm transition-colors hover:bg-slate-100"
+                    >
+                      {pickLang(lang, category.nameBn, category.nameEn)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ) : null}
 
           {menus.map((menu) =>
             // A menu whose page is attached directly is a plain link.
@@ -114,6 +147,25 @@ export function NavBar({ menus = [] }: { menus?: TNavMenu[] }) {
               </Link>
             </li>
           ))}
+
+          {/* Dynamic member categories (mobile) */}
+          {memberCategories.length > 0 ? (
+            <li className="border-t border-white/10">
+              <span className="block px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/70">
+                {t.nav.members}
+              </span>
+              {memberCategories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/members/${encodeURIComponent(category.slug)}`}
+                  className="block px-6 py-2.5 text-sm font-medium transition-colors hover:bg-govt-green-dark"
+                  onClick={() => setOpen(false)}
+                >
+                  {pickLang(lang, category.nameBn, category.nameEn)}
+                </Link>
+              ))}
+            </li>
+          ) : null}
 
           {menus.map((menu) =>
             menu.hasPage && menu.submenus.length === 0 ? (
