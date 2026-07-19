@@ -6,16 +6,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBranch, useUpdateBranch } from "../../hooks/useBranches";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { filePatch, fileRemoved } from "../../lib/fileField";
+import { branchLandingOrigin } from "../../lib/landingOrigin";
 import type { TBranch } from "../../types";
 import { createBranchSchema, type TCreateBranchForm } from "../../validators";
 import { FileInput, TextInput } from "../formInputs";
 import { ErrorState, LoadingButton, LoadingState } from "../molecules";
-
-/**
- * Origin of the public landing site, embedded as the live preview iframe. The
- * dev default matches `bun run dev` (landing on :3001); override in production.
- */
-const LANDING_URL = import.meta.env.VITE_LANDING_URL ?? "http://localhost:3001";
 
 /** Read a picked file as a data URL so it survives a cross-origin postMessage. */
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -49,6 +44,11 @@ function BranchEditor({ branch }: { branch: TBranch }) {
   const updateMutation = useUpdateBranch();
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // The preview iframe lives on the branch's own landing origin (like the
+  // page editor's preview), so its nav links resolve to the branch's real
+  // site — clicking "Notice Board" etc. browses the live pages in the pane.
+  const landingOrigin = branchLandingOrigin(branch.name);
 
   // Resizable split: `leftPct` is the details pane width as a % of the row.
   const splitRef = useRef<HTMLDivElement>(null);
@@ -145,10 +145,10 @@ function BranchEditor({ branch }: { branch: TBranch }) {
 
       win.postMessage(
         { type: "branch-preview", branch: previewBranch },
-        LANDING_URL,
+        landingOrigin,
       );
     },
-    [branch],
+    [branch, landingOrigin],
   );
 
   // Re-push the preview whenever any field changes.
@@ -161,7 +161,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
   // with the current values so nothing is missed if our earlier post raced it.
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      if (event.origin !== LANDING_URL) return;
+      if (event.origin !== landingOrigin) return;
       if (
         (event.data as { type?: string } | undefined)?.type === "preview-ready"
       ) {
@@ -170,7 +170,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [form, postPreview]);
+  }, [form, postPreview, landingOrigin]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow)">
@@ -273,7 +273,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           <iframe
             ref={iframeRef}
             title="Branch preview"
-            src={`${LANDING_URL}/preview`}
+            src={`${landingOrigin}/preview`}
             className={`size-full border-0 ${dragging ? "pointer-events-none select-none" : ""}`}
             onLoad={() => void postPreview(form.state.values)}
           />

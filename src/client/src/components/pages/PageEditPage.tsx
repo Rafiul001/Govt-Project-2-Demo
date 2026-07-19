@@ -23,6 +23,7 @@ import { useSubmenu } from "../../hooks/useSubmenus";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { displayTitle } from "../../lib/displayTitle";
 import { filePatch, fileRemoved } from "../../lib/fileField";
+import { branchLandingOrigin } from "../../lib/landingOrigin";
 import type { TBranch, TMenu, TPage, TSubmenu } from "../../types";
 import { updatePageSchema, type TUpdatePageForm } from "../../validators";
 import {
@@ -32,22 +33,6 @@ import {
   TextInput,
 } from "../formInputs";
 import { ErrorState, LoadingButton, LoadingState } from "../molecules";
-
-/** Origin of the public landing site, embedded as the live preview iframe. */
-const LANDING_URL = import.meta.env.VITE_LANDING_URL ?? "http://localhost:3001";
-
-/**
- * Landing-site origin for a branch — the branch name becomes the subdomain
- * (`Barishal` → `http://barishal.localhost:3001`), mirroring how the public
- * site resolves its branch from the request host. Serving the preview iframe
- * from this origin makes every relative link inside it (nav menus, logo,
- * notices) resolve to the branch's real landing site.
- */
-function branchLandingOrigin(branchName: string): string {
-  const url = new URL(LANDING_URL);
-  url.host = `${branchName.toLowerCase()}.${url.host}`;
-  return url.origin;
-}
 
 /** Read a picked file as a data URL so it survives a cross-origin postMessage. */
 function readFileAsDataUrl(file: File): Promise<string> {
