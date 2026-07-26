@@ -109,7 +109,7 @@ export function PrintMembersPage({
 
   return (
     // Forced light colors: this page exists to be printed.
-    <div className="min-h-screen bg-white p-8 text-black">
+    <div className="min-h-screen bg-white p-4 text-black sm:p-8">
       <div className="mb-4 flex items-start justify-between print:hidden">
         <p className="text-sm text-neutral-500">
           Use your browser's print dialog to save this list as a PDF.
@@ -134,7 +134,14 @@ export function PrintMembersPage({
         </p>
       </header>
 
-      <table className="w-full border-collapse text-sm">
+      {/*
+        The table is sized for A4, so on a phone it is wider than the screen.
+        Scroll it inside its own box rather than letting it widen the document
+        — `print:overflow-visible` drops the scroller when printing so the
+        paper layout is untouched.
+      */}
+      <div className="-mx-4 overflow-x-auto px-4 print:mx-0 print:overflow-visible print:px-0">
+      <table className="w-full min-w-3xl border-collapse text-sm print:min-w-0">
         <thead>
           <tr>
             {[
@@ -191,6 +198,7 @@ export function PrintMembersPage({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

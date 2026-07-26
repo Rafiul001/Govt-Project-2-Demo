@@ -29,6 +29,7 @@ import {
   isEmptyHighlight,
   toHighlightSlots,
 } from "../../lib/aboutDefaults";
+import { LG_QUERY, useMediaQuery } from "../../hooks/useMediaQuery";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { filePatch, fileRemoved } from "../../lib/fileField";
 import { branchLandingOrigin } from "../../lib/landingOrigin";
@@ -154,6 +155,12 @@ function BranchEditor({ branch }: { branch: TBranch }) {
   const [viewMode, setViewMode] = useState<"split" | "preview" | "edit">(
     "split",
   );
+
+  // Two panes side by side need real width, so below `lg` the split collapses
+  // to whichever single pane the toggle implies. `viewMode` still holds the
+  // user's choice — widening the window restores it.
+  const isWide = useMediaQuery(LG_QUERY);
+  const effectiveMode = isWide || viewMode !== "split" ? viewMode : "edit";
 
   useEffect(() => {
     if (!dragging) return;
@@ -308,7 +315,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-secondary shadow-(--card-shadow)">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-border px-5 py-3">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-3 sm:px-5">
         <Button
           isIconOnly
           size="sm"
@@ -336,6 +343,9 @@ function BranchEditor({ branch }: { branch: TBranch }) {
             size="sm"
             variant={viewMode === "split" ? "primary" : "ghost"}
             aria-label="Side-by-side view"
+            // Hidden below `lg`, where there is not enough width for two panes
+            // and the layout collapses to a single one regardless.
+            className="hidden lg:inline-flex"
             onPress={() => setViewMode("split")}
           >
             <Columns2Icon className="size-4" />
@@ -382,11 +392,11 @@ function BranchEditor({ branch }: { branch: TBranch }) {
       <div ref={splitRef} className="flex flex-1 overflow-hidden">
         {/* Left: editable details */}
         <form
-          style={viewMode === "split" ? { width: `${leftPct}%` } : undefined}
+          style={effectiveMode === "split" ? { width: `${leftPct}%` } : undefined}
           className={`flex-col gap-4 overflow-y-auto p-6 ${
-            viewMode === "preview"
+            effectiveMode === "preview"
               ? "hidden"
-              : viewMode === "edit"
+              : effectiveMode === "edit"
                 ? "flex w-full"
                 : "flex shrink-0"
           }`}
@@ -531,7 +541,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
         </form>
 
         {/* Drag handle (only meaningful when both panes are visible) */}
-        {viewMode === "split" ? (
+        {effectiveMode === "split" ? (
           <div
             role="separator"
             aria-orientation="vertical"
@@ -550,7 +560,7 @@ function BranchEditor({ branch }: { branch: TBranch }) {
         {/* Right: live preview (kept mounted across mode switches) */}
         <div
           className={`min-w-0 flex-1 bg-slate-100 ${
-            viewMode === "edit" ? "hidden" : ""
+            effectiveMode === "edit" ? "hidden" : ""
           }`}
         >
           <iframe

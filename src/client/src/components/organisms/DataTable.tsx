@@ -14,7 +14,15 @@ type TDataTableProps<T> = {
   rows: T[];
 };
 
-/** Thin generic wrapper over HeroUI's table for static, already-paged rows. */
+/**
+ * Thin generic wrapper over HeroUI's table for static, already-paged rows.
+ *
+ * A table cannot reflow below the width its columns need, so on narrow screens
+ * the only sane behaviour is to scroll it sideways. `overflow-x-auto` plus
+ * `max-w-full` makes the container do that; without them the table simply grew
+ * past the viewport and its right-hand columns (including the row actions)
+ * were unreachable on a phone.
+ */
 export function DataTable<T extends { id: number }>({
   ariaLabel,
   columns,
@@ -22,7 +30,7 @@ export function DataTable<T extends { id: number }>({
 }: TDataTableProps<T>) {
   return (
     <Table>
-      <Table.ScrollContainer className="rounded-xl border border-border">
+      <Table.ScrollContainer className="max-w-full overflow-x-auto rounded-xl border border-border">
         <Table.Content aria-label={ariaLabel}>
           <Table.Header>
             {columns.map((column) => (

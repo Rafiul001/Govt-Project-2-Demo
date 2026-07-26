@@ -49,16 +49,19 @@ function StatTile({ to, label, value, icon: Icon }: TStatTileProps) {
   return (
     <Link
       to={to}
-      className="group relative overflow-hidden rounded-2xl border border-border bg-surface-secondary p-5 shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-0.5 hover:shadow-(--card-shadow-hover)"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-surface-secondary p-4 shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-0.5 hover:shadow-(--card-shadow-hover) sm:p-5"
     >
       <div className="flex items-start justify-between">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-accent/15 text-accent">
-          <Icon className="size-6" />
+        <div className="flex size-10 items-center justify-center rounded-xl bg-accent/15 text-accent sm:size-12">
+          <Icon className="size-5 sm:size-6" />
         </div>
-        <ArrowUpRightIcon className="size-5 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+        {/* Hover affordance only — hidden where there is no hover anyway. */}
+        <ArrowUpRightIcon className="hidden size-5 text-muted opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
       </div>
-      <p className="mt-4 text-3xl font-bold text-foreground">{value}</p>
-      <p className="text-sm text-muted">{label}</p>
+      <p className="mt-3 text-2xl font-bold text-foreground sm:mt-4 sm:text-3xl">
+        {value}
+      </p>
+      <p className="truncate text-sm text-muted">{label}</p>
     </Link>
   );
 }
@@ -116,8 +119,9 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {/* Stats — two per row even on the narrowest phones; one full-width tile
+          per row turned the top of the dashboard into pure scrolling. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         <StatTile
           to="/members"
           label="Members"
