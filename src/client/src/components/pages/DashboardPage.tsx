@@ -5,15 +5,18 @@ import {
   Building2Icon,
   CalendarIcon,
   ContactIcon,
+  ExternalLinkIcon,
   MegaphoneIcon,
   PlusIcon,
   ShieldUserIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useAdmins } from "../../hooks/useAdmins";
+import { useBranch } from "../../hooks/useBranches";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
 import { useMembers } from "../../hooks/useMembers";
 import { useNotices } from "../../hooks/useNotices";
+import { branchLandingOrigin } from "../../lib/landingOrigin";
 import type { TNotice } from "../../types";
 
 type TIconType = ComponentType<{ className?: string }>;
@@ -39,31 +42,59 @@ const shortDate = (iso: string) =>
   });
 
 type TStatTileProps = {
-  to: string;
+  /** Internal route the tile links to… */
+  to?: string;
+  /** …or an external URL, opened in a new tab (the branch's live site). */
+  href?: string;
   label: string;
   value: number | string;
   icon: TIconType;
 };
 
-function StatTile({ to, label, value, icon: Icon }: TStatTileProps) {
-  return (
-    <Link
-      to={to}
-      className="group relative overflow-hidden rounded-2xl border border-border bg-surface-secondary p-4 shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-0.5 hover:shadow-(--card-shadow-hover) sm:p-5"
-    >
+/**
+ * A dashboard summary tile. Links to an internal route (`to`), out to the
+ * public site (`href`), or nowhere at all while its data is still loading.
+ */
+function StatTile({ to, href, label, value, icon: Icon }: TStatTileProps) {
+  const className =
+    "group relative block overflow-hidden rounded-2xl border border-border bg-surface-secondary p-4 shadow-(--card-shadow) transition-all duration-300 hover:-translate-y-0.5 hover:shadow-(--card-shadow-hover) sm:p-5";
+
+  const body = (
+    <>
       <div className="flex items-start justify-between">
         <div className="flex size-10 items-center justify-center rounded-xl bg-accent/15 text-accent sm:size-12">
           <Icon className="size-5 sm:size-6" />
         </div>
-        {/* Hover affordance only — hidden where there is no hover anyway. */}
-        <ArrowUpRightIcon className="hidden size-5 text-muted opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
+        {href ? (
+          // A live link leaves the dashboard, so its icon is always visible
+          // rather than a hover-only affordance.
+          <ExternalLinkIcon className="size-5 shrink-0 text-muted transition-colors group-hover:text-accent" />
+        ) : to ? (
+          <ArrowUpRightIcon className="hidden size-5 text-muted opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
+        ) : null}
       </div>
-      <p className="mt-3 text-2xl font-bold text-foreground sm:mt-4 sm:text-3xl">
+      <p className="mt-3 truncate text-2xl font-bold text-foreground sm:mt-4 sm:text-3xl">
         {value}
       </p>
       <p className="truncate text-sm text-muted">{label}</p>
-    </Link>
+    </>
   );
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {body}
+      </a>
+    );
+  }
+  if (to) {
+    return (
+      <Link to={to} className={className}>
+        {body}
+      </Link>
+    );
+  }
+  return <div className={className}>{body}</div>;
 }
 
 export function DashboardPage() {
@@ -74,6 +105,13 @@ export function DashboardPage() {
   const countParams = { page: 1, pageSize: 1 };
   const members = useMembers(countParams);
   const admins = useAdmins(countParams, { enabled: isSuperAdmin });
+
+  // A branch admin's own branch, for the name + live-site link on its tile.
+  // Super admins are not pinned to a branch, so this stays idle for them.
+  const branchQuery = useBranch(
+    !isSuperAdmin && admin?.branchId ? admin.branchId : NaN,
+  );
+  const branch = branchQuery.data;
 
   // Recent notices feed.
   const recent = useNotices({ page: 1, pageSize: 5 });
@@ -142,10 +180,17 @@ export function DashboardPage() {
             icon={ShieldUserIcon}
           />
         ) : (
+          // A branch admin's own branch: its name, linking out to the live
+          // public site. The id ("#6") meant nothing to them, and pointing the
+          // tile at /members just duplicated the Members tile beside it.
           <StatTile
-            to="/members"
-            label="Branch"
-            value={admin?.branchId ? `#${admin.branchId}` : "—"}
+            href={branch ? branchLandingOrigin(branch.name) : undefined}
+            label={
+              branch
+                ? branchLandingOrigin(branch.name).replace(/^https?:\/\//, "")
+                : "Branch"
+            }
+            value={branch?.name ?? (branchQuery.isLoading ? "…" : "—")}
             icon={Building2Icon}
           />
         )}
