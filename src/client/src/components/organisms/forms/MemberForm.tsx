@@ -1,4 +1,4 @@
-import { Button, toast } from "@heroui/react";
+import { Button, Checkbox, toast } from "@heroui/react";
 import { useForm } from "@tanstack/react-form";
 import { useCreateMember, useUpdateMember } from "../../../hooks/useMembers";
 import { useCurrentAdmin } from "../../../hooks/useCurrentAdmin";
@@ -8,8 +8,11 @@ import type { TMember } from "../../../types";
 import {
   bloodGroupValues,
   createMemberSchema,
+  defaultMemberPublicFieldValues,
   genderValues,
+  memberPublicFieldValues,
   type TCreateMemberForm,
+  type TMemberPublicFieldValue,
 } from "../../../validators";
 import {
   BranchSelect,
@@ -32,6 +35,44 @@ const genderOptions = genderValues.map((value) => ({
   value,
   label: value.charAt(0).toUpperCase() + value.slice(1),
 }));
+
+/**
+ * Human labels for the configurable public fields, grouped the way the profile
+ * itself is. Anything the admin leaves unchecked is stripped from the member's
+ * public profile by the API — it never reaches the landing site.
+ */
+const PUBLIC_FIELD_GROUPS: {
+  title: string;
+  fields: { name: TMemberPublicFieldValue; label: string }[];
+}[] = [
+  {
+    title: "Contact",
+    fields: [
+      { name: "mobile", label: "Mobile" },
+      { name: "email", label: "Email" },
+    ],
+  },
+  {
+    title: "Personal",
+    fields: [
+      { name: "dateOfBirth", label: "Date of birth" },
+      { name: "bloodGroup", label: "Blood group" },
+      { name: "gender", label: "Gender" },
+      { name: "nid", label: "NID" },
+      { name: "address", label: "Address" },
+    ],
+  },
+  {
+    title: "Sports",
+    fields: [
+      { name: "discipline", label: "Discipline" },
+      { name: "jerseyNumber", label: "Jersey number" },
+      { name: "joiningDate", label: "Joining date" },
+      { name: "achievements", label: "Achievements" },
+      { name: "bio", label: "Bio" },
+    ],
+  },
+];
 
 /** Optional text: empty form strings are omitted from the payload. */
 function str(value: string | undefined): string | undefined {
@@ -89,6 +130,11 @@ export function MemberForm({
       joiningDate: initial?.joiningDate ?? "",
       achievements: initial?.achievements ?? "",
       bio: initial?.bio ?? "",
+      // A member that has never been configured starts from the API's own
+      // default set, so editing an existing profile does not silently change
+      // what the public site already shows.
+      publicFields: (initial?.publicFields ??
+        defaultMemberPublicFieldValues) as TMemberPublicFieldValue[],
     } as TCreateMemberForm,
     validators: { onChange: createMemberSchema },
     onSubmit: async ({ value }) => {
@@ -111,6 +157,9 @@ export function MemberForm({
         achievements: str(value.achievements),
         bio: str(value.bio),
         branchId: isSuperAdmin ? value.branchId : undefined,
+        // Multipart carries strings only, so the published-field list goes as
+        // JSON. Always sent — an empty list is a meaningful choice.
+        publicFields: JSON.stringify(value.publicFields ?? []),
       };
       try {
         if (initial) {
@@ -146,6 +195,26 @@ export function MemberForm({
         void form.handleSubmit();
       }}
     >
+      {/* Actions sit at the top: these forms are long enough that a footer
+          submit falls well below the fold. Sticky so it stays reachable while
+          the page scrolls. */}
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 flex justify-end gap-2 border-b border-border bg-surface-secondary px-6 py-3">
+        <Button type="button" variant="ghost" onPress={onCancel}>
+          Cancel
+        </Button>
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              {isEdit ? "Save changes" : "Create"}
+            </LoadingButton>
+          )}
+        </form.Subscribe>
+      </div>
+
       <SectionHeading>Basic information</SectionHeading>
       <div className="grid gap-4 sm:grid-cols-2">
         <form.Field name="categoryId">
@@ -256,22 +325,62 @@ export function MemberForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onPress={onCancel}>
-          Cancel
-        </Button>
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <LoadingButton
-              type="submit"
-              variant="primary"
-              isLoading={isSubmitting}
-            >
-              {isEdit ? "Save changes" : "Create"}
-            </LoadingButton>
-          )}
-        </form.Subscribe>
-      </div>
+      <SectionHeading>Public profile</SectionHeading>
+      <p className="-mt-2 text-sm text-muted">
+        Tick the fields this member agrees to show on the public site. Name,
+        designation and photo are always public; anything left unticked is
+        stripped from the profile before it leaves the API.
+      </p>
+      <form.Field name="publicFields">
+        {(field) => {
+          const selected = new Set<TMemberPublicFieldValue>(
+            (field.state.value ?? []) as TMemberPublicFieldValue[],
+          );
+          const toggle = (name: TMemberPublicFieldValue, on: boolean) => {
+            const next = new Set(selected);
+            if (on) next.add(name);
+            else next.delete(name);
+            // Store in the canonical order so the saved list is stable.
+            field.handleChange(
+              memberPublicFieldValues.filter((value) => next.has(value)),
+            );
+          };
+
+          return (
+            <div className="grid gap-4 sm:grid-cols-3">
+              {PUBLIC_FIELD_GROUPS.map((group) => (
+                <fieldset
+                  key={group.title}
+                  className="rounded-xl border border-border p-4"
+                >
+                  <legend className="px-1 text-sm font-medium text-muted">
+                    {group.title}
+                  </legend>
+                  <div className="flex flex-col gap-2.5">
+                    {group.fields.map(({ name, label }) => (
+                      <Checkbox
+                        key={name}
+                        // `relative` anchors React Aria's visually-hidden
+                        // input, as on SwitchInput.
+                        className="relative flex flex-row items-center gap-2"
+                        isSelected={selected.has(name)}
+                        onChange={(isSelected) => toggle(name, isSelected)}
+                      >
+                        <Checkbox.Content>
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                        </Checkbox.Content>
+                        <span className="text-sm">{label}</span>
+                      </Checkbox>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+          );
+        }}
+      </form.Field>
     </form>
   );
 }

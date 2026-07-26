@@ -5,9 +5,11 @@
  * keyed by language. Components read the catalogue for the active language via
  * `useLanguage()` (see `components/providers/LanguageProvider.tsx`).
  *
- * Dynamic, API-sourced content (branch name, notice titles, board members) is
+ * Dynamic, API-sourced content (branch name, notice titles, member profiles) is
  * stored in a single language upstream and is rendered as-is — only the chrome
- * around it switches.
+ * around it switches. Bilingual content (menus, pages, events, the branch's
+ * "About us" copy) is picked per language via `pickLang`, and the `about`
+ * entries below double as the fallback when a branch has written none.
  */
 
 export type TLanguage = "bn" | "en";
@@ -66,7 +68,6 @@ type TDictionary = {
     home: string;
     about: string;
     notices: string;
-    board: string;
     members: string;
     events: string;
     contact: string;
@@ -107,23 +108,31 @@ type TDictionary = {
     prev: string;
     next: string;
   };
-  board: {
-    title: string;
-    subtitle: string;
-    empty: string;
-    viewAll: string;
-  };
-  boardPage: {
-    heading: string;
-    subtitle: string;
-    backHome: string;
-    count: string;
-    empty: string;
-  };
   membersPage: {
     subtitle: string;
     backHome: string;
     count: string;
+    empty: string;
+    viewProfile: string;
+  };
+  memberPage: {
+    backToCategory: string;
+    heading: string;
+    contact: string;
+    personal: string;
+    sports: string;
+    mobile: string;
+    email: string;
+    dateOfBirth: string;
+    bloodGroup: string;
+    gender: string;
+    nid: string;
+    address: string;
+    discipline: string;
+    jerseyNumber: string;
+    joiningDate: string;
+    achievements: string;
+    bio: string;
     empty: string;
   };
   events: {
@@ -143,6 +152,29 @@ type TDictionary = {
     prevMonth: string;
     nextMonth: string;
     listHeading: string;
+    allHeading: string;
+    calendarHeading: string;
+    searchPlaceholder: string;
+    searchAction: string;
+    clearFilters: string;
+    filterAll: string;
+    filterUpcoming: string;
+    filterPast: string;
+    fromDate: string;
+    toDate: string;
+    count: string;
+    noResults: string;
+    pageWord: string;
+    prev: string;
+    next: string;
+    readMore: string;
+  };
+  eventPage: {
+    backToEvents: string;
+    starts: string;
+    ends: string;
+    venue: string;
+    notFound: string;
   };
   contact: {
     title: string;
@@ -184,7 +216,6 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       home: "প্রচ্ছদ",
       about: "আমাদের সম্পর্কে",
       notices: "নোটিশ বোর্ড",
-      board: "পরিচালনা পর্ষদ",
       members: "সদস্যবৃন্দ",
       events: "ইভেন্ট",
       contact: "যোগাযোগ",
@@ -256,26 +287,32 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       prev: "পূর্ববর্তী",
       next: "পরবর্তী",
     },
-    board: {
-      title: "পরিচালনা পর্ষদ",
-      subtitle:
-        "প্রতিষ্ঠানের নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
-      empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
-      viewAll: "সকল সদস্য দেখুন →",
-    },
-    boardPage: {
-      heading: "পরিচালনা পর্ষদ",
-      subtitle:
-        "{branch} শাখার নীতিনির্ধারণ ও পরিচালনায় নিয়োজিত সম্মানিত কর্মকর্তাবৃন্দ।",
-      backHome: "← প্রচ্ছদে ফিরুন",
-      count: "জন সদস্য",
-      empty: "পরিচালনা পর্ষদের তথ্য শীঘ্রই প্রকাশ করা হবে।",
-    },
     membersPage: {
       subtitle: "{branch} শাখার নিবন্ধিত সদস্যদের তালিকা।",
       backHome: "← প্রচ্ছদে ফিরুন",
       count: "জন সদস্য",
       empty: "এই শ্রেণিতে এখনো কোনো সদস্যের তথ্য প্রকাশ করা হয়নি।",
+      viewProfile: "প্রোফাইল দেখুন",
+    },
+    memberPage: {
+      backToCategory: "← তালিকায় ফিরুন",
+      heading: "সদস্য প্রোফাইল",
+      contact: "যোগাযোগের তথ্য",
+      personal: "ব্যক্তিগত তথ্য",
+      sports: "ক্রীড়া তথ্য",
+      mobile: "মোবাইল",
+      email: "ইমেইল",
+      dateOfBirth: "জন্ম তারিখ",
+      bloodGroup: "রক্তের গ্রুপ",
+      gender: "লিঙ্গ",
+      nid: "এনআইডি",
+      address: "ঠিকানা",
+      discipline: "ডিসিপ্লিন",
+      jerseyNumber: "জার্সি নম্বর",
+      joiningDate: "যোগদানের তারিখ",
+      achievements: "অর্জন",
+      bio: "সংক্ষিপ্ত পরিচিতি",
+      empty: "এই সদস্যের বিস্তারিত তথ্য প্রকাশ করা হয়নি।",
     },
     events: {
       title: "ইভেন্ট",
@@ -287,13 +324,36 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       past: "সমাপ্ত ইভেন্ট",
     },
     eventsPage: {
-      heading: "ইভেন্ট ক্যালেন্ডার",
+      heading: "ইভেন্ট",
       subtitle: "{branch} শাখার টুর্নামেন্ট, প্রশিক্ষণ ও কার্যক্রমের সময়সূচি।",
       backHome: "← প্রচ্ছদে ফিরুন",
-      empty: "এই মাসে কোনো ইভেন্ট নেই।",
+      empty: "এই মুহূর্তে কোনো ইভেন্ট নেই।",
       prevMonth: "পূর্ববর্তী মাস",
       nextMonth: "পরবর্তী মাস",
       listHeading: "এই মাসের ইভেন্ট",
+      allHeading: "সকল ইভেন্ট",
+      calendarHeading: "ইভেন্ট ক্যালেন্ডার",
+      searchPlaceholder: "শিরোনাম বা স্থান দিয়ে খুঁজুন…",
+      searchAction: "খুঁজুন",
+      clearFilters: "ফিল্টার মুছুন",
+      filterAll: "সকল",
+      filterUpcoming: "আসন্ন",
+      filterPast: "সমাপ্ত",
+      fromDate: "শুরুর তারিখ",
+      toDate: "শেষের তারিখ",
+      count: "টি ইভেন্ট",
+      noResults: "অনুসন্ধানে কোনো ইভেন্ট পাওয়া যায়নি।",
+      pageWord: "পৃষ্ঠা",
+      prev: "পূর্ববর্তী",
+      next: "পরবর্তী",
+      readMore: "বিস্তারিত দেখুন →",
+    },
+    eventPage: {
+      backToEvents: "← সকল ইভেন্টে ফিরুন",
+      starts: "শুরু",
+      ends: "শেষ",
+      venue: "স্থান",
+      notFound: "ইভেন্টটি পাওয়া যায়নি।",
     },
     contact: {
       title: "যোগাযোগ",
@@ -335,7 +395,6 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       home: "Home",
       about: "About Us",
       notices: "Notice Board",
-      board: "Board of Directors",
       members: "Members",
       events: "Events",
       contact: "Contact",
@@ -408,26 +467,32 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       prev: "Previous",
       next: "Next",
     },
-    board: {
-      title: "Board of Directors",
-      subtitle:
-        "The honourable officials entrusted with the policy-making and management of the institution.",
-      empty: "Information on the board of directors will be published soon.",
-      viewAll: "View all members →",
-    },
-    boardPage: {
-      heading: "Board of Directors",
-      subtitle:
-        "The honourable officials entrusted with the policy-making and management of the {branch} Branch.",
-      backHome: "← Back to Home",
-      count: "members",
-      empty: "Information on the board of directors will be published soon.",
-    },
     membersPage: {
       subtitle: "Registered members of the {branch} Branch.",
       backHome: "← Back to Home",
       count: "members",
       empty: "No member information has been published in this category yet.",
+      viewProfile: "View profile",
+    },
+    memberPage: {
+      backToCategory: "← Back to the list",
+      heading: "Member Profile",
+      contact: "Contact Information",
+      personal: "Personal Information",
+      sports: "Sports Information",
+      mobile: "Mobile",
+      email: "Email",
+      dateOfBirth: "Date of birth",
+      bloodGroup: "Blood group",
+      gender: "Gender",
+      nid: "NID",
+      address: "Address",
+      discipline: "Discipline",
+      jerseyNumber: "Jersey number",
+      joiningDate: "Joining date",
+      achievements: "Achievements",
+      bio: "Biography",
+      empty: "No further details have been published for this member.",
     },
     events: {
       title: "Events",
@@ -440,14 +505,37 @@ export const dictionaries: Record<TLanguage, TDictionary> = {
       past: "Past Events",
     },
     eventsPage: {
-      heading: "Event Calendar",
+      heading: "Events",
       subtitle:
         "Schedule of tournaments, training and programmes of the {branch} Branch.",
       backHome: "← Back to Home",
-      empty: "There are no events this month.",
+      empty: "There are no events at this time.",
       prevMonth: "Previous month",
       nextMonth: "Next month",
       listHeading: "Events this month",
+      allHeading: "All Events",
+      calendarHeading: "Event Calendar",
+      searchPlaceholder: "Search by title or venue…",
+      searchAction: "Search",
+      clearFilters: "Clear filters",
+      filterAll: "All",
+      filterUpcoming: "Upcoming",
+      filterPast: "Past",
+      fromDate: "From",
+      toDate: "To",
+      count: "events",
+      noResults: "No events matched your filters.",
+      pageWord: "Page",
+      prev: "Previous",
+      next: "Next",
+      readMore: "View details →",
+    },
+    eventPage: {
+      backToEvents: "← Back to all events",
+      starts: "Starts",
+      ends: "Ends",
+      venue: "Venue",
+      notFound: "Event not found.",
     },
     contact: {
       title: "Contact",

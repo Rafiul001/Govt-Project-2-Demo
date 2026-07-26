@@ -70,6 +70,9 @@ export const eventListQuerySchema = z.strictObject({
   search: z.string().trim().min(1).optional(),
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
+  // Newest first by default (dashboard + "past events"); `asc` puts the
+  // soonest event first, which is what an "upcoming events" list wants.
+  order: z.enum(["asc", "desc"]).catch("desc").default("desc"),
 });
 
 export type TEventListQuery = z.infer<typeof eventListQuerySchema>;

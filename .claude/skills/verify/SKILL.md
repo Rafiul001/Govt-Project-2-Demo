@@ -35,7 +35,11 @@ curl -s -o /dev/null -w "%{http_code}" \
 
 - Known branch subdomain → 200; unknown subdomain → 404.
 - Bare `localhost` / `www` / raw IP → 404 (no branch).
-- Routes: `/`, `/notices`, `/board`, `/:menuSlug`, `/:menuSlug/:submenuSlug`.
+- Routes: `/`, `/notices`, `/events`, `/events/:id`, `/members/:categorySlug`,
+  `/members/:categorySlug/:id`, `/:menuSlug`, `/:menuSlug/:submenuSlug`.
+- `/events/:id` and `/members/:slug/:id` 404 when the row belongs to another
+  branch (or, for members, another category) — worth checking after touching
+  either page, since the underlying API routes are not branch-scoped.
 
 ## Gotchas
 

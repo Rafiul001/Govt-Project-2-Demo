@@ -19,7 +19,7 @@ three parts:
 
 A tour of the admin panel. Every list screen is built from reusable cards, and
 the whole UI supports light/dark mode with three accent colors. List screens
-(Board of Directors, Notices, Admins, Banners) share a debounced **search box**
+(Members, Notices, Admins, Banners) share a debounced **search box**
 and — for super admins — a **branch filter**, with a **clear-filters** action;
 all filter state lives in the URL search params.
 
@@ -43,12 +43,14 @@ contact details — with floating edit/delete actions. _(Super admin only.)_
 | -------------------------------------------------------- | ------------------------------------------------------ |
 | ![Branches (light)](docs/screenshots/branches-light.png) | ![Branches (dark)](docs/screenshots/branches-dark.png) |
 
-### Board of Directors
+### Members
 
-Horizontal profile cards showing each member's photo, name, designation, and
-display order.
-
-![Board of Directors](docs/screenshots/board-of-directors.png)
+GEMS-style profiles (players, coaches, officials, board of directors, …)
+grouped by dynamic **member categories**, viewable as a profile-card grid or a
+table and exportable to CSV/print. Each profile carries a **Public profile**
+section where the admin ticks exactly which fields (mobile, NID, blood group,
+bio, …) may appear on the public site; everything unticked is stripped by the
+API before it leaves the server.
 
 ### Banners
 
@@ -85,8 +87,9 @@ update your own avatar and password.
 
 The public-facing side ([`src/landing-page/`](src/landing-page/)). One Next.js
 deployment serves **every branch**: the branch is resolved from the request
-subdomain, and all content (branch profile, hero banners, notices, board of
-directors) is fetched live from the API and scoped to that branch. Each site is bilingual with
+subdomain, and all content (branch profile and its About copy, hero banners,
+notices, events, member profiles) is fetched live from the API and scoped to
+that branch. Each site is bilingual with
 a Bengali/English toggle — below, **Dhaka** is shown in English and **Sylhet** in
 Bengali.
 
@@ -307,7 +310,7 @@ src/
 │           └── pages/       # One component per screen
 ├── landing-page/             # Public per-branch site (Next.js — see its README)
 │   ├── next.config.ts        # Next config (image hosts, allowedDevOrigins)
-│   ├── app/                  # App Router pages (home, /notices, /board, /[menu], /[menu]/[submenu])
+│   ├── app/                  # App Router pages (home, /notices, /events[/:id], /members/:slug[/:id], /[menu][/[submenu]])
 │   ├── components/           # Atoms/molecules/organisms for the public site
 │   └── lib/                  # api.ts (subdomain → branch + data fetching), i18n
 ├── index.ts                  # Entry point: boots Hono server, graceful shutdown
@@ -327,7 +330,6 @@ src/
 │   │       ├── index.ts                    # /api/v1 router
 │   │       ├── adminRouter.ts              # /api/v1/admin routes
 │   │       ├── branchRouter.ts             # /api/v1/branch routes
-│   │       ├── boardOfDirectorsRouter.ts   # /api/v1/board-of-directors routes
 │   │       ├── noticeRouter.ts             # /api/v1/notice routes
 │   │       ├── bannerRouter.ts             # /api/v1/banner routes
 │   │       ├── menuRouter.ts               # /api/v1/menu routes
@@ -352,7 +354,6 @@ src/
 │           ├── index.ts      # Barrel re-export of all tables
 │           ├── adminSchema.ts
 │           ├── branchSchema.ts
-│           ├── boardOfDirectorsSchema.ts
 │           ├── noticeSchema.ts
 │           ├── bannerSchema.ts
 │           ├── menuSchema.ts
@@ -366,7 +367,6 @@ src/
     └── validators/
         ├── admin.validator.ts            # Zod schemas for admin requests
         ├── branch.validator.ts           # Zod schemas for branch requests
-        ├── boardOfDirectors.validator.ts # Zod schemas for board requests
         ├── notice.validator.ts           # Zod schemas for notice requests
         ├── banner.validator.ts           # Zod schemas for banner requests
         ├── pagination.validator.ts       # Shared pagination + `?branchName`/`?search` query schema
@@ -412,7 +412,7 @@ are stored on Cloudinary and only the resulting delivery URL is persisted.
 
 **Pagination, search & branch filter.** Every `GET` list endpoint is paginated
 via the `?page` and `?pageSize` query params (defaults `page=1`, `pageSize=10`,
-max `pageSize=100`). The board-of-directors, notice, banner, and admin lists
+max `pageSize=100`). The member, notice, banner, and admin lists
 also accept an optional **`?branchName=`** (scope the list to one branch) and a
 free-text **`?search=`** matched against that resource's key columns — validated
 with [`branchListQuerySchema`](src/shared/validators/pagination.validator.ts).
@@ -437,11 +437,6 @@ Their `data` is a paginated envelope rather than a bare array:
 | `POST`   | `/api/v1/branch`                 | Super admin only | `form` (logo, banner) | Create a branch                                |
 | `PATCH`  | `/api/v1/branch/:id`             | Super admin only | `form` (logo, banner) | Update a branch                                |
 | `DELETE` | `/api/v1/branch/:id`             | Super admin only | —                     | Delete a branch (+ media, cascades children)   |
-| `GET`    | `/api/v1/board-of-directors`     | Public           | —                     | List board members (branch-scoped, paginated)  |
-| `GET`    | `/api/v1/board-of-directors/:id` | Public           | —                     | Get one board member                           |
-| `POST`   | `/api/v1/board-of-directors`     | Any admin        | `form` (avatar)       | Create a board member                          |
-| `PATCH`  | `/api/v1/board-of-directors/:id` | Any admin        | `form` (avatar)       | Update a board member                          |
-| `DELETE` | `/api/v1/board-of-directors/:id` | Any admin        | —                     | Delete a board member (+ its avatar)           |
 | `GET`    | `/api/v1/notice`                 | Public           | —                     | List notices (branch-scoped, paginated)        |
 | `GET`    | `/api/v1/notice/:id`             | Public           | —                     | Get one notice                                 |
 | `POST`   | `/api/v1/notice`                 | Any admin        | `form` (image, file)  | Create a notice                                |
@@ -482,9 +477,11 @@ Their `data` is a paginated envelope rather than a bare array:
 > banner title defaults to the menu title. Its public URL is `/:menuSlug`.
 
 > **Public reads.** The `GET` routes above are public — they power the landing
-> sites, which fetch each branch's profile, notices, and board members with no
-> auth, scoped by `?branchName=`. Anonymous callers only ever see **published**
-> notices; an authenticated admin additionally sees their own branch's drafts.
+> sites, which fetch each branch's profile, notices, events, and member
+> profiles with no auth, scoped by `?branchName=`. Anonymous callers only ever
+> see **published** notices and events; an authenticated admin additionally sees
+> their own branch's drafts. Member profiles are additionally reduced to the
+> fields each member publishes (see `publicFields`).
 >
 > Admins created through the API are always **branch admins** (a `branchId` is
 > required); a super admin **cannot** create another super admin — those are
@@ -498,7 +495,6 @@ Their `data` is a paginated envelope rather than a bare array:
 | ------------------ | ----------------------- | ------------------------------------------------ |
 | `admins`           | `DB.ADMIN`              | Portal administrators (unique `username`)        |
 | `branches`         | `DB.BRANCH`             | Organization branches (parent entity)            |
-| `boardofdirectors` | `DB.BOARD_OF_DIRECTORS` | Board members of a branch                        |
 | `notices`          | `DB.NOTICE`             | Notices published by a branch                    |
 | `banners`          | `DB.BANNER`             | Hero-slider banners of a branch                  |
 | `menus`            | `DB.MENU`               | Top-level nav menus of a branch's public site    |
@@ -506,18 +502,25 @@ Their `data` is a paginated envelope rather than a bare array:
 | `pages`            | `DB.PAGE`               | The page behind a sub-menu **or** a menu (banner + markdown) |
 
 Each schema file also exports an inferred row type (`TAdmin`, `TBranch`,
-`TBoardOfDirector`, `TNotice`, `TBanner`).
+`TNotice`, `TBanner`).
 
 The `branches` table also has a unique, optional **`previewUrl`** — the public
 URL of the branch's landing site, whose subdomain must be the branch name (e.g.
 `https://dhaka.example.com` for "Dhaka"), validated in
-[`branch.validator.ts`](src/shared/validators/branch.validator.ts).
+[`branch.validator.ts`](src/shared/validators/branch.validator.ts) — plus the
+branch's **"About us" copy** (`about*` columns and the `aboutHighlights` JSON
+array), edited in the branch editor and rendered by the public site's About
+section, which falls back to its built-in default text per blank field.
+
+The `members` table carries a **`publicFields`** JSON array naming the profile
+fields that member publishes; `null` means "never configured" and the API
+applies `defaultMemberPublicFields`. See
+[`member.validator.ts`](src/shared/validators/member.validator.ts).
 
 ### Relationships
 
 A **branch** is the parent entity:
 
-- One branch **has many** board of directors (`boardofdirectors.branchId → branches.id`)
 - One branch **has many** notices (`notices.branchId → branches.id`)
 - One branch **has many** banners (`banners.branchId → branches.id`)
 - One branch **has many** menus (`menus.branchId → branches.id`); a menu
@@ -536,7 +539,6 @@ import db from "@/server/db/client";
 
 const branch = await db.query.branchesTable.findFirst({
   with: {
-    boardOfDirectors: true,
     notices: true,
     banners: true,
   },
@@ -558,9 +560,13 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   unauthenticated users to login, and super-admin-only screens (Branches,
   Admins) redirect branch admins away. Tokens live in a persisted Zustand store;
   the `ky` client attaches the `Bearer` token and clears it on a `401`.
-- **Screens** — Dashboard, Branches, Board of Directors, Banners, Notices,
-  Menus & Pages (with a live-preview split-screen page editor), Admins, and
-  Settings, each composed from `molecules` → `organisms` → `pages`. A menu with
+- **Screens** — Dashboard, Branches, Members, Member Categories, Events,
+  Banners, Notices, Menus & Pages (with a live-preview split-screen page
+  editor), Admins, and Settings, each composed from `molecules` → `organisms` →
+  `pages`. The two split-screen editors (branch and page) keep their
+  **Publish/Save button in the header**, and the long full-page Member and Event
+  forms keep theirs in a sticky bar at the top, so the action is reachable
+  without scrolling either pane. A menu with
   nothing in it offers both **Add page** (attach a page directly, no sub-menu)
   and **Add sub-menu**.
 - **Forms** — TanStack Form with the Zod schemas in
@@ -569,7 +575,7 @@ server (see [`src/client/vite.config.ts`](src/client/vite.config.ts)).
   populated from `/api/v1/branch`.
 - **Lists** — server-paginated; the page/size (plus an optional `search` term
   and `branchName` filter) live in the URL search params (validated with Zod)
-  and feed the TanStack Query hooks. Board of Directors, Notices, Admins, and
+  and feed the TanStack Query hooks. Members, Notices, Admins, and
   Banners share a reusable filter toolbar — a debounced search box, a
   super-admin-only branch dropdown, and a clear-filters action. Each resource is
   presented as a responsive **card grid** rather than a table (Notices uses a
@@ -598,16 +604,32 @@ per-branch build.
   API/DB outage degrades to empty sections rather than a crashed page.
 - **Bilingual** — every page has a Bengali/English toggle (Bengali is the
   default for a government portal); see the screenshots above.
-- **Content** — hero, About, Notice Board, Board of Directors, Important Links,
-  and a Contact section with an embedded map. Branch profile, hero banners,
-  notices, and board members are live from the API. The rotating **hero** is
+- **Content** — hero, About, Notice Board, Upcoming Events, Important Links,
+  and a Contact section with an embedded map. The masthead leads with the
+  **branch name**, with the organization as its subtitle. The **About** section
+  is written per branch in the dashboard (heading, subtitle, intro and three
+  highlight cards, each bilingual) and falls back to the built-in copy for any
+  field left blank. Branch profile, hero banners, notices, events, and member
+  profiles are live from the API. The rotating **hero** is
   driven by the branch's managed banners (it falls back to the bilingual static
   slides when none are set), and **Important Links** lists every branch — each
   linking to its own site via its `previewUrl` (falling back to the national
   e-government links when no branch URL is set). The org identity is static
   config, with the branch name templated into the chrome strings (hero slide,
   About intro, archive subtitles) via `withBranch()` in
-  [`lib/i18n.ts`](src/landing-page/lib/i18n.ts).
+  [`lib/i18n.ts`](src/landing-page/lib/i18n.ts) — `{branch}` works in
+  admin-written About copy too.
+- **Events** — `/events` lists **every** published event of the branch by
+  default (newest first, nine per page), narrowed by a search box, an
+  all/upcoming/past switch and a from/to date window. Every filter is a backend
+  query param living in the URL, so the view is shareable. A month calendar sits
+  below the list with its own `?month=` navigation, and any event — card, chip,
+  or home-page tile — opens its full detail page at `/events/:id`.
+- **Members** — `/members/:categorySlug` lists a category's profiles; clicking
+  one opens `/members/:categorySlug/:id`, the member's public profile. The page
+  simply renders whatever the API returned: unpublished fields arrive as `null`
+  and their rows (and empty groups) disappear, so the privacy rules live in one
+  place on the server.
 - **Dynamic pages** — admin-authored Markdown pages from the Menus & Pages
   editor: `/:menuSlug/:submenuSlug` for sub-menu pages and `/:menuSlug` for
   pages attached directly to a menu. The nav renders direct-page menus as plain

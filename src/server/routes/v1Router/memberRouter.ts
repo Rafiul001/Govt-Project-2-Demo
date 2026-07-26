@@ -34,7 +34,9 @@ import {
 import type { TTokenPayload } from "@/shared/types";
 import {
   createMemberSchema,
+  defaultMemberPublicFields,
   updateMemberSchema,
+  type TMemberPublicField,
 } from "@/shared/validators/member.validator";
 import {
   memberListQuerySchema,
@@ -51,12 +53,39 @@ const memberRouter = new Hono<TAppEnv>();
 // responses are stripped of private fields; mutations require an admin.
 
 /**
- * PRIVACY: fields never exposed to anonymous callers. NID especially must not
- * appear on a public website; contact/address/birth data are admin-only too.
+ * PRIVACY: reduces a member to what its own `publicFields` configuration
+ * allows an anonymous caller to see. Identity (names, designation, photo,
+ * order, category, branch) is always public; every configurable field —
+ * contact details, NID, address, date of birth, the sports block — is blanked
+ * out unless the admin listed it. A member that was never configured falls
+ * back to `defaultMemberPublicFields`, which reproduces the behaviour from
+ * before per-member visibility existed.
+ *
+ * Fields are nulled rather than dropped so the response shape stays stable for
+ * the landing site's profile pages.
  */
 function toPublicMember(member: TMember) {
-  const { nid, mobile, email, address, dateOfBirth, ...publicFields } = member;
-  return publicFields;
+  const allowed = new Set<TMemberPublicField>(
+    member.publicFields ?? defaultMemberPublicFields,
+  );
+  const visible = <T>(field: TMemberPublicField, value: T) =>
+    allowed.has(field) ? value : null;
+
+  return {
+    ...member,
+    mobile: visible("mobile", member.mobile),
+    email: visible("email", member.email),
+    dateOfBirth: visible("dateOfBirth", member.dateOfBirth),
+    bloodGroup: visible("bloodGroup", member.bloodGroup),
+    gender: visible("gender", member.gender),
+    nid: visible("nid", member.nid),
+    address: visible("address", member.address),
+    discipline: visible("discipline", member.discipline),
+    jerseyNumber: visible("jerseyNumber", member.jerseyNumber),
+    joiningDate: visible("joiningDate", member.joiningDate),
+    achievements: visible("achievements", member.achievements),
+    bio: visible("bio", member.bio),
+  };
 }
 
 /** Checks that a member category with the given id exists. */

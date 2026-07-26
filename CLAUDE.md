@@ -51,11 +51,17 @@ Two admin types: `SUPER_ADMIN` (unscoped) and `BRANCH_ADMIN` (pinned to one `bra
 - **Always** return via the response helpers in [src/server/responses/](src/server/responses/) (`ok`, `created`, `badRequest`, `notFound`, `forbidden`, `unAuthorized`) — they enforce the `{ success, message, data }` / `{ success, message, errors }` envelope.
 - Validate every input with `zValidator` against a shared schema in [src/shared/validators/](src/shared/validators/) (`"form"` for multipart, `"query"`, `"param"`). Reuse these schemas on the client too.
 - Image/PDF uploads go through the Cloudinary helpers in [src/server/service/cloudinary/](src/server/service/cloudinary/) (`uploadImage`/`replaceImage`/`deleteImage`, and the PDF equivalents). On update, a `remove*` flag only applies when no replacement file was sent; deleting a row also deletes its Cloudinary assets.
+- Multipart fields are strings, so structured values (a branch's `aboutHighlights`, a member's `publicFields`) travel **JSON-encoded** and are parsed by a `z.string().transform(JSON.parse).pipe(...)` schema in the shared validator.
+- **Member privacy is per member.** `toPublicMember` in [memberRouter.ts](src/server/routes/v1Router/memberRouter.ts) blanks every configurable profile field an anonymous caller is not allowed to see, driven by the member's own `publicFields` list (`null` → `defaultMemberPublicFields`). Identity — names, designation, photo, order, category, branch — is always public. Fields are nulled, not dropped, so the response shape is stable and the landing site just renders whatever is non-empty.
 - Config is read once through [src/server/config/index.ts](src/server/config/index.ts), which fails fast on missing/invalid env vars — add new env access there, not via `process.env` inline.
 
 ## Data model: the menu → submenu → page tree
 
-A **branch** is the parent of everything (board of directors, notices, banners, menus — all `ON DELETE CASCADE`, `branchId` denormalized onto children for single-column scoping). Schemas live in [src/server/db/schemas/](src/server/db/schemas/); relations for `db.query` are in [relations.ts](src/server/db/relations.ts).
+A **branch** is the parent of everything (members, events, notices, banners, menus — all `ON DELETE CASCADE`, `branchId` denormalized onto children for single-column scoping). Schemas live in [src/server/db/schemas/](src/server/db/schemas/); relations for `db.query` are in [relations.ts](src/server/db/relations.ts).
+
+The branch row also carries its public **"About us" copy** (`about*` columns plus an `aboutHighlights` JSON array), edited in the branch editor. Blank fields fall back to the built-in text in the landing page's [i18n catalogue](src/landing-page/lib/i18n.ts) — the dashboard pre-fills the form with those same defaults, so an admin edits real wording. `{branch}` in any of that copy is replaced with the branch name.
+
+There is no board-of-directors table: directors are ordinary **members** in a `board-of-directors` category.
 
 The public site navigation is the subtle part:
 

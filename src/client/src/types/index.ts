@@ -52,6 +52,16 @@ export type TAdminType = "SUPER_ADMIN" | "BRANCH_ADMIN";
 
 // --- Entities ---
 
+/** One card of the branch's public "About us" highlight row. */
+export type TAboutHighlight = {
+  /** Icon key; see `aboutHighlightIconValues` in the validators. */
+  icon?: string;
+  titleBn?: string;
+  titleEn?: string;
+  bodyBn?: string;
+  bodyEn?: string;
+};
+
 export type TBranch = {
   id: number;
   name: string;
@@ -62,8 +72,31 @@ export type TBranch = {
   logo: string | null;
   banner: string | null;
   isPublished: boolean;
+  /** Public "About us" copy; `null` falls back to the landing page defaults. */
+  aboutTitleBn: string | null;
+  aboutTitleEn: string | null;
+  aboutSubtitleBn: string | null;
+  aboutSubtitleEn: string | null;
+  aboutIntroBn: string | null;
+  aboutIntroEn: string | null;
+  aboutHighlights: TAboutHighlight[] | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/**
+ * The "About us" fields as they go over the wire: multipart carries strings
+ * only, so the highlight cards are sent JSON-encoded.
+ */
+export type TBranchAboutInput = {
+  aboutTitleBn?: string;
+  aboutTitleEn?: string;
+  aboutSubtitleBn?: string;
+  aboutSubtitleEn?: string;
+  aboutIntroBn?: string;
+  aboutIntroEn?: string;
+  /** JSON-encoded `TAboutHighlight[]`. */
+  aboutHighlights?: string;
 };
 
 /** Admin as returned by the API (password stripped). */
@@ -74,17 +107,6 @@ export type TAdmin = {
   avatar: string;
   adminType: TAdminType;
   branchId: number | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type TBoardOfDirector = {
-  id: number;
-  name: string;
-  designation: string;
-  avatar: string;
-  order: number;
-  branchId: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -126,7 +148,7 @@ export type TLoginResult = {
 
 // --- Branch ---
 
-export type TCreateBranchInput = {
+export type TCreateBranchInput = TBranchAboutInput & {
   name: string;
   previewUrl: string;
   address: string;
@@ -136,7 +158,7 @@ export type TCreateBranchInput = {
   banner?: File;
 };
 
-export type TUpdateBranchInput = {
+export type TUpdateBranchInput = TBranchAboutInput & {
   name?: string;
   previewUrl?: string;
   address?: string;
@@ -177,26 +199,6 @@ export type TUpdateProfileInput = {
   avatar?: File;
   /** Remove the saved avatar (ignored when a new `avatar` file is sent). */
   removeAvatar?: boolean;
-};
-
-// --- Board of directors ---
-
-export type TCreateBoardOfDirectorInput = {
-  branchId?: number;
-  name: string;
-  designation: string;
-  avatar?: File;
-  order?: number;
-};
-
-export type TUpdateBoardOfDirectorInput = {
-  branchId?: number;
-  name?: string;
-  designation?: string;
-  avatar?: File;
-  /** Remove the saved avatar (ignored when a new `avatar` file is sent). */
-  removeAvatar?: boolean;
-  order?: number;
 };
 
 // --- Notice ---
@@ -367,6 +369,11 @@ export type TMember = {
   mobile: string | null;
   email: string | null;
   order: number;
+  /**
+   * Profile fields this member publishes on the landing site. `null` means
+   * never configured — the API then applies its default set.
+   */
+  publicFields: string[] | null;
   dateOfBirth: string | null;
   bloodGroup: string | null;
   gender: string | null;
@@ -393,6 +400,8 @@ export type TCreateMemberInput = {
   mobile?: string;
   email?: string;
   order?: number;
+  /** JSON-encoded array of published field names. */
+  publicFields?: string;
   dateOfBirth?: string;
   bloodGroup?: string;
   gender?: string;

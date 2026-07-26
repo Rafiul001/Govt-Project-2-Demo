@@ -1,11 +1,13 @@
 import {
   date,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
+import type { TMemberPublicField } from "@/shared/validators/member.validator";
 import { DB } from "../constant";
 import { branchesTable } from "./branchSchema";
 import { memberCategoriesTable } from "./memberCategorySchema";
@@ -20,9 +22,9 @@ import { memberCategoriesTable } from "./memberCategorySchema";
  * silently wipe member profiles across all branches — the category router
  * refuses to delete a non-empty category.
  *
- * PRIVACY: `nid`, `mobile`, `email`, `address` and `dateOfBirth` are
- * admin-only — the member routes strip them from anonymous (public landing
- * site) responses. See `toPublicMember` in the member router.
+ * PRIVACY: which profile fields reach the public landing site is configured
+ * per member in `publicFields` — anything not listed there is stripped from
+ * anonymous responses. See `toPublicMember` in the member router.
  */
 export const membersTable = pgTable(DB.MEMBER, {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -34,7 +36,12 @@ export const membersTable = pgTable(DB.MEMBER, {
   mobile: varchar({ length: 32 }),
   email: varchar({ length: 255 }),
   order: integer().notNull().default(0),
-  // Personal (admin-only on public responses)
+  // Names of the configurable profile fields this member agrees to publish
+  // (e.g. `["bloodGroup", "discipline", "bio"]`). Everything outside the list
+  // is stripped for anonymous callers; name, designation and photo are always
+  // public. `null` means "never configured" and falls back to the default set.
+  publicFields: jsonb().$type<TMemberPublicField[]>(),
+  // Personal (published only when listed in `publicFields`)
   dateOfBirth: date({ mode: "string" }),
   bloodGroup: varchar({ length: 8 }),
   gender: varchar({ length: 16 }),

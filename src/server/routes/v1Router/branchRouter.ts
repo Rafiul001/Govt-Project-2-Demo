@@ -92,19 +92,18 @@ branchRouter.post(
   authMiddleware([adminType.SUPER_ADMIN]),
   zValidator("form", createBranchSchema),
   async (c) => {
-    const data = c.req.valid("form");
+    const { logo: logoFile, banner: bannerFile, ...data } = c.req.valid("form");
 
     if (await previewUrlTaken(data.previewUrl)) {
       return badRequest(c, "Preview URL is already in use");
     }
 
-    const logo = data.logo ? (await uploadImage(data.logo)).url : null;
-    const banner = data.banner ? (await uploadImage(data.banner)).url : null;
+    const logo = logoFile ? (await uploadImage(logoFile)).url : null;
+    const banner = bannerFile ? (await uploadImage(bannerFile)).url : null;
 
     await db.insert(branchesTable).values({
-      name: data.name,
-      previewUrl: data.previewUrl,
-      address: data.address,
+      // The "about" copy comes through unchanged; every field is optional.
+      ...data,
       phone: data.phone || null,
       email: data.email || null,
       logo,

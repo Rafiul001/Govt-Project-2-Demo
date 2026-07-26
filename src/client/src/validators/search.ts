@@ -15,7 +15,7 @@ export type TListSearch = z.infer<typeof listSearchSchema>;
 /**
  * Pagination plus a free-text `search` and a `branchName` filter, all kept in
  * the URL so the filtered view is shareable and survives reloads. Shared by the
- * banners, board-of-directors, and admins list routes.
+ * banners and admins list routes.
  */
 export const filterSearchSchema = listSearchSchema.extend({
   search: z.string().trim().min(1).optional().catch(undefined),

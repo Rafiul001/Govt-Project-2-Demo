@@ -19,6 +19,60 @@ export const bloodGroups = [
 
 export const genders = ["male", "female", "other"] as const;
 
+/**
+ * Profile fields whose visibility on the public landing site is configurable
+ * per member (see `publicFields` on the member schema). The identity fields —
+ * names, designation, photo, display order, category and branch — are always
+ * public and so are deliberately absent from this list.
+ */
+export const memberPublicFields = [
+  "mobile",
+  "email",
+  "dateOfBirth",
+  "bloodGroup",
+  "gender",
+  "nid",
+  "address",
+  "discipline",
+  "jerseyNumber",
+  "joiningDate",
+  "achievements",
+  "bio",
+] as const;
+
+export type TMemberPublicField = (typeof memberPublicFields)[number];
+
+/**
+ * What an anonymous visitor sees when a member has never been configured —
+ * the behaviour before per-member visibility existed: contact details, NID,
+ * address and date of birth stay private, everything else is public.
+ */
+export const defaultMemberPublicFields: TMemberPublicField[] = [
+  "bloodGroup",
+  "gender",
+  "discipline",
+  "jerseyNumber",
+  "joiningDate",
+  "achievements",
+  "bio",
+];
+
+/**
+ * The published-field list as it arrives over multipart: a JSON-encoded array
+ * of field names, since a form field can only carry a string.
+ */
+const publicFieldsFormSchema = z
+  .string()
+  .transform((raw, ctx) => {
+    try {
+      return JSON.parse(raw) as unknown;
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Invalid publicFields JSON" });
+      return z.NEVER;
+    }
+  })
+  .pipe(z.array(z.enum(memberPublicFields)));
+
 /** True when at least one language name is a non-empty (trimmed) string. */
 const hasAnyName = (v: { nameBn?: string; nameEn?: string }) =>
   Boolean(v.nameBn?.trim() || v.nameEn?.trim());
@@ -28,7 +82,9 @@ const profileFields = {
   mobile: z.string().trim().min(1).max(32).optional(),
   email: z.email().max(255).optional(),
   order: z.coerce.number().int().min(0).optional(),
-  // Personal — admin-only on public responses (see the member router).
+  // Which of the fields below reach the public site (see the member router).
+  publicFields: publicFieldsFormSchema.optional(),
+  // Personal
   dateOfBirth: z.iso.date().optional(),
   bloodGroup: z.enum(bloodGroups).optional(),
   gender: z.enum(genders).optional(),

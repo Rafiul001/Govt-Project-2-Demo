@@ -2,12 +2,22 @@
  * Public-facing mirrors of the backend API entity shapes
  * (see `src/server/db/schemas` and `src/client/src/types`).
  *
- * The landing page only ever renders *public* data: the branch profile,
- * its published notices, and its board of directors. These types match the
- * JSON the API returns (dates serialized as strings) so the static data in
- * `lib/data.ts` can later be swapped for a real public endpoint with no
- * changes to the components.
+ * The landing page only ever renders *public* data: the branch profile, its
+ * published notices, events and members. These types match the JSON the API
+ * returns (dates serialized as strings) so the static data in `lib/data.ts`
+ * can later be swapped for a real public endpoint with no changes to the
+ * components.
  */
+
+/** One card of the branch's "About us" highlight row. */
+export type TAboutHighlight = {
+  /** Icon key; `HIGHLIGHT_ICONS` in `AboutSection` maps it to a component. */
+  icon?: string | null;
+  titleBn?: string | null;
+  titleEn?: string | null;
+  bodyBn?: string | null;
+  bodyEn?: string | null;
+};
 
 export type TBranch = {
   id: number;
@@ -19,6 +29,18 @@ export type TBranch = {
   logo: string | null;
   banner: string | null;
   isPublished: boolean;
+  /**
+   * "About us" copy written in the dashboard's branch editor. Each field is
+   * `null` until an admin fills it in, in which case the section falls back to
+   * the built-in text in `lib/i18n.ts`.
+   */
+  aboutTitleBn: string | null;
+  aboutTitleEn: string | null;
+  aboutSubtitleBn: string | null;
+  aboutSubtitleEn: string | null;
+  aboutIntroBn: string | null;
+  aboutIntroEn: string | null;
+  aboutHighlights: TAboutHighlight[] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -30,17 +52,6 @@ export type TNotice = {
   fileUrl: string | null;
   image: string | null;
   isPublished: boolean;
-  branchId: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type TBoardOfDirector = {
-  id: number;
-  name: string;
-  designation: string;
-  avatar: string;
-  order: number;
   branchId: number;
   createdAt: string;
   updatedAt: string;
@@ -72,9 +83,11 @@ export type TMemberCategory = {
 };
 
 /**
- * A member profile as the PUBLIC API returns it — the private fields (NID,
- * mobile, email, address, date of birth) are stripped server-side for
- * anonymous callers and never reach this site.
+ * A member profile as the PUBLIC API returns it. Which of the optional fields
+ * actually carry a value is decided per member in the dashboard ("Public
+ * profile"): anything the admin has not published comes back as `null`, so
+ * this site simply renders whatever is non-empty and never has to know the
+ * privacy rules itself.
  */
 export type TMember = {
   id: number;
@@ -83,8 +96,13 @@ export type TMember = {
   designation: string | null;
   photo: string | null;
   order: number;
+  mobile: string | null;
+  email: string | null;
+  dateOfBirth: string | null;
   bloodGroup: string | null;
   gender: string | null;
+  nid: string | null;
+  address: string | null;
   discipline: string | null;
   jerseyNumber: number | null;
   joiningDate: string | null;

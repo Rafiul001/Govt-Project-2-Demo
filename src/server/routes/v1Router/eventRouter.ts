@@ -34,7 +34,7 @@ import {
 import { eventListQuerySchema } from "@/shared/validators/pagination.validator";
 import { idParamSchema } from "@/shared/validators/params.validator";
 import { zValidator } from "@hono/zod-validator";
-import { and, count, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 const eventRouter = new Hono<TAppEnv>();
@@ -51,8 +51,10 @@ const eventRouter = new Hono<TAppEnv>();
  *
  * `?from=`/`?to=` (inclusive `YYYY-MM-DD`) narrow to a date window using
  * OVERLAP semantics — a multi-day event is returned for every month it
- * touches — which backs the calendar view. An unknown branch name yields an
- * empty page.
+ * touches — which backs the calendar view, and with no window at all the
+ * whole archive comes back. `?order=asc` flips the default newest-first sort
+ * so an "upcoming" list can lead with the soonest event. An unknown branch
+ * name yields an empty page.
  */
 eventRouter.get(
   "/",
@@ -60,7 +62,7 @@ eventRouter.get(
   zValidator("query", eventListQuerySchema),
   async (c) => {
     const admin = c.get("admin") as TTokenPayload | undefined;
-    const { page, pageSize, branchName, search, from, to } =
+    const { page, pageSize, branchName, search, from, to, order } =
       c.req.valid("query");
 
     let branchId: number | null | undefined;
@@ -106,7 +108,11 @@ eventRouter.get(
       .select()
       .from(eventsTable)
       .where(where)
-      .orderBy(desc(eventsTable.startAt), desc(eventsTable.id))
+      .orderBy(
+        ...(order === "asc"
+          ? [asc(eventsTable.startAt), asc(eventsTable.id)]
+          : [desc(eventsTable.startAt), desc(eventsTable.id)]),
+      )
       .limit(pageSize)
       .offset(pageOffset(page, pageSize));
 

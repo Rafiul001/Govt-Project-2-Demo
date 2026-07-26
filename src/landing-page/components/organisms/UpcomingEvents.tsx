@@ -10,8 +10,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Home-page section with the branch's next few published events and a link to
- * the full `/events` calendar. Hidden entirely when there are none.
+ * Home-page section with the branch's next few published events, each linking
+ * to its detail page, plus a link to the full `/events` archive. Hidden
+ * entirely when there are none.
  */
 export function UpcomingEvents({
   events,
@@ -36,9 +37,10 @@ export function UpcomingEvents({
           {events.map((event) => {
             const title = pickLang(lang, event.titleBn, event.titleEn);
             return (
-              <article
+              <Link
                 key={event.id}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                href={`/events/${event.id}`}
+                className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="relative aspect-video w-full bg-slate-100">
                   {event.image ? (
@@ -56,7 +58,7 @@ export function UpcomingEvents({
                   )}
                 </div>
                 <div className="border-t-4 border-govt-green px-4 py-4">
-                  <h3 className="font-bold leading-tight text-slate-800">
+                  <h3 className="font-bold leading-tight text-slate-800 group-hover:text-govt-green">
                     {title}
                   </h3>
                   <p className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-600">
@@ -70,7 +72,7 @@ export function UpcomingEvents({
                     </p>
                   ) : null}
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>

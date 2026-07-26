@@ -32,12 +32,12 @@ export function NavBar({
   const [open, setOpen] = useState(false);
 
   // Section anchors are root-relative so they also work from other routes;
-  // "Notice Board" and "Board of Directors" link to their full pages.
+  // "Notice Board" and "Events" link to their full pages. People are reached
+  // through the "Members" dropdown built from the member categories.
   const navItems = [
     { label: t.nav.home, href: "/#home" },
     { label: t.nav.about, href: "/#about" },
     { label: t.nav.notices, href: "/notices" },
-    { label: t.nav.board, href: "/board" },
     { label: t.nav.events, href: "/events" },
     { label: t.nav.contact, href: "/#contact" },
   ];

@@ -63,6 +63,51 @@ function previewUrlMatchesName(url: string, name: string): boolean {
   return subdomain === name.trim().toLowerCase();
 }
 
+/**
+ * Icon keys a highlight card may use. Mirrors `aboutHighlightIcons` in
+ * `src/shared/validators/branch.validator.ts`; `ABOUT_HIGHLIGHT_ICONS` in the
+ * branch editor maps each key to its lucide component.
+ */
+export const aboutHighlightIconValues = [
+  "shield-check",
+  "users",
+  "building",
+  "landmark",
+  "award",
+  "scale",
+  "handshake",
+  "globe",
+  "file-text",
+  "heart",
+  "sparkles",
+  "target",
+] as const;
+
+// A cleared select produces "", which is stripped before submitting.
+const aboutHighlightSchema = z.strictObject({
+  icon: z
+    .union([z.literal(""), z.enum(aboutHighlightIconValues)])
+    .optional(),
+  titleBn: z.string().trim().max(255).optional(),
+  titleEn: z.string().trim().max(255).optional(),
+  bodyBn: z.string().trim().max(1000).optional(),
+  bodyEn: z.string().trim().max(1000).optional(),
+});
+
+export type TAboutHighlightForm = z.infer<typeof aboutHighlightSchema>;
+
+// The public "About us" block. Every field is optional in both languages; the
+// landing page substitutes `{branch}` in any of them for the branch's name.
+const aboutFields = {
+  aboutTitleBn: z.string().trim().max(255).optional(),
+  aboutTitleEn: z.string().trim().max(255).optional(),
+  aboutSubtitleBn: z.string().trim().max(1000).optional(),
+  aboutSubtitleEn: z.string().trim().max(1000).optional(),
+  aboutIntroBn: z.string().trim().max(4000).optional(),
+  aboutIntroEn: z.string().trim().max(4000).optional(),
+  aboutHighlights: z.array(aboutHighlightSchema).max(6).optional(),
+};
+
 export const createBranchSchema = z
   .strictObject({
     name: z.string().trim().min(1, "Name is required").max(255),
@@ -72,6 +117,7 @@ export const createBranchSchema = z
     email: optionalEmail,
     logo: optionalFile,
     banner: optionalFile,
+    ...aboutFields,
   })
   .refine((v) => previewUrlMatchesName(v.previewUrl, v.name), {
     path: ["previewUrl"],
@@ -95,6 +141,7 @@ export const updateBranchSchema = z
     banner: optionalFile,
     // Set to true by the Publish button on the branch editor.
     isPublished: z.boolean().optional(),
+    ...aboutFields,
   })
   .refine(
     (v) =>
@@ -157,35 +204,6 @@ export const updateProfileSchema = z.strictObject({
   avatar: optionalFile,
 });
 export type TUpdateProfileForm = z.infer<typeof updateProfileSchema>;
-
-// --- Board of directors ---
-
-export const createBoardOfDirectorSchema = z.strictObject({
-  branchId: branchId.optional(),
-  name: z.string().trim().min(1, "Name is required").max(255),
-  designation: z.string().trim().min(1, "Designation is required").max(255),
-  avatar: optionalFile,
-  order: z.number().int().min(0).optional(),
-});
-export type TCreateBoardOfDirectorForm = z.infer<
-  typeof createBoardOfDirectorSchema
->;
-
-export const updateBoardOfDirectorSchema = z.strictObject({
-  branchId: branchId.optional(),
-  name: z.string().trim().min(1, "Name is required").max(255).optional(),
-  designation: z
-    .string()
-    .trim()
-    .min(1, "Designation is required")
-    .max(255)
-    .optional(),
-  avatar: optionalFile,
-  order: z.number().int().min(0).optional(),
-});
-export type TUpdateBoardOfDirectorForm = z.infer<
-  typeof updateBoardOfDirectorSchema
->;
 
 // --- Notice ---
 
@@ -346,8 +364,43 @@ const optionalDate = z
   .union([z.literal(""), z.iso.date("Enter a valid date")])
   .optional();
 
+/**
+ * Profile fields whose visibility on the public site is configurable per
+ * member. Mirrors `memberPublicFields` in
+ * `src/shared/validators/member.validator.ts`; the identity fields (names,
+ * designation, photo, order) are always public and so are not listed.
+ */
+export const memberPublicFieldValues = [
+  "mobile",
+  "email",
+  "dateOfBirth",
+  "bloodGroup",
+  "gender",
+  "nid",
+  "address",
+  "discipline",
+  "jerseyNumber",
+  "joiningDate",
+  "achievements",
+  "bio",
+] as const;
+
+export type TMemberPublicFieldValue = (typeof memberPublicFieldValues)[number];
+
+/** What a member publishes when the admin has never configured them. */
+export const defaultMemberPublicFieldValues: TMemberPublicFieldValue[] = [
+  "bloodGroup",
+  "gender",
+  "discipline",
+  "jerseyNumber",
+  "joiningDate",
+  "achievements",
+  "bio",
+];
+
 const memberProfileFields = {
   nameBn: z.string().trim().max(255).optional(),
+  publicFields: z.array(z.enum(memberPublicFieldValues)).optional(),
   nameEn: z.string().trim().max(255).optional(),
   designation: z.string().trim().max(255).optional(),
   photo: optionalFile,

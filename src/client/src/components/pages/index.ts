@@ -2,7 +2,6 @@ export { LoginPage } from "./LoginPage";
 export { DashboardPage } from "./DashboardPage";
 export { BranchesPage } from "./BranchesPage";
 export { BranchEditPage } from "./BranchEditPage";
-export { BoardOfDirectorsPage } from "./BoardOfDirectorsPage";
 export { BannersPage } from "./BannersPage";
 export { MenusPage } from "./MenusPage";
 export { SubmenusPage } from "./SubmenusPage";

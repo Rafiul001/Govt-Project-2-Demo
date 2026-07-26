@@ -19,7 +19,6 @@ import { Route as AppMembersRouteImport } from './routes/_app/members'
 import { Route as AppMemberCategoriesRouteImport } from './routes/_app/member-categories'
 import { Route as AppEventsRouteImport } from './routes/_app/events'
 import { Route as AppBranchesRouteImport } from './routes/_app/branches'
-import { Route as AppBoardOfDirectorsRouteImport } from './routes/_app/board-of-directors'
 import { Route as AppBannersRouteImport } from './routes/_app/banners'
 import { Route as AppAdminsRouteImport } from './routes/_app/admins'
 import { Route as AppMenusIndexRouteImport } from './routes/_app/menus.index'
@@ -79,11 +78,6 @@ const AppEventsRoute = AppEventsRouteImport.update({
 const AppBranchesRoute = AppBranchesRouteImport.update({
   id: '/branches',
   path: '/branches',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppBoardOfDirectorsRoute = AppBoardOfDirectorsRouteImport.update({
-  id: '/board-of-directors',
-  path: '/board-of-directors',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBannersRoute = AppBannersRouteImport.update({
@@ -148,7 +142,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admins': typeof AppAdminsRoute
   '/banners': typeof AppBannersRoute
-  '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
   '/events': typeof AppEventsRoute
   '/member-categories': typeof AppMemberCategoriesRoute
@@ -170,7 +163,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admins': typeof AppAdminsRoute
   '/banners': typeof AppBannersRoute
-  '/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/branches': typeof AppBranchesRoute
   '/events': typeof AppEventsRoute
   '/member-categories': typeof AppMemberCategoriesRoute
@@ -195,7 +187,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/admins': typeof AppAdminsRoute
   '/_app/banners': typeof AppBannersRoute
-  '/_app/board-of-directors': typeof AppBoardOfDirectorsRoute
   '/_app/branches': typeof AppBranchesRoute
   '/_app/events': typeof AppEventsRoute
   '/_app/member-categories': typeof AppMemberCategoriesRoute
@@ -221,7 +212,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/admins'
     | '/banners'
-    | '/board-of-directors'
     | '/branches'
     | '/events'
     | '/member-categories'
@@ -243,7 +233,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/admins'
     | '/banners'
-    | '/board-of-directors'
     | '/branches'
     | '/events'
     | '/member-categories'
@@ -267,7 +256,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/admins'
     | '/_app/banners'
-    | '/_app/board-of-directors'
     | '/_app/branches'
     | '/_app/events'
     | '/_app/member-categories'
@@ -365,13 +353,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBranchesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/board-of-directors': {
-      id: '/_app/board-of-directors'
-      path: '/board-of-directors'
-      fullPath: '/board-of-directors'
-      preLoaderRoute: typeof AppBoardOfDirectorsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/banners': {
       id: '/_app/banners'
       path: '/banners'
@@ -455,7 +436,6 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminsRoute: typeof AppAdminsRoute
   AppBannersRoute: typeof AppBannersRoute
-  AppBoardOfDirectorsRoute: typeof AppBoardOfDirectorsRoute
   AppBranchesRoute: typeof AppBranchesRoute
   AppEventsRoute: typeof AppEventsRoute
   AppMemberCategoriesRoute: typeof AppMemberCategoriesRoute
@@ -477,7 +457,6 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminsRoute: AppAdminsRoute,
   AppBannersRoute: AppBannersRoute,
-  AppBoardOfDirectorsRoute: AppBoardOfDirectorsRoute,
   AppBranchesRoute: AppBranchesRoute,
   AppEventsRoute: AppEventsRoute,
   AppMemberCategoriesRoute: AppMemberCategoriesRoute,

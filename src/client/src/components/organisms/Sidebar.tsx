@@ -10,7 +10,6 @@ import {
   SettingsIcon,
   ShieldUserIcon,
   TagsIcon,
-  UsersIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
@@ -34,7 +33,6 @@ const NAV_ITEMS: TNavItem[] = [
     superAdminOnly: true,
     activePrefixes: ["/branch"],
   },
-  { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
   {
     to: "/members",
     label: "Members",

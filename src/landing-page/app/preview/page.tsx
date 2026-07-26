@@ -1,7 +1,6 @@
 "use client";
 
 import { AboutSection } from "@/components/organisms/AboutSection";
-import { BoardOfDirectors } from "@/components/organisms/BoardOfDirectors";
 import { ContactSection } from "@/components/organisms/ContactSection";
 import { HeroSlider } from "@/components/organisms/HeroSlider";
 import { NavBar } from "@/components/organisms/NavBar";
@@ -22,8 +21,9 @@ import { useEffect, useState } from "react";
  *
  * The full landing layout is rendered so the editor shows a faithful page.
  * Branch-profile sections (header, hero, about, contact, footer) reflect the
- * live edits; the notice board and board-of-directors sections are shown as
- * layout (empty state) since those are managed separately, not in this editor.
+ * live edits — including the "About us" copy and its highlight cards; the
+ * notice board is shown as layout (empty state) since notices are managed
+ * separately, not in this editor.
  *
  * This route is *only* meant to be embedded by the dashboard editor — it is not
  * a viewable public page. It renders nothing until a branch arrives via
@@ -73,9 +73,8 @@ export default function PreviewPage() {
           bannerUrl={branch.banner}
           branchName={branch.name}
         />
-        <AboutSection branchName={branch.name} />
+        <AboutSection branch={branch} branchName={branch.name} />
         <NoticeBoard notices={[]} branches={[branch]} />
-        <BoardOfDirectors members={[]} />
         <ContactSection branch={branch} />
       </main>
       <SiteFooter branch={branch} />

@@ -1,19 +1,39 @@
 import { Chip } from "@heroui/react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { displayTitle } from "../../lib/displayTitle";
 import type { TMember } from "../../types";
+import {
+  defaultMemberPublicFieldValues,
+  type TMemberPublicFieldValue,
+} from "../../validators";
 
-/** One label/value line of the profile; hidden when the value is empty. */
+/**
+ * One label/value line of the profile; hidden when the value is empty.
+ *
+ * `visibility` marks whether the field is published on the landing site, so an
+ * admin can see at a glance what a visitor gets. Identity fields (name,
+ * designation, …) are always public and pass no marker.
+ */
 function ProfileRow({
   label,
   value,
+  visibility,
 }: {
   label: string;
   value: string | number | null | undefined;
+  visibility?: boolean;
 }) {
   if (value == null || value === "") return null;
   return (
     <div className="flex gap-2 text-sm">
-      <dt className="w-32 shrink-0 font-medium text-muted">{label}</dt>
+      <dt className="flex w-32 shrink-0 items-center gap-1.5 font-medium text-muted">
+        {visibility === undefined ? null : visibility ? (
+          <EyeIcon className="size-3.5 text-accent" aria-label="Public" />
+        ) : (
+          <EyeOffIcon className="size-3.5" aria-label="Not published" />
+        )}
+        {label}
+      </dt>
       <dd className="text-foreground">{value}</dd>
     </div>
   );
@@ -56,7 +76,9 @@ type TMemberProfileProps = {
 
 /**
  * Read-only GEMS-style profile view of a member, hosted in a modal from the
- * members page. Shows all three field groups; empty fields are hidden.
+ * members page. Shows all three field groups; empty fields are hidden. Each
+ * configurable field carries an eye marker showing whether it is published on
+ * the public site (see "Public profile" in the member form).
  */
 export function MemberProfile({
   member,
@@ -64,6 +86,10 @@ export function MemberProfile({
   branchName,
 }: TMemberProfileProps) {
   const name = displayTitle(member.nameBn, member.nameEn);
+  const published = new Set<string>(
+    member.publicFields ?? defaultMemberPublicFieldValues,
+  );
+  const isPublic = (field: TMemberPublicFieldValue) => published.has(field);
 
   return (
     <div className="space-y-5">
@@ -98,25 +124,73 @@ export function MemberProfile({
         <ProfileRow label="Name (Bangla)" value={member.nameBn} />
         <ProfileRow label="Name (English)" value={member.nameEn} />
         <ProfileRow label="Designation" value={member.designation} />
-        <ProfileRow label="Mobile" value={member.mobile} />
-        <ProfileRow label="Email" value={member.email} />
+        <ProfileRow
+          label="Mobile"
+          value={member.mobile}
+          visibility={isPublic("mobile")}
+        />
+        <ProfileRow
+          label="Email"
+          value={member.email}
+          visibility={isPublic("email")}
+        />
         <ProfileRow label="Display order" value={member.order} />
       </ProfileSection>
 
       <ProfileSection title="Personal information">
-        <ProfileRow label="Date of birth" value={formatDate(member.dateOfBirth)} />
-        <ProfileRow label="Blood group" value={member.bloodGroup} />
-        <ProfileRow label="Gender" value={member.gender} />
-        <ProfileRow label="NID" value={member.nid} />
-        <ProfileRow label="Address" value={member.address} />
+        <ProfileRow
+          label="Date of birth"
+          value={formatDate(member.dateOfBirth)}
+          visibility={isPublic("dateOfBirth")}
+        />
+        <ProfileRow
+          label="Blood group"
+          value={member.bloodGroup}
+          visibility={isPublic("bloodGroup")}
+        />
+        <ProfileRow
+          label="Gender"
+          value={member.gender}
+          visibility={isPublic("gender")}
+        />
+        <ProfileRow
+          label="NID"
+          value={member.nid}
+          visibility={isPublic("nid")}
+        />
+        <ProfileRow
+          label="Address"
+          value={member.address}
+          visibility={isPublic("address")}
+        />
       </ProfileSection>
 
       <ProfileSection title="Sports information">
-        <ProfileRow label="Discipline" value={member.discipline} />
-        <ProfileRow label="Jersey number" value={member.jerseyNumber} />
-        <ProfileRow label="Joining date" value={formatDate(member.joiningDate)} />
-        <ProfileRow label="Achievements" value={member.achievements} />
-        <ProfileRow label="Bio" value={member.bio} />
+        <ProfileRow
+          label="Discipline"
+          value={member.discipline}
+          visibility={isPublic("discipline")}
+        />
+        <ProfileRow
+          label="Jersey number"
+          value={member.jerseyNumber}
+          visibility={isPublic("jerseyNumber")}
+        />
+        <ProfileRow
+          label="Joining date"
+          value={formatDate(member.joiningDate)}
+          visibility={isPublic("joiningDate")}
+        />
+        <ProfileRow
+          label="Achievements"
+          value={member.achievements}
+          visibility={isPublic("achievements")}
+        />
+        <ProfileRow
+          label="Bio"
+          value={member.bio}
+          visibility={isPublic("bio")}
+        />
       </ProfileSection>
     </div>
   );

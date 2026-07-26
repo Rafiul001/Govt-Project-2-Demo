@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
   // subdomains must be allowlisted or hot reload fails to connect.
   // `*.localhost` covers the per-branch dev hosts (barishal.localhost:3001)
   // the dashboard's preview iframe uses.
-  allowedDevOrigins: ["rida-project.com", "*.rida-project.com", "*.localhost"],
+  allowedDevOrigins: [
+    "rida-project.com",
+    "*.rida-project.com",
+    "*.localhost",
+    "*.example.com",
+  ],
   experimental: {
     // In dev, Next caches Server Component fetches across HMR refreshes, so
     // dashboard edits only appeared after a hard reload. Disable it so every

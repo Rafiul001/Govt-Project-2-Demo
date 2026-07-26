@@ -11,6 +11,7 @@ import Link from "next/link";
 /**
  * All members of one category (the `/members/:slug` route), ordered by
  * display `order` — the category's own bilingual name is the page heading.
+ * Each card links to that member's full profile (`/members/:slug/:id`).
  */
 export function MembersArchive({
   category,
@@ -48,7 +49,11 @@ export function MembersArchive({
             </p>
             <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
               {ordered.map((member) => (
-                <MemberProfileCard key={member.id} member={member} />
+                <MemberProfileCard
+                  key={member.id}
+                  member={member}
+                  categorySlug={category.slug}
+                />
               ))}
             </div>
           </>

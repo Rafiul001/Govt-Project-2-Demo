@@ -6,9 +6,13 @@ import type { TBranch } from "@/lib/types";
 import Image from "next/image";
 
 /**
- * Masthead: national emblem on the left, organization + branch name in the
- * centre, and the branch's own logo (falling back to the national flag) on the
- * right — the standard Bangladesh government portal header composition.
+ * Masthead: national emblem on the left, the *branch* name as the headline in
+ * the centre with the parent organization as its subtitle, and the branch's
+ * own logo (falling back to the national flag) on the right — the standard
+ * Bangladesh government portal header composition.
+ *
+ * The branch leads because every deployment of this site *is* one branch's
+ * site; the organization is the context, not the subject.
  */
 export function SiteHeader({ branch }: { branch: TBranch | null }) {
   const { lang, t } = useLanguage();
@@ -27,21 +31,24 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
 
         <div className="min-w-0 flex-1 text-center">
           <h1 className="truncate text-lg font-bold text-govt-green sm:text-2xl">
-            {t.org.name}
+            {branch
+              ? `${branch.name} ${t.header.branchSuffix}`
+              : t.org.name}
           </h1>
+          {/* The organization is the subtitle now that the branch is the
+              headline. Shown only when there *is* a branch above it. */}
           {branch ? (
             <p className="truncate text-sm font-semibold text-govt-red sm:text-base">
-              {branch.name} {t.header.branchSuffix}
+              {t.org.name}
             </p>
           ) : null}
-          {/* Secondary line shows the English name as a subtitle when the page
-              is in Bangla; redundant when the page is already in English. */}
+          {/* Third line repeats the identity in English when the page is in
+              Bangla; redundant when the page is already in English. */}
           {lang === "bn" ? (
             <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">
-              {dictionaries.en.org.name}
               {branch
-                ? `, ${branch.name} ${dictionaries.en.header.branchSuffix}`
-                : ""}
+                ? `${branch.name} ${dictionaries.en.header.branchSuffix}, ${dictionaries.en.org.name}`
+                : dictionaries.en.org.name}
             </p>
           ) : null}
         </div>

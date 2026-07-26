@@ -4,15 +4,15 @@ import {
   ArrowUpRightIcon,
   Building2Icon,
   CalendarIcon,
+  ContactIcon,
   MegaphoneIcon,
   PlusIcon,
   ShieldUserIcon,
-  UsersIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useAdmins } from "../../hooks/useAdmins";
-import { useBoardOfDirectors } from "../../hooks/useBoardOfDirectors";
 import { useCurrentAdmin } from "../../hooks/useCurrentAdmin";
+import { useMembers } from "../../hooks/useMembers";
 import { useNotices } from "../../hooks/useNotices";
 import type { TNotice } from "../../types";
 
@@ -69,7 +69,7 @@ export function DashboardPage() {
 
   // We only need the totals, so request a single row per resource.
   const countParams = { page: 1, pageSize: 1 };
-  const board = useBoardOfDirectors(countParams);
+  const members = useMembers(countParams);
   const admins = useAdmins(countParams, { enabled: isSuperAdmin });
 
   // Recent notices feed.
@@ -80,7 +80,7 @@ export function DashboardPage() {
     isLoading ? "…" : (value ?? 0);
 
   const quickActions = [
-    { to: "/board-of-directors", label: "Board of Directors", icon: UsersIcon },
+    { to: "/members", label: "Members", icon: ContactIcon },
     { to: "/notices", label: "Notices", icon: MegaphoneIcon },
     ...(isSuperAdmin
       ? [
@@ -119,10 +119,10 @@ export function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatTile
-          to="/board-of-directors"
-          label="Board members"
-          value={dash(board.data?.total, board.isLoading)}
-          icon={UsersIcon}
+          to="/members"
+          label="Members"
+          value={dash(members.data?.total, members.isLoading)}
+          icon={ContactIcon}
         />
         <StatTile
           to="/notices"
@@ -139,7 +139,7 @@ export function DashboardPage() {
           />
         ) : (
           <StatTile
-            to="/board-of-directors"
+            to="/members"
             label="Branch"
             value={admin?.branchId ? `#${admin.branchId}` : "—"}
             icon={Building2Icon}

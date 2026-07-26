@@ -6,7 +6,6 @@ export { ConfirmDialog } from "./ConfirmDialog";
 export { LoadingButton } from "./LoadingButton";
 export { SpriteIcon } from "./SpriteIcon";
 export { BranchCard } from "./BranchCard";
-export { BoardMemberCard } from "./BoardMemberCard";
 export { BannerCard } from "./BannerCard";
 export { NoticeCard } from "./NoticeCard";
 export { NoticePreview } from "./NoticePreview";

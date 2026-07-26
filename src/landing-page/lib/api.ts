@@ -5,7 +5,7 @@
  * API's *public* GET routes directly with no auth token and no CORS concerns.
  * Everything is keyed off the branch *name*, which is derived per request from
  * the *subdomain* the visitor came in on (`dhaka.example.com` → `Dhaka`) — see
- * `getBranchName`. Notices and the board of directors are then scoped via
+ * `getBranchName`. Notices, events and members are then scoped via
  * `?branchName=`, and the branch profile is resolved by matching the name in
  * the public branch list. This lets one deployment serve every branch.
  *
@@ -16,7 +16,6 @@
 import { headers } from "next/headers";
 import type {
   TBanner,
-  TBoardOfDirector,
   TBranch,
   TDynamicPage,
   TEvent,
@@ -178,26 +177,6 @@ export async function getBanners(
   return data?.items ?? [];
 }
 
-/** Board of directors for the branch, ordered by display order. */
-export async function getBoardOfDirectors(
-  name?: string,
-  pageSize = 12,
-): Promise<TBoardOfDirector[]> {
-  const branchName = name ?? (await getBranchName());
-  if (!branchName) return [];
-  const data = await apiGet<TPaginated<TBoardOfDirector>>(
-    `/api/v1/board-of-directors?branchName=${encodeURIComponent(branchName)}&pageSize=${pageSize}`,
-  );
-  return data?.items ?? [];
-}
-
-/** Full board of directors — backs the `/board` page. */
-export async function getAllBoardOfDirectors(
-  name?: string,
-): Promise<TBoardOfDirector[]> {
-  return getBoardOfDirectors(name, 100);
-}
-
 /**
  * Published navigation tree for the branch — menus with their published
  * sub-menus. Backs the NavBar dropdowns. Empty when the branch has no
@@ -246,7 +225,7 @@ export async function getMemberCategories(): Promise<TMemberCategory[]> {
 
 /**
  * The branch's members of one category, resolved by the category's URL slug.
- * Private profile fields are stripped by the API for anonymous callers.
+ * Unpublished profile fields are blanked out by the API for anonymous callers.
  */
 export async function getMembersByCategory(
   categorySlug: string,
@@ -259,6 +238,17 @@ export async function getMembersByCategory(
       `&categorySlug=${encodeURIComponent(categorySlug)}&pageSize=100`,
   );
   return data?.items ?? [];
+}
+
+/**
+ * One member profile by id — backs `/members/:slug/:id`. Returns `null` when
+ * the id is unknown. The caller must still check that the member belongs to
+ * the current branch (and category): the route is global, so an id from
+ * another branch would otherwise render on the wrong site.
+ */
+export async function getMember(id: number): Promise<TMember | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return apiGet<TMember>(`/api/v1/member/${id}`);
 }
 
 /**
@@ -278,6 +268,59 @@ export async function getEventsForRange(
       `&from=${from}&to=${to}&pageSize=100`,
   );
   return data?.items ?? [];
+}
+
+/** One page of the event archive, as returned by the API. */
+export type TEventsPage = TPaginated<TEvent>;
+
+const EMPTY_EVENTS_PAGE: TEventsPage = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: 9,
+  totalPages: 1,
+};
+
+/**
+ * A page of the branch's published events — backs the `/events` archive list.
+ * Search, the optional date window and pagination are all backend filters, so
+ * the list always reflects the query string. With no `from`/`to` the API
+ * returns *every* event, which is what a first-time visitor sees.
+ */
+export async function getEventsPage(opts: {
+  search?: string;
+  from?: string;
+  to?: string;
+  /** `asc` leads with the soonest event — used by the "upcoming" filter. */
+  order?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+  name?: string;
+}): Promise<TEventsPage> {
+  const branchName = opts.name ?? (await getBranchName());
+  if (!branchName) return EMPTY_EVENTS_PAGE;
+  const params = new URLSearchParams({
+    branchName,
+    page: String(opts.page ?? 1),
+    pageSize: String(opts.pageSize ?? 9),
+    order: opts.order ?? "desc",
+  });
+  if (opts.search) params.set("search", opts.search);
+  if (opts.from) params.set("from", opts.from);
+  if (opts.to) params.set("to", opts.to);
+
+  const data = await apiGet<TPaginated<TEvent>>(`/api/v1/event?${params}`);
+  return data ?? EMPTY_EVENTS_PAGE;
+}
+
+/**
+ * One published event by id — backs `/events/:id`. Returns `null` for an
+ * unknown or unpublished event (the API hides drafts from anonymous callers).
+ * The caller must still check the event belongs to the current branch.
+ */
+export async function getEvent(id: number): Promise<TEvent | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return apiGet<TEvent>(`/api/v1/event/${id}`);
 }
 
 /**

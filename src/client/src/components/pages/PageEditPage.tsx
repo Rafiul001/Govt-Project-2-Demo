@@ -103,7 +103,8 @@ export function PageEditPage({
 /**
  * Split editor: page content on the left, a live landing-page preview on the
  * right (an iframe of the public `/preview/page` route kept in sync via
- * `postMessage`). Toggle "Published" and Save to make the page public.
+ * `postMessage`). Toggle "Published" and hit Save in the header to make the
+ * page public.
  */
 function PageEditor({
   page,
@@ -376,10 +377,27 @@ function PageEditor({
             <PencilIcon className="size-4" />
           </Button>
         </div>
+
+        {/* Save lives in the header so it is always reachable, no matter how
+            far down the content editor or the preview is scrolled. */}
+        <div className="shrink-0">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <LoadingButton
+                variant="primary"
+                isLoading={isSubmitting}
+                onPress={() => void form.handleSubmit()}
+              >
+                {isSubmitting ? null : <SaveIcon className="size-4" />}
+                {isSubmitting ? "Saving…" : "Save"}
+              </LoadingButton>
+            )}
+          </form.Subscribe>
+        </div>
       </header>
 
       {/* Resizable split: form | preview (or one pane full-width) */}
-      <div ref={splitRef} className="relative flex flex-1 overflow-hidden">
+      <div ref={splitRef} className="flex flex-1 overflow-hidden">
         {/* Left: editable content */}
         <form
           style={viewMode === "split" ? { width: `${leftPct}%` } : undefined}
@@ -475,24 +493,6 @@ function PageEditor({
             className={`size-full border-0 ${dragging ? "pointer-events-none select-none" : ""}`}
             onLoad={() => void postPreview(form.state.values)}
           />
-        </div>
-
-        {/* Save floats over whichever pane(s) are visible */}
-        <div className="absolute bottom-6 right-6">
-          <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(isSubmitting) => (
-              <LoadingButton
-                variant="primary"
-                size="lg"
-                className="shadow-lg"
-                isLoading={isSubmitting}
-                onPress={() => void form.handleSubmit()}
-              >
-                {isSubmitting ? null : <SaveIcon className="size-4" />}
-                {isSubmitting ? "Saving…" : "Save"}
-              </LoadingButton>
-            )}
-          </form.Subscribe>
         </div>
       </div>
     </div>

@@ -103,6 +103,26 @@ export function EventForm({ initial, onSuccess, onCancel }: TEventFormProps) {
         void form.handleSubmit();
       }}
     >
+      {/* Actions sit at the top: these forms are long enough that a footer
+          submit falls well below the fold. Sticky so it stays reachable while
+          the page scrolls. */}
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 flex justify-end gap-2 border-b border-border bg-surface-secondary px-6 py-3">
+        <Button type="button" variant="ghost" onPress={onCancel}>
+          Cancel
+        </Button>
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              {isEdit ? "Save changes" : "Create"}
+            </LoadingButton>
+          )}
+        </form.Subscribe>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <form.Field name="titleBn">
           {(field) => <TextInput field={field} label="Title (Bangla)" />}
@@ -170,22 +190,6 @@ export function EventForm({ initial, onSuccess, onCancel }: TEventFormProps) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onPress={onCancel}>
-          Cancel
-        </Button>
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <LoadingButton
-              type="submit"
-              variant="primary"
-              isLoading={isSubmitting}
-            >
-              {isEdit ? "Save changes" : "Create"}
-            </LoadingButton>
-          )}
-        </form.Subscribe>
-      </div>
     </form>
   );
 }

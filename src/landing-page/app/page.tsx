@@ -1,5 +1,4 @@
 import { AboutSection } from "@/components/organisms/AboutSection";
-import { BoardOfDirectors } from "@/components/organisms/BoardOfDirectors";
 import { ContactSection } from "@/components/organisms/ContactSection";
 import { HeroSlider } from "@/components/organisms/HeroSlider";
 import { NavBar } from "@/components/organisms/NavBar";
@@ -11,7 +10,6 @@ import { UpcomingEvents } from "@/components/organisms/UpcomingEvents";
 import {
   findBranch,
   getBanners,
-  getBoardOfDirectors,
   getBranchName,
   getBranches,
   getMemberCategories,
@@ -37,11 +35,10 @@ export default async function Home() {
   const branch = findBranch(branches, branchName);
   if (!branch) notFound();
 
-  const [banners, notices, board, menus, memberCategories, upcomingEvents] =
+  const [banners, notices, menus, memberCategories, upcomingEvents] =
     await Promise.all([
       getBanners(branch.name),
       getNotices(branch.name),
-      getBoardOfDirectors(branch.name),
       getNavTree(branch.name),
       getMemberCategories(),
       getUpcomingEvents(branch.name),
@@ -60,13 +57,12 @@ export default async function Home() {
             branchName={branch?.name ?? branchName}
           />
         ) : null}
-        <AboutSection branchName={branch?.name ?? branchName} />
+        <AboutSection branch={branch} branchName={branch?.name ?? branchName} />
         <NoticeBoard notices={notices} branches={branches} />
         <UpcomingEvents
           events={upcomingEvents}
           branchName={branch?.name ?? branchName}
         />
-        <BoardOfDirectors members={board} />
         <ContactSection branch={branch} />
       </main>
       <SiteFooter branch={branch} />
