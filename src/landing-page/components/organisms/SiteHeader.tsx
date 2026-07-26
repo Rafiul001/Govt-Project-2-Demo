@@ -29,8 +29,17 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
           priority
         />
 
+        {/*
+          No `truncate` on these lines. It is `overflow: hidden` plus
+          `white-space: nowrap`, and Bengali ink stands taller than its own
+          line box (measured: 1.25–1.39x the font size, against ~1.0x for
+          Latin), so the hidden overflow crops the tops and bottoms of the
+          glyphs — the branch name was losing several pixels off each end.
+          These strings are short and centred, so on the rare long branch name
+          wrapping to a second line is far better than a cropped one.
+        */}
         <div className="min-w-0 flex-1 text-center">
-          <h1 className="truncate text-lg font-bold text-govt-green sm:text-2xl">
+          <h1 className="text-lg font-bold text-govt-green sm:text-2xl">
             {branch
               ? `${branch.name} ${t.header.branchSuffix}`
               : t.org.name}
@@ -38,14 +47,14 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
           {/* The organization is the subtitle now that the branch is the
               headline. Shown only when there *is* a branch above it. */}
           {branch ? (
-            <p className="truncate text-sm font-semibold text-govt-red sm:text-base">
+            <p className="text-sm font-semibold text-govt-red sm:text-base">
               {t.org.name}
             </p>
           ) : null}
           {/* Third line repeats the identity in English when the page is in
               Bangla; redundant when the page is already in English. */}
           {lang === "bn" ? (
-            <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
               {branch
                 ? `${branch.name} ${dictionaries.en.header.branchSuffix}, ${dictionaries.en.org.name}`
                 : dictionaries.en.org.name}

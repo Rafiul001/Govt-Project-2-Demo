@@ -9,45 +9,46 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * One label/value line. Renders nothing when the value is empty — which is
- * also how an *unpublished* field arrives, since the API blanks anything the
- * admin has not opted into. The site therefore never has to know the privacy
- * rules: it simply shows what it was given.
+ * One label/value line of a profile group.
+ *
+ * An empty value is also how an *unpublished* field arrives, since the API
+ * blanks anything the admin has not opted into. The site therefore never has
+ * to know the privacy rules: it simply shows what it was given.
  */
-function ProfileRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number | null | undefined;
-}) {
-  if (value == null || value === "") return null;
-  return (
-    <div className="flex gap-3 py-2">
-      <dt className="w-36 shrink-0 text-sm text-slate-500">{label}</dt>
-      <dd className="text-sm font-medium text-slate-800">{value}</dd>
-    </div>
-  );
+type TProfileRow = { label: string; value: string | number | null | undefined };
+
+/** Rows that actually carry a value — i.e. the ones this member publishes. */
+function filled(rows: TProfileRow[]): TProfileRow[] {
+  return rows.filter((row) => row.value != null && row.value !== "");
 }
 
-/** A titled group of rows; hidden entirely when every row is empty. */
-function ProfileSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  const rows = Array.isArray(children) ? children : [children];
-  const hasContent = rows.some(Boolean);
-  if (!hasContent) return null;
+/**
+ * A titled group of rows, hidden entirely when the member publishes none of
+ * them.
+ *
+ * Note this takes row *data*, not `<ProfileRow>` elements: a React element is
+ * a truthy object even when it renders `null`, so filtering elements would
+ * leave an empty bordered panel on the page.
+ */
+function ProfileSection({ title, rows }: { title: string; rows: TProfileRow[] }) {
+  const visible = filled(rows);
+  if (visible.length === 0) return null;
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h3 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-govt-green">
         {title}
       </h3>
-      <dl className="mt-2 divide-y divide-slate-100">{children}</dl>
+      <dl className="mt-2 divide-y divide-slate-100">
+        {visible.map((row) => (
+          <div key={row.label} className="flex gap-3 py-2">
+            <dt className="w-36 shrink-0 text-sm text-slate-500">
+              {row.label}
+            </dt>
+            <dd className="text-sm font-medium text-slate-800">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
@@ -71,74 +72,44 @@ export function MemberDetail({
   const name = pickLang(lang, member.nameBn, member.nameEn);
   const categoryName = pickLang(lang, category.nameBn, category.nameEn);
 
-  const contactRows = [
-    <ProfileRow
-      key="mobile"
-      label={t.memberPage.mobile}
-      value={member.mobile}
-    />,
-    <ProfileRow key="email" label={t.memberPage.email} value={member.email} />,
+  const contactRows: TProfileRow[] = [
+    { label: t.memberPage.mobile, value: member.mobile },
+    { label: t.memberPage.email, value: member.email },
   ];
-  const personalRows = [
-    <ProfileRow
-      key="dob"
-      label={t.memberPage.dateOfBirth}
-      value={
-        member.dateOfBirth ? formatLocaleDate(member.dateOfBirth, lang) : null
-      }
-    />,
-    <ProfileRow
-      key="blood"
-      label={t.memberPage.bloodGroup}
-      value={member.bloodGroup}
-    />,
-    <ProfileRow
-      key="gender"
-      label={t.memberPage.gender}
-      value={member.gender}
-    />,
-    <ProfileRow key="nid" label={t.memberPage.nid} value={member.nid} />,
-    <ProfileRow
-      key="address"
-      label={t.memberPage.address}
-      value={member.address}
-    />,
+  const personalRows: TProfileRow[] = [
+    {
+      label: t.memberPage.dateOfBirth,
+      value: member.dateOfBirth
+        ? formatLocaleDate(member.dateOfBirth, lang)
+        : null,
+    },
+    { label: t.memberPage.bloodGroup, value: member.bloodGroup },
+    { label: t.memberPage.gender, value: member.gender },
+    { label: t.memberPage.nid, value: member.nid },
+    { label: t.memberPage.address, value: member.address },
   ];
-  const sportsRows = [
-    <ProfileRow
-      key="discipline"
-      label={t.memberPage.discipline}
-      value={member.discipline}
-    />,
-    <ProfileRow
-      key="jersey"
-      label={t.memberPage.jerseyNumber}
-      value={
+  const sportsRows: TProfileRow[] = [
+    { label: t.memberPage.discipline, value: member.discipline },
+    {
+      label: t.memberPage.jerseyNumber,
+      value:
         member.jerseyNumber != null
           ? toLocaleDigits(member.jerseyNumber, lang)
-          : null
-      }
-    />,
-    <ProfileRow
-      key="joining"
-      label={t.memberPage.joiningDate}
-      value={
-        member.joiningDate ? formatLocaleDate(member.joiningDate, lang) : null
-      }
-    />,
-    <ProfileRow
-      key="achievements"
-      label={t.memberPage.achievements}
-      value={member.achievements}
-    />,
-    <ProfileRow key="bio" label={t.memberPage.bio} value={member.bio} />,
+          : null,
+    },
+    {
+      label: t.memberPage.joiningDate,
+      value: member.joiningDate
+        ? formatLocaleDate(member.joiningDate, lang)
+        : null,
+    },
+    { label: t.memberPage.achievements, value: member.achievements },
+    { label: t.memberPage.bio, value: member.bio },
   ];
 
-  // `ProfileRow` returns null for an empty value, so this is exactly "did the
-  // admin publish anything at all beyond the identity header?".
-  const hasDetails = [...contactRows, ...personalRows, ...sportsRows].some(
-    (row) => row.props.value != null && row.props.value !== "",
-  );
+  // "Did this member publish anything at all beyond the identity header?"
+  const hasDetails =
+    filled([...contactRows, ...personalRows, ...sportsRows]).length > 0;
 
   return (
     <section className="scroll-mt-20 bg-slate-50 py-14">
@@ -187,17 +158,11 @@ export function MemberDetail({
         </div>
 
         {hasDetails ? (
-          <div className="mt-6 grid gap-5 lg:grid-cols-2">
-            <ProfileSection title={t.memberPage.contact}>
-              {contactRows}
-            </ProfileSection>
-            <ProfileSection title={t.memberPage.personal}>
-              {personalRows}
-            </ProfileSection>
+          <div className="mt-6 grid items-start gap-5 lg:grid-cols-2">
+            <ProfileSection title={t.memberPage.contact} rows={contactRows} />
+            <ProfileSection title={t.memberPage.personal} rows={personalRows} />
             <div className="lg:col-span-2">
-              <ProfileSection title={t.memberPage.sports}>
-                {sportsRows}
-              </ProfileSection>
+              <ProfileSection title={t.memberPage.sports} rows={sportsRows} />
             </div>
           </div>
         ) : (

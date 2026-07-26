@@ -5,7 +5,7 @@ import {
   type TEventFilters,
 } from "@/components/organisms/EventsArchive";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { toBanglaDigits, toLocaleDigits } from "@/lib/format";
+import { formatMonthLabel, toLocaleDigits } from "@/lib/format";
 import { pickLang, type TLanguage } from "@/lib/i18n";
 import type { TEvent } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -88,12 +88,7 @@ export function EventsCalendar({
   const todayKey = dayKey(new Date());
   const byDay = bucketEventsByDay(events);
 
-  const monthLabelRaw = firstOfMonth.toLocaleDateString(
-    lang === "bn" ? "bn-BD" : "en-GB",
-    { month: "long", year: "numeric" },
-  );
-  const monthLabel =
-    lang === "bn" ? toBanglaDigits(monthLabelRaw) : monthLabelRaw;
+  const monthLabel = formatMonthLabel(year, monthNum, lang);
 
   const cells = Array.from({ length: 42 }, (_, i) => {
     const day = i - leadingBlanks + 1;

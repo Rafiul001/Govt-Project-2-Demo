@@ -2,21 +2,12 @@
 
 import { SectionHeading } from "@/components/molecules/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { formatLocaleDate, toBanglaDigits } from "@/lib/format";
-import { pickLang, type TLanguage } from "@/lib/i18n";
+import { formatLocaleDate, formatLocaleTime } from "@/lib/format";
+import { pickLang } from "@/lib/i18n";
 import type { TEvent } from "@/lib/types";
 import { CalendarDays, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-/** Localized time like "০৯:০০" / "09:00". */
-function formatTime(iso: string, lang: TLanguage): string {
-  const formatted = new Date(iso).toLocaleTimeString(
-    lang === "bn" ? "bn-BD" : "en-GB",
-    { hour: "2-digit", minute: "2-digit" },
-  );
-  return lang === "bn" ? toBanglaDigits(formatted) : formatted;
-}
 
 /** One labelled fact of the event's summary panel. */
 function DetailRow({
@@ -82,13 +73,13 @@ export function EventDetail({ event }: { event: TEvent }) {
           <DetailRow
             icon={<CalendarDays className="size-5" aria-hidden />}
             label={t.eventPage.starts}
-            value={`${formatLocaleDate(event.startAt, lang)}, ${formatTime(event.startAt, lang)}`}
+            value={`${formatLocaleDate(event.startAt, lang)}, ${formatLocaleTime(event.startAt, lang)}`}
           />
           {event.endAt ? (
             <DetailRow
               icon={<CalendarDays className="size-5" aria-hidden />}
               label={t.eventPage.ends}
-              value={`${formatLocaleDate(event.endAt, lang)}, ${formatTime(event.endAt, lang)}`}
+              value={`${formatLocaleDate(event.endAt, lang)}, ${formatLocaleTime(event.endAt, lang)}`}
             />
           ) : null}
           {event.venue ? (

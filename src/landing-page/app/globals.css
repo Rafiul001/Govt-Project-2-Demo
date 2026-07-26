@@ -13,6 +13,56 @@
   --color-govt-red: #f42a41;
 
   --font-sans: var(--font-hind-siliguri), system-ui, sans-serif;
+
+  /*
+   * Type scale, re-tuned for Bengali.
+   *
+   * Tailwind's defaults are calibrated for Latin, where a glyph is one
+   * horizontal row. Bengali stacks conjuncts *vertically* — ক্ষ, প্ত, ঙ্গ, ্য
+   * put two or three parts above and below the base — so at Tailwind's
+   * `text-sm` (14px) the lower halves collapse into an unreadable blob on a
+   * standard-DPI screen. The small end of the scale is bumped a step and every
+   * size gets a taller line box for the below-base forms to live in.
+   *
+   * Done here rather than per component so every existing `text-xs`/`text-sm`
+   * utility across the site is fixed at once — and it stays fixed for markup
+   * written later.
+   */
+  --text-xs: 0.8125rem; /* 13px */
+  --text-xs--line-height: calc(1.6 / 0.8125);
+  --text-sm: 0.9375rem; /* 15px */
+  --text-sm--line-height: calc(1.65 / 0.9375);
+  --text-base: 1.0625rem; /* 17px */
+  --text-base--line-height: calc(1.8 / 1.0625);
+  --text-lg: 1.1875rem; /* 19px */
+  --text-lg--line-height: calc(1.85 / 1.1875);
+
+  /*
+   * Headings keep Tailwind's sizes but get a taller line box.
+   *
+   * Measured in-browser: Bengali ink (tall vowel signs above, stacked
+   * conjuncts below) spans 1.25–1.39x the font size, where Latin spans ~1.0x.
+   * Tailwind's heading line-heights tighten as the size grows — 2xl is 1.33,
+   * 3xl 1.2, 4xl 1.11 — so the ink is taller than its own line box. On its own
+   * that just looks cramped, but combined with `truncate` (which is
+   * `overflow: hidden`) the browser *crops* the glyph tops and bottoms: the
+   * masthead h1 was losing 4px off the top and 3px off the bottom.
+   *
+   * 1.45 clears the worst measured ratio at every size with room to spare.
+   */
+  --text-xl--line-height: 1.45;
+  --text-2xl--line-height: 1.45;
+  --text-3xl--line-height: 1.45;
+  --text-4xl--line-height: 1.45;
+
+  /*
+   * Letter-spacing is a Latin device. Bengali renders a syllable as one
+   * connected cluster under the matra, and positive tracking prises those
+   * pieces apart — so the `tracking-wide` section headings are toned down to
+   * something that still reads as spaced in English without damaging Bengali.
+   */
+  --tracking-wide: 0.0125em;
+  --tracking-wider: 0.025em;
 }
 
 html {
