@@ -15,6 +15,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
 
 /** The "when" filter: the whole archive, or one side of today. */
 export type TEventWhen = "all" | "upcoming" | "past";
@@ -122,6 +123,9 @@ function EventCard({ event }: { event: TEvent }) {
   );
 }
 
+/** How long a filter change settles before it is pushed to the URL. */
+const FILTER_DEBOUNCE_MS = 350;
+
 /**
  * The `/events` page body: every published event of the branch, filterable and
  * paginated.
@@ -129,9 +133,15 @@ function EventCard({ event }: { event: TEvent }) {
  * A first-time visitor lands on the unfiltered archive — all events, newest
  * first. Search, the upcoming/past switch and the date window are *backend*
  * filters that live in the query string (`?search=`, `?when=`, `?from=`,
- * `?to=`, `?page=`), so every control is a plain link/form submit and the
- * resulting view is shareable and survives a reload. The month calendar is
- * rendered separately below by the page.
+ * `?to=`, `?page=`), so the resulting view is shareable and survives a reload.
+ *
+ * Every control applies itself: the component owns a `draft` of the filters so
+ * the UI reacts instantly (the chip highlights on click, the field shows each
+ * keystroke), and a debounce pushes that draft into the query string, which
+ * re-runs the server query. No control depends on the Search button — that
+ * button only skips the wait. The month calendar is rendered separately below
+ * by the page, and its `?month=` is carried through every navigation so
+ * filtering the list never resets the calendar.
  */
 export function EventsArchive({
   events,
@@ -139,6 +149,7 @@ export function EventsArchive({
   page,
   totalPages,
   filters,
+  month,
   branchName,
 }: {
   events: TEvent[];
@@ -146,10 +157,49 @@ export function EventsArchive({
   page: number;
   totalPages: number;
   filters: TEventFilters;
+  /** Calendar month (`YYYY-MM`), preserved across filter changes. */
+  month?: string;
   branchName?: string | null;
 }) {
   const { lang, t } = useLanguage();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const href = useCallback(
+    (next: TEventFilters, toPage: number) => eventsHref(next, toPage, month),
+    [month],
+  );
+
+  // The filters as the user is editing them. Kept separate from `filters`
+  // (which describes the list currently on screen) so the controls stay
+  // responsive while the debounced navigation is still in flight.
+  const [draft, setDraft] = useState(filters);
+
+  // Adopt filters that changed outside our own typing — a "clear filters"
+  // click, browser back/forward, a shared link. Compared as the URL they
+  // produce so a re-render with an equal-but-new object is not mistaken for a
+  // change. Done during render (not in an effect) so the inputs never flash
+  // the stale value; our own debounced pushes arrive here already matching.
+  const serverKey = eventsHref(filters, 1);
+  const [seenKey, setSeenKey] = useState(serverKey);
+  if (serverKey !== seenKey) {
+    setSeenKey(serverKey);
+    setDraft(filters);
+  }
+
+  // Debounce the draft into the URL. `replace` rather than `push` so a
+  // keystroke-by-keystroke search does not bury the previous page in history,
+  // and `scroll: false` so the page does not jump while refining filters.
+  const draftKey = eventsHref(draft, 1);
+  useEffect(() => {
+    if (draftKey === serverKey) return;
+    const id = setTimeout(() => {
+      startTransition(() => {
+        router.replace(href(draft, 1), { scroll: false });
+      });
+    }, FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [draftKey, serverKey, draft, href, router]);
 
   const isFiltered =
     Boolean(filters.search) ||
@@ -157,21 +207,12 @@ export function EventsArchive({
     Boolean(filters.from) ||
     Boolean(filters.to);
 
+  // Submitting (Enter, or the Search button) just skips the debounce.
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const read = (key: string) => String(data.get(key) ?? "").trim();
-    router.push(
-      eventsHref(
-        {
-          search: read("search"),
-          when: (read("when") || "all") as TEventWhen,
-          from: read("from"),
-          to: read("to"),
-        },
-        1,
-      ),
-    );
+    startTransition(() => {
+      router.replace(href(draft, 1), { scroll: false });
+    });
   };
 
   const whenOptions: { value: TEventWhen; label: string }[] = [
@@ -220,7 +261,10 @@ export function EventsArchive({
                   id="event-search"
                   type="search"
                   name="search"
-                  defaultValue={filters.search}
+                  value={draft.search}
+                  onChange={(e) =>
+                    setDraft({ ...draft, search: e.target.value })
+                  }
                   placeholder={t.eventsPage.searchPlaceholder}
                   className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-govt-green focus:ring-2 focus:ring-govt-green/20"
                 />
@@ -238,7 +282,8 @@ export function EventsArchive({
                 id="event-from"
                 type="date"
                 name="from"
-                defaultValue={filters.from}
+                value={draft.from}
+                onChange={(e) => setDraft({ ...draft, from: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-govt-green focus:ring-2 focus:ring-govt-green/20"
               />
             </div>
@@ -254,7 +299,8 @@ export function EventsArchive({
                 id="event-to"
                 type="date"
                 name="to"
-                defaultValue={filters.to}
+                value={draft.to}
+                onChange={(e) => setDraft({ ...draft, to: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-govt-green focus:ring-2 focus:ring-govt-green/20"
               />
             </div>
@@ -267,13 +313,19 @@ export function EventsArchive({
             </button>
           </div>
 
-          {/* Upcoming / past switch — radios so it submits with the form. */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Upcoming / past switch. Radios (not links) so the group is
+              keyboard-navigable and announced as one control; picking one
+              updates the draft, which the debounce applies. */}
+          <div
+            role="radiogroup"
+            aria-label={t.eventsPage.allHeading}
+            className="mt-3 flex flex-wrap items-center gap-2"
+          >
             {whenOptions.map((option) => (
               <label
                 key={option.value}
                 className={`cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                  filters.when === option.value
+                  draft.when === option.value
                     ? "border-govt-green bg-govt-green text-white"
                     : "border-slate-300 bg-white text-slate-600 hover:border-govt-green hover:text-govt-green"
                 }`}
@@ -282,24 +334,41 @@ export function EventsArchive({
                   type="radio"
                   name="when"
                   value={option.value}
-                  defaultChecked={filters.when === option.value}
+                  checked={draft.when === option.value}
+                  onChange={() => setDraft({ ...draft, when: option.value })}
                   className="sr-only"
                 />
                 {option.label}
               </label>
             ))}
 
-            {isFiltered ? (
-              <Link
-                href="/events"
+            {/* Live region: the count below changes without a page load, so
+                announce that a refresh is under way. */}
+            <span aria-live="polite" className="sr-only">
+              {isPending ? t.eventsPage.searchAction : ""}
+            </span>
+
+            {isFiltered || draft.when !== "all" || draft.search || draft.from || draft.to ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft({ search: "", when: "all", from: "", to: "" })
+                }
                 className="ml-auto text-sm font-semibold text-govt-green hover:underline"
               >
                 {t.eventsPage.clearFilters}
-              </Link>
+              </button>
             ) : null}
           </div>
         </form>
 
+        {/* Dim while a debounced filter change is being applied, so the list
+            visibly belongs to the previous query until the new one lands. */}
+        <div
+          className={
+            isPending ? "opacity-50 transition-opacity" : "transition-opacity"
+          }
+        >
         {events.length > 0 ? (
           <>
             <p className="mt-6 text-sm text-slate-500">
@@ -320,7 +389,7 @@ export function EventsArchive({
               >
                 {page > 1 ? (
                   <Link
-                    href={eventsHref(filters, page - 1)}
+                    href={href(filters, page - 1)}
                     aria-label={t.eventsPage.prev}
                     className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition-colors hover:border-govt-green hover:text-govt-green"
                   >
@@ -338,7 +407,7 @@ export function EventsArchive({
                   ) : (
                     <Link
                       key={p}
-                      href={eventsHref(filters, p)}
+                      href={href(filters, p)}
                       aria-current={p === page ? "page" : undefined}
                       className={`inline-flex size-9 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${
                         p === page
@@ -352,7 +421,7 @@ export function EventsArchive({
                 )}
                 {page < totalPages ? (
                   <Link
-                    href={eventsHref(filters, page + 1)}
+                    href={href(filters, page + 1)}
                     aria-label={t.eventsPage.next}
                     className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition-colors hover:border-govt-green hover:text-govt-green"
                   >
@@ -367,6 +436,7 @@ export function EventsArchive({
             {isFiltered ? t.eventsPage.noResults : t.eventsPage.empty}
           </div>
         )}
+        </div>
       </div>
     </section>
   );

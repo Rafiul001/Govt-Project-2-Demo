@@ -63,12 +63,19 @@ export function SiteHeader({ branch }: { branch: TBranch | null }) {
         </div>
 
         {branch?.logo ? (
+          /*
+            `object-contain`, not `object-cover`: branch logos are wordmarks of
+            all shapes (wide banners, tall crests), and cover cropped them to a
+            square — a wide logo lost everything but its middle few letters.
+            Contain fits the whole mark inside the box; the white padding gives
+            logos with transparent backgrounds something to sit on.
+          */
           <Image
             src={branch.logo}
             alt={`${branch.name} logo`}
-            width={64}
+            width={128}
             height={64}
-            className="hidden size-14 shrink-0 rounded-sm border border-slate-200 object-cover sm:block sm:size-16"
+            className="hidden h-14 w-auto max-w-36 shrink-0 rounded-sm border border-slate-200 bg-white object-contain p-1 sm:block sm:h-16"
           />
         ) : (
           <Image

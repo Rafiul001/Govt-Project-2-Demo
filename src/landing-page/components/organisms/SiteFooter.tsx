@@ -26,12 +26,19 @@ export function SiteFooter({ branch }: { branch: TBranch | null }) {
         {/* Identity */}
         <div className="sm:col-span-2 lg:col-span-1">
           <div className="flex items-center gap-3">
+            {/*
+              On a dark-green footer the emblem was forced to a flat white
+              silhouette (`brightness-0 invert`), which reduced it to a
+              featureless blob. Sit the mark on a white tile instead so it
+              keeps its real colours — and prefer the branch's own logo, which
+              until now never appeared in the footer at all.
+            */}
             <Image
-              src="/assets/national-emblem.svg"
-              alt=""
-              width={44}
+              src={branch?.logo ?? "/assets/national-emblem.svg"}
+              alt={branch?.logo ? `${branch.name} logo` : ""}
+              width={88}
               height={44}
-              className="size-11 shrink-0 brightness-0 invert"
+              className="h-11 w-auto max-w-24 shrink-0 rounded-sm bg-white object-contain p-1"
             />
             <div>
               <p className="font-bold text-white">{t.org.name}</p>

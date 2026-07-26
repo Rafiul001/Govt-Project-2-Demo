@@ -169,6 +169,7 @@ export default async function EventsPage({
           page={archive.page}
           totalPages={archive.totalPages}
           filters={filters}
+          month={params.month === month ? month : undefined}
           branchName={branch.name}
         />
         <div className="mx-auto -mt-8 max-w-7xl px-4 pb-14">

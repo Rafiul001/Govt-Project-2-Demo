@@ -62,7 +62,13 @@ export function HeroSlider({
       className="relative overflow-hidden bg-linear-to-br from-govt-green-dark via-govt-green to-govt-green-dark text-white"
       aria-roledescription="carousel"
     >
-      {/* Active slide image as a subtle, darkened backdrop when available */}
+      {/*
+        Active slide image as the backdrop. Shown at full strength under a
+        gradient that is opaque at the bottom and clears towards the top —
+        the same treatment as a dynamic page's banner. The previous flat wash
+        (25% image beneath a 60% green sheet) made the branch's banner almost
+        invisible.
+      */}
       {activeImage ? (
         <div className="absolute inset-0" aria-hidden>
           <Image
@@ -72,9 +78,9 @@ export function HeroSlider({
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-25"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-govt-green-dark/60" />
+          <div className="absolute inset-0 bg-linear-to-t from-govt-green-dark via-govt-green-dark/75 to-govt-green-dark/30" />
         </div>
       ) : null}
 

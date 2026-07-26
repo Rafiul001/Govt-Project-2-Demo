@@ -50,13 +50,19 @@ export default async function Home() {
       <SiteHeader branch={branch} />
       <NavBar menus={menus} memberCategories={memberCategories} />
       <main className="flex-1">
-        {banners.length > 0 ? (
-          <HeroSlider
-            banners={banners}
-            bannerUrl={branch?.banner ?? null}
-            branchName={branch?.name ?? branchName}
-          />
-        ) : null}
+        {/*
+          Always rendered. `HeroSlider` already falls back to the bilingual
+          static slides over the branch's own banner image, which is the only
+          thing that image is used for — gating on `banners.length` meant a
+          branch that had uploaded a banner but not created any banner records
+          simply never showed it, while the dashboard preview (which always
+          renders the hero) showed it fine.
+        */}
+        <HeroSlider
+          banners={banners}
+          bannerUrl={branch?.banner ?? null}
+          branchName={branch?.name ?? branchName}
+        />
         <AboutSection branch={branch} branchName={branch?.name ?? branchName} />
         <NoticeBoard notices={notices} branches={branches} />
         <UpcomingEvents

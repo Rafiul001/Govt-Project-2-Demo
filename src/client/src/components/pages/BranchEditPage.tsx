@@ -5,11 +5,14 @@ import {
   ArrowLeftIcon,
   AwardIcon,
   Building2Icon,
+  Columns2Icon,
+  EyeIcon,
   FileTextIcon,
   GlobeIcon,
   HandshakeIcon,
   HeartIcon,
   LandmarkIcon,
+  PencilIcon,
   RocketIcon,
   ScaleIcon,
   ShieldCheckIcon,
@@ -144,6 +147,13 @@ function BranchEditor({ branch }: { branch: TBranch }) {
   const splitRef = useRef<HTMLDivElement>(null);
   const [leftPct, setLeftPct] = useState(45);
   const [dragging, setDragging] = useState(false);
+
+  // Editor layout: details + preview side by side, or one of them full-width —
+  // same control as the page editor. The preview iframe stays mounted (just
+  // hidden) so switching modes doesn't reload it and lose the postMessage state.
+  const [viewMode, setViewMode] = useState<"split" | "preview" | "edit">(
+    "split",
+  );
 
   useEffect(() => {
     if (!dragging) return;
@@ -319,9 +329,40 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           </p>
         </div>
 
+        {/* View mode: side-by-side / preview only / edit only */}
+        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border border-border p-1">
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "split" ? "primary" : "ghost"}
+            aria-label="Side-by-side view"
+            onPress={() => setViewMode("split")}
+          >
+            <Columns2Icon className="size-4" />
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "preview" ? "primary" : "ghost"}
+            aria-label="Preview only"
+            onPress={() => setViewMode("preview")}
+          >
+            <EyeIcon className="size-4" />
+          </Button>
+          <Button
+            isIconOnly
+            size="sm"
+            variant={viewMode === "edit" ? "primary" : "ghost"}
+            aria-label="Edit only"
+            onPress={() => setViewMode("edit")}
+          >
+            <PencilIcon className="size-4" />
+          </Button>
+        </div>
+
         {/* Publish lives in the header so it is always reachable, no matter
             how far down either pane is scrolled. */}
-        <div className="ml-auto shrink-0">
+        <div className="shrink-0">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <LoadingButton
@@ -341,8 +382,14 @@ function BranchEditor({ branch }: { branch: TBranch }) {
       <div ref={splitRef} className="flex flex-1 overflow-hidden">
         {/* Left: editable details */}
         <form
-          style={{ width: `${leftPct}%` }}
-          className="flex shrink-0 flex-col gap-4 overflow-y-auto p-6"
+          style={viewMode === "split" ? { width: `${leftPct}%` } : undefined}
+          className={`flex-col gap-4 overflow-y-auto p-6 ${
+            viewMode === "preview"
+              ? "hidden"
+              : viewMode === "edit"
+                ? "flex w-full"
+                : "flex shrink-0"
+          }`}
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -483,23 +530,29 @@ function BranchEditor({ branch }: { branch: TBranch }) {
           ))}
         </form>
 
-        {/* Drag handle */}
+        {/* Drag handle (only meaningful when both panes are visible) */}
+        {viewMode === "split" ? (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            className={`group flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent ${
+              dragging ? "bg-accent" : ""
+            }`}
+          >
+            <div className="h-8 w-0.5 rounded-full bg-white/60 group-hover:bg-white" />
+          </div>
+        ) : null}
+
+        {/* Right: live preview (kept mounted across mode switches) */}
         <div
-          role="separator"
-          aria-orientation="vertical"
-          onMouseDown={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          className={`group flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-border transition-colors hover:bg-accent ${
-            dragging ? "bg-accent" : ""
+          className={`min-w-0 flex-1 bg-slate-100 ${
+            viewMode === "edit" ? "hidden" : ""
           }`}
         >
-          <div className="h-8 w-0.5 rounded-full bg-white/60 group-hover:bg-white" />
-        </div>
-
-        {/* Right: live preview */}
-        <div className="min-w-0 flex-1 bg-slate-100">
           <iframe
             ref={iframeRef}
             title="Branch preview"

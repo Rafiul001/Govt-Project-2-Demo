@@ -67,6 +67,14 @@ export function DynamicPageContent({
       {/* Banner */}
       <section className="relative overflow-hidden bg-linear-to-br from-govt-green-dark via-govt-green to-govt-green-dark text-white">
         {bannerImage ? (
+          /*
+            The image is shown at full strength and darkened by a gradient that
+            is opaque at the bottom and clears towards the top, rather than the
+            old flat wash (25% image under a 60% green sheet) which left the
+            picture barely readable. The title sits in the dark bottom band, so
+            it stays legible over any image while the upper part of the photo
+            comes through.
+          */
           <div className="absolute inset-0" aria-hidden>
             <Image
               src={bannerImage}
@@ -74,13 +82,13 @@ export function DynamicPageContent({
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-25"
+              className="object-cover"
             />
-            <div className="absolute inset-0 bg-govt-green-dark/60" />
+            <div className="absolute inset-0 bg-linear-to-t from-govt-green-dark via-govt-green-dark/75 to-govt-green-dark/25" />
           </div>
         ) : null}
 
-        <div className="relative mx-auto flex min-h-52 max-w-7xl flex-col justify-center px-4 py-12">
+        <div className="relative mx-auto flex min-h-52 max-w-7xl flex-col justify-end px-4 py-12">
           {menuTitle || submenuTitle ? (
             <p className="mb-2 text-sm font-medium text-white/80">
               {[menuTitle, submenuTitle].filter(Boolean).join(" › ")}
